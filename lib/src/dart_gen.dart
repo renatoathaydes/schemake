@@ -14,27 +14,48 @@ String _nullable(String s) => "$s?";
 
 String _array(String s) => "List<$s>";
 
+mixin DartMethodGenerator {
+  void generateMethod(
+      StringBuffer buffer, Objects objects, DartGeneratorOptions options);
+}
+
+class DartToStringMethodGenerator with DartMethodGenerator {
+  const DartToStringMethodGenerator();
+
+  @override
+  void generateMethod(
+      StringBuffer buffer, Objects objects, DartGeneratorOptions options) {
+    buffer.writeToString(objects, options);
+  }
+}
+
+class DartEqualsAndHashCodeMethodGenerator with DartMethodGenerator {
+  const DartEqualsAndHashCodeMethodGenerator();
+
+  @override
+  void generateMethod(
+      StringBuffer buffer, Objects objects, DartGeneratorOptions options) {
+    buffer.writeEquals(objects, options);
+    buffer.writeHashCode(objects, options);
+  }
+}
+
 final class DartGeneratorOptions with GeneratorOptions {
   final String? insertBeforeClass;
   final String Function(String propertyName)? fieldName;
   final String Function(Property<Object?> property)? insertBeforeField;
   final String Function(Property<Object?> property)? insertBeforeConstructorArg;
-  final String? insertWithinClass;
-  final bool generateToString;
-  final bool generateEqualsAndHashCode;
-  final bool generateToJson;
-  final bool generateFromJson;
+  final List<DartMethodGenerator> methodGenerators;
 
   const DartGeneratorOptions({
     this.insertBeforeClass,
     this.fieldName,
     this.insertBeforeField,
     this.insertBeforeConstructorArg,
-    this.insertWithinClass,
-    this.generateToString = true,
-    this.generateEqualsAndHashCode = true,
-    this.generateToJson = false,
-    this.generateFromJson = false,
+    this.methodGenerators = const [
+      DartToStringMethodGenerator(),
+      DartEqualsAndHashCodeMethodGenerator()
+    ],
   });
 }
 
@@ -84,14 +105,9 @@ extension on StringBuffer {
     writeFields(objects, options, remainingObjects);
     // constructor
     writeConstructor(objects, options);
-    options.insertWithinClass?.vmap(writeln);
-    if (options.generateToString) writeToString(objects, options);
-    if (options.generateEqualsAndHashCode) {
-      writeEquals(objects, options);
-      writeHashCode(objects, options);
+    for (final methodGenerator in options.methodGenerators) {
+      methodGenerator.generateMethod(this, objects, options);
     }
-    if (options.generateFromJson) writeFromJson(objects);
-    if (options.generateToJson) writeToJson(objects);
     writeln('}');
   }
 
@@ -171,10 +187,6 @@ extension on StringBuffer {
     }
     writeln(';');
   }
-
-  void writeFromJson(Objects objects) {}
-
-  void writeToJson(Objects objects) {}
 }
 
 extension on SchemaType<dynamic> {

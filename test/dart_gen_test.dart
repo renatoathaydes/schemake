@@ -45,8 +45,7 @@ const nestedObjectSchema = Objects('Nested', {
 void main() {
   group('Schemake Dart class gen', () {
     test('can write simple Dart class', () {
-      expect(
-          generateDart([personSchema]).toString(),
+      expect(generateDart([personSchema]).toString(),
           equals(_generatedPersonClass));
     });
 
