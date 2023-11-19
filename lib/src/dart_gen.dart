@@ -6,35 +6,47 @@ String _nullable(String s) => "$s?";
 
 String _array(String s) => "List<$s>";
 
-StringBuffer generateDart(SchemaType<dynamic> schemaType,
-    [StringBuffer? buffer, String Function(String) typeWrapper = _identity]) {
+StringBuffer generateDart(List<Objects> schemaTypes, [StringBuffer? buffer]) {
   final writer = buffer ?? StringBuffer();
-  final _ = switch (schemaType) {
-    Nullable<dynamic, NonNull>(type: var type) =>
-      generateDart(type, writer, _nullable),
-    Validatable(type: var type) => generateDart(type, writer),
-    Ints() => writer.write(typeWrapper('int')),
-    Floats() => writer.write(typeWrapper('double')),
-    Strings() => writer.write(typeWrapper('String')),
-    Bools() => writer.write(typeWrapper('bool')),
-    Arrays<dynamic, SchemaType>(itemsType: var type) =>
-      generateDart(type, writer, _array),
-    Objects(properties: var props, dartClassName: var className) =>
-      writer.writeObjects(className, props),
-    Dictionaries<dynamic, SchemaType>() =>
-      // TODO: Handle this case.
-      null,
-  };
+  final remainingSchemas = [...schemaTypes];
+  while (remainingSchemas.isNotEmpty) {
+    final schemaType = remainingSchemas.removeLast();
+    writer.writeObjects(schemaType, remainingSchemas);
+  }
   return writer;
 }
 
 extension on StringBuffer {
-  void writeObjects(
-      String className, Map<String, Property<Object?>> properties) {
-    writeln('class $className {');
-    properties.forEach((key, value) {
+  StringBuffer addingTo(List<Objects> list, Objects objects) {
+    list.add(objects);
+    return this;
+  }
+
+  void writeType(SchemaType<dynamic> schemaType, List<Objects> remainingObjects,
+      [String Function(String) typeWrapper = _identity]) {
+    final _ = switch (schemaType) {
+      Nullable<dynamic, NonNull>(type: var type) =>
+        writeType(type, remainingObjects, _nullable),
+      Validatable(type: var type) => writeType(type, remainingObjects),
+      Ints() => write(typeWrapper('int')),
+      Floats() => write(typeWrapper('double')),
+      Strings() => write(typeWrapper('String')),
+      Bools() => write(typeWrapper('bool')),
+      Arrays<dynamic, SchemaType>(itemsType: var type) =>
+        writeType(type, remainingObjects, _array),
+      Objects(dartClassName: var className) =>
+        addingTo(remainingObjects, schemaType).write(typeWrapper(className)),
+      Dictionaries<dynamic, SchemaType>() =>
+        // TODO: Handle this case.
+        null,
+    };
+  }
+
+  void writeObjects(Objects objects, List<Objects> remainingObjects) {
+    writeln('class ${objects.dartClassName} {');
+    objects.properties.forEach((key, value) {
       write('  ');
-      generateDart(value.type, this);
+      writeType(value.type, remainingObjects);
       write(' $key');
       writeln(';');
     });
