@@ -87,8 +87,8 @@ extension on StringBuffer {
     options.insertWithinClass?.vmap(writeln);
     if (options.generateToString) writeToString(objects, options);
     if (options.generateEqualsAndHashCode) {
-      writeEquals(objects);
-      writeHashCode(objects);
+      writeEquals(objects, options);
+      writeHashCode(objects, options);
     }
     if (options.generateFromJson) writeFromJson(objects);
     if (options.generateToJson) writeToJson(objects);
@@ -126,8 +126,7 @@ extension on StringBuffer {
     objects.properties.forEach((key, value) {
       write('    ');
       final fieldName = options.fieldName?.vmap((f) => f(key)) ?? key;
-      final wrapValue =
-          value.type.isStringOrNull() ? _quoteAndDollar : _dollar;
+      final wrapValue = value.type.isStringOrNull() ? _quoteAndDollar : _dollar;
       writeln(_quote('$fieldName = ${wrapValue(fieldName)},'));
     });
     write('    ');
@@ -135,9 +134,43 @@ extension on StringBuffer {
     writeln(';');
   }
 
-  void writeEquals(Objects objects) {}
+  void writeEquals(Objects objects, DartGeneratorOptions options) {
+    writeln('  @override\n'
+        '  bool operator ==(Object other) =>\n'
+        '    identical(this, other) ||');
+    write('    other is ${objects.name} &&\n'
+        '    runtimeType == other.runtimeType');
+    if (objects.properties.isNotEmpty) {
+      writeln(' &&');
+      write(objects.properties.entries.map((entry) {
+        final fieldName =
+            options.fieldName?.vmap((f) => f(entry.key)) ?? entry.key;
+        final isList = entry.value.type is Arrays<Object?, Object?>;
+        return isList
+            ? '    const ListEquality().equals($fieldName, other.$fieldName)'
+            : '    $fieldName == other.$fieldName';
+      }).join(' &&\n'));
+    }
+    writeln(';');
+  }
 
-  void writeHashCode(Objects objects) {}
+// @override
+//   int get hashCode => name.hashCode ^ age.hashCode;
+  void writeHashCode(Objects objects, DartGeneratorOptions options) {
+    writeln('  @override\n'
+        '  int get hashCode =>');
+    if (objects.properties.isEmpty) {
+      write('    runtimeType.hashCode');
+    } else {
+      write('    ');
+      write(objects.properties.entries.map((entry) {
+        final fieldName =
+            options.fieldName?.vmap((f) => f(entry.key)) ?? entry.key;
+        return '$fieldName.hashCode';
+      }).join(' ^ '));
+    }
+    writeln(';');
+  }
 
   void writeFromJson(Objects objects) {}
 

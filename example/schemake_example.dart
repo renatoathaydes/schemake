@@ -17,7 +17,7 @@ void main() {
   print('Full name: ${joe['name']}');
   print('Age:       ${joe['age']}');
 
-  // generate a Dart class from the schema... prints:
+  // generate a Dart class from the schema... by default, it prints:
   // class Person {
   //   String name;
   //   int? age;
@@ -31,6 +31,18 @@ void main() {
   //     'name = "$name",'
   //     'age = $age,'
   //     '}';
+  //   @override
+  //   bool operator ==(Object other) =>
+  //     identical(this, other) ||
+  //     other is Person &&
+  //     runtimeType == other.runtimeType &&
+  //     name == other.name &&
+  //     age == other.age;
+  //   @override
+  //   int get hashCode =>
+  //     name.hashCode ^ age.hashCode;
   // }
+  //
+  // There are many options to generate more things, like toJson and fromJson.
   print(generateDart([personSchema]));
 }

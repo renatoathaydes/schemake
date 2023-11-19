@@ -16,6 +16,16 @@ class Person {
     'name = "$name",'
     'age = $age,'
     '}';
+  @override
+  bool operator ==(Object other) =>
+    identical(this, other) ||
+    other is Person &&
+    runtimeType == other.runtimeType &&
+    name == other.name &&
+    age == other.age;
+  @override
+  int get hashCode =>
+    name.hashCode ^ age.hashCode;
 }
 ''';
 
@@ -54,6 +64,15 @@ void main() {
               "    'StringItems{'\n"
               "    'items = \$items,'\n"
               "    '}';\n"
+              '  @override\n'
+              '  bool operator ==(Object other) =>\n'
+              "    identical(this, other) ||\n"
+              "    other is StringItems &&\n"
+              "    runtimeType == other.runtimeType &&\n"
+              "    const ListEquality().equals(items, other.items);\n"
+              '  @override\n'
+              '  int get hashCode =>\n'
+              "    items.hashCode;\n"
               '}\n'));
     });
 
@@ -71,6 +90,15 @@ void main() {
               "    'Nested{'\n"
               "    'inner = \$inner,'\n"
               "    '}';\n"
+              '  @override\n'
+              '  bool operator ==(Object other) =>\n'
+              "    identical(this, other) ||\n"
+              "    other is Nested &&\n"
+              "    runtimeType == other.runtimeType &&\n"
+              "    inner == other.inner;\n"
+              '  @override\n'
+              '  int get hashCode =>\n'
+              "    inner.hashCode;\n"
               '}\n'
               '$_generatedPersonClass'));
     });
