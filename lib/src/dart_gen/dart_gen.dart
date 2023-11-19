@@ -1,6 +1,6 @@
 import 'package:conveniently/conveniently.dart';
 
-import '../schemake.dart';
+import '../../schemake.dart';
 
 String _identity(String s) => s;
 
