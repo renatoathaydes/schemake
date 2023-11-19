@@ -114,10 +114,10 @@ class Objects extends NonNull<Map<String, Object?>> {
         }
         try {
           result[name] = property.type.convertToDart(entry.value);
-        } on ValidationException catch (e) {
-          if (e is PropertyValidationException) rethrow;
-          throw PropertyValidationException(
-              [...location, name], properties, e.errors);
+        } on PropertyException catch (e) {
+          throw e.prependPath(name);
+        } on ToPropertyException catch (e) {
+          throw e.toPropertyException(name, this);
         }
       }
       _checkRequiredProperties(result, location);

@@ -1,36 +1,79 @@
+import 'dart:convert';
+
 import 'package:schemake/schemake.dart';
 import 'package:test/test.dart';
 import 'package:yaml/yaml.dart';
 
 import 'matchers.dart';
 
-const myObject = Objects('Person', {
+const _personSchema = Objects('Person', {
   'name': Property<String>(type: Strings()),
   'age': Property<int?>(type: Nullable(Ints())),
+});
+
+const _companySchema = Objects('Company', {
+  'name': Property<String>(type: Strings()),
+  'employees':
+      Property<List<Map<String, Object?>>>(type: Arrays(_personSchema)),
 });
 
 void main() {
   group('Schemake objects', () {
     test('can convert from YAML object to custom type (full object)', () {
-      expect(myObject.convertToDart(loadYaml('name: Joe\nage: 30')),
+      expect(_personSchema.convertToDart(loadYaml('name: Joe\nage: 30')),
           equals({'name': 'Joe', 'age': 30}));
     });
 
     test('can convert from YAML object to custom type (missing field)', () {
-      expect(myObject.convertToDart(loadYaml('name: Joe')),
+      expect(_personSchema.convertToDart(loadYaml('name: Joe')),
           equals({'name': 'Joe'}));
     });
 
     test(
         'cannot convert from YAML object to custom type (missing mandatory field)',
         () {
-      expect(() => myObject.convertToDart(loadYaml('age: 10')),
-          throwsMissingPropertyException([], myObject.properties, ['name']));
+      expect(
+          () => _personSchema.convertToDart(loadYaml('age: 10')),
+          throwsMissingPropertyException(
+              [], _personSchema.properties, ['name']));
     });
 
     test('cannot convert from YAML object to custom type (unknown field)', () {
-      expect(() => myObject.convertToDart(loadYaml('name: Joe\nheight: 180')),
-          throwsUnknownPropertyException(['height'], myObject.properties));
+      expect(
+          () => _personSchema.convertToDart(loadYaml('name: Joe\nheight: 180')),
+          throwsUnknownPropertyException(['height'], _personSchema.properties));
+    });
+  });
+
+  group('Schemake JSON', () {
+    test('can convert from JSON to custom type (nested schema)', () {
+      expect(
+          _companySchema.convertToDart(jsonDecode('{'
+              '  "name": "ACME",'
+              '  "employees": [ {'
+              '    "name": "Joe",'
+              '    "age": 30'
+              '  } ]'
+              '}')),
+          equals({
+            'name': 'ACME',
+            'employees': [
+              {'name': 'Joe', 'age': 30}
+            ]
+          }));
+    });
+
+    test('cannot convert from JSON to custom type (nested schema problem)', () {
+      expect(
+          () => _companySchema.convertToDart(jsonDecode('{'
+              '  "name": "ACME",'
+              '  "employees": [ {'
+              '    "name": true,'
+              '    "age": 30'
+              '  } ]'
+              '}')),
+          throwsPropertyTypeException(
+              String, true, ['employees', 'name'], _personSchema));
     });
   });
 }
