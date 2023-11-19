@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:schemake/schemake.dart';
 
 typedef ValidationResult = List<String>;
@@ -6,13 +7,13 @@ abstract class Validator<T> {
   void validate(T value);
 }
 
-class IntRange implements Validator<int> {
+class IntRangeValidator implements Validator<int> {
   final int min;
   final int max;
 
-  const IntRange(this.min, this.max);
+  const IntRangeValidator(this.min, this.max);
 
-  const IntRange.maxExclusive(int min, int max) : this(min, max - 1);
+  const IntRangeValidator.maxExclusive(int min, int max) : this(min, max - 1);
 
   @override
   void validate(int value) {
@@ -23,6 +24,47 @@ class IntRange implements Validator<int> {
         if (tooHigh) '$value > $max',
       ];
       throw ValidationException(errors);
+    }
+  }
+}
+
+/// Obtained by running Java `Character.isWhitespace(i)`
+/// on each char up to Character.MAX_CODE_POINT.
+const _whitespace = [
+  9,
+  10,
+  11,
+  12,
+  13,
+  28,
+  29,
+  30,
+  31,
+  32,
+  5760,
+  8192,
+  8193,
+  8194,
+  8195,
+  8196,
+  8197,
+  8198,
+  8200,
+  8201,
+  8202,
+  8232,
+  8233,
+  8287,
+  12288
+];
+
+class NonBlankStringValidator implements Validator<String> {
+  const NonBlankStringValidator();
+
+  @override
+  void validate(String value) {
+    if (value.runes.none((c) => !_whitespace.contains(c))) {
+      throw const ValidationException(['blank string']);
     }
   }
 }

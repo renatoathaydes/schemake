@@ -4,7 +4,7 @@ import 'package:yaml/yaml.dart';
 
 import 'matchers.dart';
 
-const ages = IntRange(0, 100);
+const ages = IntRangeValidator(0, 100);
 
 const myObject = Objects({
   'name': Property<String>(type: Strings()),
@@ -12,7 +12,7 @@ const myObject = Objects({
 });
 
 void main() {
-  group('Schemake scalar', () {
+  group('Schemake int validator', () {
     final ints = const Validatable(Ints(), ages);
 
     test('allows int within range', () {
@@ -28,8 +28,29 @@ void main() {
           () => ints.convertToDart(-1), throwsValidationException(['-1 < 0']));
     });
   });
+  group('Schemake NonBlank validator', () {
+    final ints =
+        const Validatable<String>(Strings(), NonBlankStringValidator());
 
-  group('Schemake objects', () {
+    test('allows non-blank strings', () {
+      expect(ints.convertToDart('a'), equals('a'));
+      expect(ints.convertToDart('   a'), equals('   a'));
+      expect(ints.convertToDart('hello world'), equals('hello world'));
+    });
+
+    test('does not allow blank strings', () {
+      expect(() => ints.convertToDart(''),
+          throwsValidationException(['blank string']));
+      expect(() => ints.convertToDart(' '),
+          throwsValidationException(['blank string']));
+      expect(() => ints.convertToDart('         '),
+          throwsValidationException(['blank string']));
+      expect(() => ints.convertToDart(' \n\t '),
+          throwsValidationException(['blank string']));
+    });
+  });
+
+  group('Schemake object validator', () {
     test('validator allows field within range', () {
       expect(myObject.convertToDart(loadYaml('name: Joe\nage: 30')),
           equals({'name': 'Joe', 'age': 30}));
