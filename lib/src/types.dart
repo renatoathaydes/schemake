@@ -6,6 +6,8 @@ import 'property.dart';
 sealed class SchemaType<T> {
   const SchemaType();
 
+  Type dartType() => T;
+
   T convertToDart(Object? yaml);
 }
 
@@ -158,7 +160,7 @@ final class Dictionaries<S, T extends SchemaType<S>>
   }
 }
 
-class Validatable<T> implements SchemaType<T> {
+class Validatable<T> extends SchemaType<T> {
   final SchemaType<T> type;
   final Validator<T> validator;
 
