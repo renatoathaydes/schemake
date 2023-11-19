@@ -4,7 +4,7 @@ import 'package:yaml/yaml.dart';
 
 import 'matchers.dart';
 
-const myObject = Objects({
+const myObject = Objects('Person', {
   'name': Property<String>(type: Strings()),
   'age': Property<int?>(type: Nullable(Ints())),
 });

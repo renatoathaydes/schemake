@@ -6,7 +6,7 @@ import 'matchers.dart';
 
 const ages = IntRangeValidator(0, 100);
 
-const myObject = Objects({
+const myObject = Objects('Person', {
   'name': Property<String>(type: Strings()),
   'age': Property<int>(type: Validatable(Ints(), ages)),
 });

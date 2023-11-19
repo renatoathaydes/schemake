@@ -1,7 +1,7 @@
 import 'package:schemake/schemake.dart';
 import 'package:yaml/yaml.dart';
 
-const person = Objects({
+const person = Objects('Person', {
   'name': Property<String>(type: Strings()),
   'age': Property<int?>(type: Nullable(Ints())),
 });

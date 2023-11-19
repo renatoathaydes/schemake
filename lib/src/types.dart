@@ -23,19 +23,19 @@ sealed class NonNull<T> extends SchemaType<T> {
   }
 }
 
-final class Nullable<S, T extends SchemaType<S>> extends SchemaType<S?> {
-  final NonNull<S> nonNullableType;
+final class Nullable<S, T extends NonNull<S>> extends SchemaType<S?> {
+  final NonNull<S> type;
 
-  const Nullable(this.nonNullableType);
+  const Nullable(this.type);
 
   @override
   S? convertToDart(Object? yaml) {
-    return yaml == null ? null : nonNullableType.convertToDart(yaml);
+    return yaml == null ? null : type.convertToDart(yaml);
   }
 
   @override
   String toString() {
-    return 'schemake.Nullable{$nonNullableType}';
+    return 'schemake.Nullable{$type}';
   }
 }
 
@@ -87,11 +87,12 @@ final class Arrays<S, T extends SchemaType<S>> extends NonNull<List<S>> {
 }
 
 class Objects extends NonNull<Map<String, Object?>> {
+  final String dartClassName;
   final Map<String, Property<Object?>> properties;
   final bool ignoreUnknownProperties;
   final List<String> location;
 
-  const Objects(this.properties,
+  const Objects(this.dartClassName, this.properties,
       {this.ignoreUnknownProperties = false, this.location = const []});
 
   @override
