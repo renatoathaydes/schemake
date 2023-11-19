@@ -22,3 +22,16 @@ dynamic throwsMissingPropertyException(
       .having(
           (e) => e.missingProperties, 'missingProperties', missingProperties));
 }
+
+dynamic throwsValidationException(List<String> errors) {
+  return throwsA(isA<ValidationException>()
+      .having((e) => e.errors, 'errors', equals(errors)));
+}
+
+dynamic throwsPropertyValidationException(
+    List<String> location, Object? objectType, List<String> errors) {
+  return throwsA(isA<PropertyValidationException>()
+      .having((e) => e.fieldLocation, 'fieldLocation', equals(location))
+      .having((e) => e.objectType, 'objectType', equals(objectType))
+      .having((e) => e.errors, 'errors', equals(errors)));
+}

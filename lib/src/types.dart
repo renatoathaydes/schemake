@@ -1,13 +1,15 @@
+import 'package:schemake/src/validator.dart';
+
 import 'errors.dart';
 import 'property.dart';
 
-sealed class Type<T> {
-  const Type();
+sealed class SchemaType<T> {
+  const SchemaType();
 
   T convertToDart(Object? yaml);
 }
 
-sealed class NonNull<T> extends Type<T> {
+sealed class NonNull<T> extends SchemaType<T> {
   const NonNull();
 
   @override
@@ -21,8 +23,8 @@ sealed class NonNull<T> extends Type<T> {
   }
 }
 
-final class Nullable<S, T extends Type<S>> extends Type<S?> {
-  final Type<S> nonNullableType;
+final class Nullable<S, T extends SchemaType<S>> extends SchemaType<S?> {
+  final NonNull<S> nonNullableType;
 
   const Nullable(this.nonNullableType);
 
@@ -65,7 +67,7 @@ final class Bools extends NonNull<bool> {
   String toString() => 'schemake.Bools';
 }
 
-final class Arrays<S, T extends Type<S>> extends NonNull<List<S>> {
+final class Arrays<S, T extends SchemaType<S>> extends NonNull<List<S>> {
   final T itemsType;
 
   const Arrays(this.itemsType);
@@ -104,7 +106,13 @@ class Objects extends NonNull<Map<String, Object?>> {
           if (ignoreUnknownProperties) continue;
           throw UnknownPropertyException([...location, name], properties);
         }
-        result[name] = property.type.convertToDart(entry.value);
+        try {
+          result[name] = property.type.convertToDart(entry.value);
+        } on ValidationException catch (e) {
+          if (e is PropertyValidationException) rethrow;
+          throw PropertyValidationException(
+              [...location, name], properties, e.errors);
+        }
       }
       _checkRequiredProperties(result, location);
       return result;
@@ -127,7 +135,8 @@ class Objects extends NonNull<Map<String, Object?>> {
   String toString() => 'schemake.Objects{$properties}';
 }
 
-final class Dictionaries<S, T extends Type<S>> extends NonNull<Map<String, S>> {
+final class Dictionaries<S, T extends SchemaType<S>>
+    extends NonNull<Map<String, S>> {
   final T valueType;
 
   const Dictionaries(this.valueType);
@@ -140,6 +149,20 @@ final class Dictionaries<S, T extends Type<S>> extends NonNull<Map<String, S>> {
       });
     }
     throw TypeException(S, yaml);
+  }
+}
+
+class Validatable<T> implements SchemaType<T> {
+  final SchemaType<T> type;
+  final Validator<T> validator;
+
+  const Validatable(this.type, this.validator);
+
+  @override
+  T convertToDart(Object? yaml) {
+    final result = type.convertToDart(yaml);
+    validator.validate(result);
+    return result;
   }
 }
 

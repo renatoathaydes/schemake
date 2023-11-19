@@ -4,7 +4,7 @@ class TypeException implements SchemakeException {
   final Type targetType;
   final Object? actualValue;
 
-  TypeException(this.targetType, this.actualValue);
+  const TypeException(this.targetType, this.actualValue);
 
   @override
   String toString() {
@@ -16,7 +16,7 @@ class UnknownPropertyException implements SchemakeException {
   final List<String> fieldLocation;
   final Object objectType;
 
-  UnknownPropertyException(this.fieldLocation, this.objectType);
+  const UnknownPropertyException(this.fieldLocation, this.objectType);
 }
 
 class MissingPropertyException implements SchemakeException {
@@ -24,6 +24,20 @@ class MissingPropertyException implements SchemakeException {
   final Object objectType;
   final List<String> missingProperties;
 
-  MissingPropertyException(
+  const MissingPropertyException(
       this.fieldLocation, this.objectType, this.missingProperties);
+}
+
+class ValidationException implements SchemakeException {
+  final List<String> errors;
+
+  const ValidationException(this.errors);
+}
+
+class PropertyValidationException extends ValidationException {
+  final List<String> fieldLocation;
+  final Object objectType;
+
+  const PropertyValidationException(
+      this.fieldLocation, this.objectType, super.errors);
 }

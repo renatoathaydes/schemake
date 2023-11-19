@@ -1,7 +1,7 @@
 import 'types.dart';
 
 class Property<T> {
-  final Type<T> type;
+  final SchemaType<T> type;
   final String? dartProperty;
   final T? defaultValue;
   final String? description;
