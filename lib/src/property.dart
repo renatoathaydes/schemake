@@ -7,8 +7,6 @@ class Property<T> {
 
   const Property({required this.type, this.defaultValue, this.description});
 
-  void validate() {}
-
   @override
   String toString() {
     return 'Property{type: $type, '

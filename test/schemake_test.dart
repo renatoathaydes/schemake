@@ -27,18 +27,6 @@ void main() {
       expect(const Arrays<int, Ints>(Ints()).convertToDart(loadYaml('[]')),
           equals(<int>[]));
     });
-    test('can convert from YAML object to Map<String, int>', () {
-      expect(
-          const Dictionaries<int, Ints>(Ints())
-              .convertToDart(loadYaml('{foo: 10}')),
-          equals({'foo': 10}));
-    });
-    test('can convert from YAML object to Map<String, String>', () {
-      expect(
-          const Dictionaries<String, Strings>(Strings())
-              .convertToDart(loadYaml('{foo: bar}')),
-          equals({'foo': 'bar'}));
-    });
   });
 
   group('Schemake null errors', () {
@@ -62,18 +50,6 @@ void main() {
       expect(
           () => const Arrays<int, Ints>(Ints()).convertToDart(loadYaml('null')),
           throwsTypeException(List<int>, null));
-    });
-    test('cannot convert from YAML null to Map<String, int>', () {
-      expect(
-          () => const Dictionaries<int, Ints>(Ints())
-              .convertToDart(loadYaml('null')),
-          throwsTypeException(Map<String, int>, null));
-    });
-    test('cannot convert from YAML null to Map<String, String>', () {
-      expect(
-          () => const Dictionaries<String, Strings>(Strings())
-              .convertToDart(loadYaml('null')),
-          throwsTypeException(Map<String, String>, null));
     });
   });
 
@@ -113,30 +89,6 @@ void main() {
     test('can convert from YAML array to null', () {
       expect(
           const Nullable(Arrays<int, Ints>(Ints()))
-              .convertToDart(loadYaml('null')),
-          isNull);
-    });
-    test('can convert from YAML object to Map<String, int>', () {
-      expect(
-          const Nullable(Dictionaries<int, Ints>(Ints()))
-              .convertToDart(loadYaml('{foo: 10}')),
-          equals({'foo': 10}));
-    });
-    test('can convert from YAML object to null', () {
-      expect(
-          const Nullable(Dictionaries<int, Ints>(Ints()))
-              .convertToDart(loadYaml('null')),
-          isNull);
-    });
-    test('can convert from YAML object to Map<String, String>', () {
-      expect(
-          const Nullable(Dictionaries<String, Strings>(Strings()))
-              .convertToDart(loadYaml('{foo: bar}')),
-          equals({'foo': 'bar'}));
-    });
-    test('can convert from YAML object to null', () {
-      expect(
-          const Nullable(Dictionaries<String, Strings>(Strings()))
               .convertToDart(loadYaml('null')),
           isNull);
     });

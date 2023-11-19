@@ -57,10 +57,8 @@ void main() {
     });
 
     test('validator does not allow field outside range', () {
-      expect(
-          () => myObject.convertToDart(loadYaml('name: Joe\nage: 130')),
-          throwsPropertyValidationException(
-              ['age'], myObject.properties, ['130 > 100']));
+      expect(() => myObject.convertToDart(loadYaml('name: Joe\nage: 130')),
+          throwsPropertyValidationException(['age'], myObject, ['130 > 100']));
     });
   });
 }

@@ -143,23 +143,6 @@ class Objects extends NonNull<Map<String, Object?>> {
   String toString() => 'schemake.Objects{$properties}';
 }
 
-final class Dictionaries<S, T extends SchemaType<S>>
-    extends NonNull<Map<String, S>> {
-  final T valueType;
-
-  const Dictionaries(this.valueType);
-
-  @override
-  Map<String, S> convertToDartNonNull(Object yaml) {
-    if (yaml is Map) {
-      return yaml.map((k, v) {
-        return MapEntry(_cast<String>(k), valueType.convertToDart(v));
-      });
-    }
-    throw TypeException(S, yaml);
-  }
-}
-
 class Validatable<T> extends SchemaType<T> {
   final SchemaType<T> type;
   final Validator<T> validator;

@@ -96,9 +96,6 @@ extension on StringBuffer {
         writeType(type, remainingObjects, array),
       Objects(name: var className) =>
         addingTo(remainingObjects, schemaType).write(typeWrapper(className)),
-      Dictionaries<dynamic, SchemaType>() =>
-        // TODO: Handle this case.
-        null,
     };
   }
 
