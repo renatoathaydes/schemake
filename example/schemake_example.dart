@@ -1,5 +1,4 @@
 import 'package:schemake/schemake.dart';
-import 'package:schemake/src/dart_gen.dart';
 import 'package:yaml/yaml.dart';
 
 const personSchema = Objects('Person', {
