@@ -89,13 +89,13 @@ final class Arrays<S, T extends SchemaType<S>> extends NonNull<List<S>> {
 mixin GeneratorOptions {}
 
 class Objects extends NonNull<Map<String, Object?>> {
-  final String dartClassName;
+  final String name;
   final Map<String, Property<Object?>> properties;
   final bool ignoreUnknownProperties;
   final List<String> location;
   final List<GeneratorOptions> generatorOptions;
 
-  const Objects(this.dartClassName, this.properties,
+  const Objects(this.name, this.properties,
       {this.ignoreUnknownProperties = false,
       this.location = const [],
       this.generatorOptions = const []});

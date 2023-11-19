@@ -25,6 +25,12 @@ void main() {
   //     required this.name,
   //     this.age,
   //   });
+  //   @override
+  //   String toString() =>
+  //     'Person{'
+  //     'name = "$name",'
+  //     'age = $age,'
+  //     '}';
   // }
   print(generateDart([personSchema]));
 }
