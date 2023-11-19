@@ -12,7 +12,9 @@ void main() {
   name: Joe Doe
   age: 42
   ''');
-  final joe = personSchema.convertToDart(yaml);
+
+  // get a pure Dart value back (no YAML classes)
+  Map<String, Object?> joe = personSchema.convertToDart(yaml);
   print('Full name: ${joe['name']}');
   print('Age:       ${joe['age']}');
 
@@ -20,6 +22,10 @@ void main() {
   // class Person {
   //   String name;
   //   int? age;
+  //   Person({
+  //     required this.name,
+  //     this.age,
+  //   });
   // }
   print(generateDart([personSchema]));
 }

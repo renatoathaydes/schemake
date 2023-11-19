@@ -6,6 +6,19 @@ String _nullable(String s) => "$s?";
 
 String _array(String s) => "List<$s>";
 
+enum DartClassMutability {
+  constConstructor,
+  finalFields,
+  mutableFields,
+}
+
+final class DartGenatorOptions with GeneratorOptions {
+  final DartClassMutability mutability;
+
+  const DartGenatorOptions(
+      {this.mutability = DartClassMutability.constConstructor});
+}
+
 StringBuffer generateDart(List<Objects> schemaTypes, [StringBuffer? buffer]) {
   final writer = buffer ?? StringBuffer();
   final remainingSchemas = [...schemaTypes];
@@ -44,12 +57,21 @@ extension on StringBuffer {
 
   void writeObjects(Objects objects, List<Objects> remainingObjects) {
     writeln('class ${objects.dartClassName} {');
+    // fields
     objects.properties.forEach((key, value) {
       write('  ');
       writeType(value.type, remainingObjects);
       write(' $key');
       writeln(';');
     });
-    writeln('}');
+    // constructor
+    writeln('  ${objects.dartClassName}({');
+    objects.properties.forEach((key, value) {
+      write(value.type is Nullable ? '    ' : '    required ');
+      write('this.');
+      write(key);
+      writeln(',');
+    });
+    writeln('  });\n}');
   }
 }

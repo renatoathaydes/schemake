@@ -86,14 +86,19 @@ final class Arrays<S, T extends SchemaType<S>> extends NonNull<List<S>> {
   String toString() => 'schemake.Arrays{$itemsType}';
 }
 
+mixin GeneratorOptions {}
+
 class Objects extends NonNull<Map<String, Object?>> {
   final String dartClassName;
   final Map<String, Property<Object?>> properties;
   final bool ignoreUnknownProperties;
   final List<String> location;
+  final List<GeneratorOptions> generatorOptions;
 
   const Objects(this.dartClassName, this.properties,
-      {this.ignoreUnknownProperties = false, this.location = const []});
+      {this.ignoreUnknownProperties = false,
+      this.location = const [],
+      this.generatorOptions = const []});
 
   @override
   Map<String, Object?> convertToDartNonNull(Object yaml) {

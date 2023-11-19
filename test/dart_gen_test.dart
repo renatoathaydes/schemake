@@ -23,6 +23,10 @@ void main() {
           equals('class Person {\n'
               '  String name;\n'
               '  int? age;\n'
+              '  Person({\n'
+              '    required this.name,\n'
+              '    this.age,\n'
+              '  });\n'
               '}\n'));
     });
 
@@ -31,6 +35,9 @@ void main() {
           generateDart([stringItemsSchema]).toString(),
           equals('class StringItems {\n'
               '  List<String> items;\n'
+              '  StringItems({\n'
+              '    required this.items,\n'
+              '  });\n'
               '}\n'));
     });
 
@@ -39,10 +46,17 @@ void main() {
           generateDart([nestedObjectSchema]).toString(),
           equals('class Nested {\n'
               '  Person inner;\n'
+              '  Nested({\n'
+              '    required this.inner,\n'
+              '  });\n'
               '}\n'
               'class Person {\n'
               '  String name;\n'
               '  int? age;\n'
+              '  Person({\n'
+              '    required this.name,\n'
+              '    this.age,\n'
+              '  });\n'
               '}\n'));
     });
   });
