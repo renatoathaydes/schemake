@@ -32,16 +32,14 @@ void main() {
     test(
         'cannot convert from YAML object to custom type (missing mandatory field)',
         () {
-      expect(
-          () => _personSchema.convertToDart(loadYaml('age: 10')),
-          throwsMissingPropertyException(
-              [], _personSchema.properties, ['name']));
+      expect(() => _personSchema.convertToDart(loadYaml('age: 10')),
+          throwsMissingPropertyException([], _personSchema, ['name']));
     });
 
     test('cannot convert from YAML object to custom type (unknown field)', () {
       expect(
           () => _personSchema.convertToDart(loadYaml('name: Joe\nheight: 180')),
-          throwsUnknownPropertyException(['height'], _personSchema.properties));
+          throwsUnknownPropertyException(['height'], _personSchema));
     });
   });
 

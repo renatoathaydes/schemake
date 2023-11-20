@@ -1,3 +1,4 @@
+import 'package:conveniently/conveniently.dart';
 import 'package:schemake/src/validator.dart';
 
 import 'errors.dart';
@@ -91,67 +92,79 @@ final class Arrays<S, T extends SchemaType<S>> extends NonNull<List<S>> {
 mixin GeneratorOptions {}
 
 class Objects extends ObjectsBase<Map<String, Object?>> {
-  const Objects(super.name, super.properties,
+  final Map<String, Property<Object?>> properties;
+  final List<GeneratorOptions> generatorOptions;
+
+  const Objects(super.name, this.properties,
       {super.ignoreUnknownProperties = false,
       super.location = const [],
-      super.generatorOptions = const []});
+      this.generatorOptions = const []});
 
   @override
   Map<String, Object?> convertToDartNonNull(Object yaml) {
     return convertToMap(yaml);
   }
+
+  @override
+  Object? Function(Object?)? getPropertyConverter(String property) {
+    return properties[property]?.type.convertToDart;
+  }
+
+  @override
+  Iterable<String> getRequiredProperties() {
+    return properties.entries
+        .where((e) => e.value.type is NonNull)
+        .map((e) => e.key);
+  }
+
+  @override
+  String toString() => 'schemake.Objects{$properties}';
 }
 
 abstract class ObjectsBase<T> extends NonNull<T> {
   final String name;
-  final Map<String, Property<Object?>> properties;
   final bool ignoreUnknownProperties;
   final List<String> location;
-  final List<GeneratorOptions> generatorOptions;
 
-  const ObjectsBase(this.name, this.properties,
-      {this.ignoreUnknownProperties = false,
-      this.location = const [],
-      this.generatorOptions = const []});
+  const ObjectsBase(this.name,
+      {this.ignoreUnknownProperties = false, this.location = const []});
+
+  Object? Function(Object?)? getPropertyConverter(String property);
+
+  Iterable<String> getRequiredProperties();
 
   Map<String, Object?> convertToMap(Object yaml) {
     if (yaml is Map) {
       final result = <String, Object?>{};
-
       for (final entry in yaml.entries) {
         final name = _cast<String>(entry.key);
-        final property = properties[name];
-        if (property == null) {
+        final propertyConverter = getPropertyConverter(name);
+        if (propertyConverter == null) {
           if (ignoreUnknownProperties) continue;
-          throw UnknownPropertyException([...location, name], properties);
+          throw UnknownPropertyException([...location, name], this);
         }
         try {
-          result[name] = property.type.convertToDart(entry.value);
+          result[name] = propertyConverter(entry.value);
         } on PropertyException catch (e) {
           throw e.prependPath(name);
         } on ToPropertyException catch (e) {
           throw e.toPropertyException(name, this);
         }
       }
-      _checkRequiredProperties(result, location);
+      checkRequiredProperties(result.keys);
       return result;
     }
     throw TypeException(Map<String, Object?>, yaml);
   }
 
-  void _checkRequiredProperties(
-      Map<String, Object?> map, List<String> location) {
-    final missingProperties = properties.entries
-        .where((e) => e.value.type is NonNull && !map.containsKey(e.key))
-        .map((e) => e.key);
+  void checkRequiredProperties(Iterable<String> providedProperties) {
+    final missingProperties =
+        getRequiredProperties().where(providedProperties.contains.not$);
     if (missingProperties.isNotEmpty) {
       throw MissingPropertyException(
-          location, properties, missingProperties.toList());
+          location, this, missingProperties.toList());
     }
   }
-
-  @override
-  String toString() => 'schemake.Objects{$properties}';
 }
 
 class Validatable<T> extends SchemaType<T> {

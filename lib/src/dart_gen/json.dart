@@ -8,8 +8,8 @@ class ToJsonMethodGenerator with DartMethodGenerator {
   const ToJsonMethodGenerator();
 
   @override
-  GeneratorExtras? generateMethod(StringBuffer buffer,
-      ObjectsBase<dynamic> objects, DartGeneratorOptions options) {
+  GeneratorExtras? generateMethod(
+      StringBuffer buffer, Objects objects, DartGeneratorOptions options) {
     buffer.writeToJson(objects, options);
     return null;
   }
@@ -21,8 +21,8 @@ class FromJsonMethodGenerator with DartMethodGenerator {
   const FromJsonMethodGenerator(this.schemaObjectName);
 
   @override
-  GeneratorExtras generateMethod(StringBuffer buffer,
-      ObjectsBase<dynamic> objects, DartGeneratorOptions options) {
+  GeneratorExtras generateMethod(
+      StringBuffer buffer, Objects objects, DartGeneratorOptions options) {
     buffer.writeFromJson(objects, options);
     return GeneratorExtras(
         const {},
@@ -32,7 +32,7 @@ class FromJsonMethodGenerator with DartMethodGenerator {
 }
 
 extension on StringBuffer {
-  void writeToJson(ObjectsBase<dynamic> objects, DartGeneratorOptions options) {
+  void writeToJson(Objects objects, DartGeneratorOptions options) {
     writeln('  Map<String, Object?> toJson() => {');
     objects.properties.forEach((key, value) {
       write('       ');
@@ -42,14 +42,13 @@ extension on StringBuffer {
     writeln('  };');
   }
 
-  void writeFromJson(
-      ObjectsBase<dynamic> objects, DartGeneratorOptions options) {
+  void writeFromJson(Objects objects, DartGeneratorOptions options) {
     writeln('  static ${objects.name} fromJson(Object? value) =>');
     writeln('    const ${objects.name}JsonReviver().fromJson(value);');
   }
 
-  void writeJsonReviver(String schemaObjectName, ObjectsBase<dynamic> objects,
-      DartGeneratorOptions options) {
+  void writeJsonReviver(
+      String schemaObjectName, Objects objects, DartGeneratorOptions options) {
     const mapName = 'cleanValue';
     writeln('class ${objects.name}JsonReviver {\n'
         '  const ${objects.name}JsonReviver();\n'
@@ -68,8 +67,7 @@ extension on StringBuffer {
         '}');
   }
 
-  void writeConstructorCall(
-      ObjectsBase<dynamic> objects, DartGeneratorOptions options,
+  void writeConstructorCall(Objects objects, DartGeneratorOptions options,
       {required String indent, required String mapName}) {
     writeln('${objects.name}(');
     objects.properties.forEach((key, value) {
