@@ -90,20 +90,31 @@ final class Arrays<S, T extends SchemaType<S>> extends NonNull<List<S>> {
 
 mixin GeneratorOptions {}
 
-class Objects extends NonNull<Map<String, Object?>> {
+class Objects extends ObjectsBase<Map<String, Object?>> {
+  const Objects(super.name, super.properties,
+      {super.ignoreUnknownProperties = false,
+      super.location = const [],
+      super.generatorOptions = const []});
+
+  @override
+  Map<String, Object?> convertToDartNonNull(Object yaml) {
+    return convertToMap(yaml);
+  }
+}
+
+abstract class ObjectsBase<T> extends NonNull<T> {
   final String name;
   final Map<String, Property<Object?>> properties;
   final bool ignoreUnknownProperties;
   final List<String> location;
   final List<GeneratorOptions> generatorOptions;
 
-  const Objects(this.name, this.properties,
+  const ObjectsBase(this.name, this.properties,
       {this.ignoreUnknownProperties = false,
       this.location = const [],
       this.generatorOptions = const []});
 
-  @override
-  Map<String, Object?> convertToDartNonNull(Object yaml) {
+  Map<String, Object?> convertToMap(Object yaml) {
     if (yaml is Map) {
       final result = <String, Object?>{};
 

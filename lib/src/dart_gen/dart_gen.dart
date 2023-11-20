@@ -12,16 +12,16 @@ class GeneratorExtras {
 }
 
 mixin DartMethodGenerator {
-  GeneratorExtras? generateMethod(
-      StringBuffer buffer, Objects objects, DartGeneratorOptions options);
+  GeneratorExtras? generateMethod(StringBuffer buffer,
+      ObjectsBase<dynamic> objects, DartGeneratorOptions options);
 }
 
 class DartToStringMethodGenerator with DartMethodGenerator {
   const DartToStringMethodGenerator();
 
   @override
-  GeneratorExtras? generateMethod(
-      StringBuffer buffer, Objects objects, DartGeneratorOptions options) {
+  GeneratorExtras? generateMethod(StringBuffer buffer,
+      ObjectsBase<dynamic> objects, DartGeneratorOptions options) {
     buffer.writeToString(objects, options);
     return null;
   }
@@ -31,8 +31,8 @@ class DartEqualsAndHashCodeMethodGenerator with DartMethodGenerator {
   const DartEqualsAndHashCodeMethodGenerator();
 
   @override
-  GeneratorExtras? generateMethod(
-      StringBuffer buffer, Objects objects, DartGeneratorOptions options) {
+  GeneratorExtras? generateMethod(StringBuffer buffer,
+      ObjectsBase<dynamic> objects, DartGeneratorOptions options) {
     buffer.writeEquals(objects, options);
     buffer.writeHashCode(objects, options);
     return null;
@@ -77,12 +77,14 @@ StringBuffer generateDart(List<Objects> schemaTypes) {
 }
 
 extension on StringBuffer {
-  StringBuffer addingTo(List<Objects> list, Objects objects) {
+  StringBuffer addingTo(
+      List<ObjectsBase<dynamic>> list, ObjectsBase<dynamic> objects) {
     list.add(objects);
     return this;
   }
 
-  void writeType(SchemaType<dynamic> schemaType, List<Objects> remainingObjects,
+  void writeType(SchemaType<dynamic> schemaType,
+      List<ObjectsBase<dynamic>> remainingObjects,
       [String Function(String) typeWrapper = identityString]) {
     final _ = switch (schemaType) {
       Nullable<dynamic, NonNull>(type: var type) =>
@@ -94,13 +96,13 @@ extension on StringBuffer {
       Bools() => write(typeWrapper('bool')),
       Arrays<dynamic, SchemaType>(itemsType: var type) =>
         writeType(type, remainingObjects, array),
-      Objects(name: var className) =>
+      ObjectsBase(name: var className) =>
         addingTo(remainingObjects, schemaType).write(typeWrapper(className)),
     };
   }
 
-  List<GeneratorExtras> writeObjects(
-      Objects objects, List<Objects> remainingObjects) {
+  List<GeneratorExtras> writeObjects(ObjectsBase<dynamic> objects,
+      List<ObjectsBase<dynamic>> remainingObjects) {
     final options = objects.generatorOptions
             .whereType<DartGeneratorOptions>()
             .firstOrNull ??
@@ -118,8 +120,8 @@ extension on StringBuffer {
     return generatorExtras;
   }
 
-  void writeFields(Objects objects, DartGeneratorOptions options,
-      List<Objects> remainingObjects) {
+  void writeFields(ObjectsBase<dynamic> objects, DartGeneratorOptions options,
+      List<ObjectsBase<dynamic>> remainingObjects) {
     objects.properties.forEach((key, value) {
       write('  ');
       options.insertBeforeField?.vmap((insert) => insert(value));
@@ -129,7 +131,8 @@ extension on StringBuffer {
     });
   }
 
-  void writeConstructor(Objects objects, DartGeneratorOptions options) {
+  void writeConstructor(
+      ObjectsBase<dynamic> objects, DartGeneratorOptions options) {
     writeln('  ${objects.name}({');
     objects.properties.forEach((key, value) {
       options.insertBeforeConstructorArg?.vmap((insert) => insert(value));
@@ -141,7 +144,8 @@ extension on StringBuffer {
     writeln('  });');
   }
 
-  void writeToString(Objects objects, DartGeneratorOptions options) {
+  void writeToString(
+      ObjectsBase<dynamic> objects, DartGeneratorOptions options) {
     write('  @override\n'
         '  String toString() =>\n'
         '    ');
@@ -157,7 +161,7 @@ extension on StringBuffer {
     writeln(';');
   }
 
-  void writeEquals(Objects objects, DartGeneratorOptions options) {
+  void writeEquals(ObjectsBase<dynamic> objects, DartGeneratorOptions options) {
     writeln('  @override\n'
         '  bool operator ==(Object other) =>\n'
         '    identical(this, other) ||');
@@ -177,9 +181,8 @@ extension on StringBuffer {
     writeln(';');
   }
 
-// @override
-//   int get hashCode => name.hashCode ^ age.hashCode;
-  void writeHashCode(Objects objects, DartGeneratorOptions options) {
+  void writeHashCode(
+      ObjectsBase<dynamic> objects, DartGeneratorOptions options) {
     writeln('  @override\n'
         '  int get hashCode =>');
     if (objects.properties.isEmpty) {
