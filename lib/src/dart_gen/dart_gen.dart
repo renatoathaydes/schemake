@@ -27,8 +27,8 @@ class DartToStringMethodGenerator with DartMethodGenerator {
   }
 }
 
-class DartEqualsAndHashCodeMethodGenerator with DartMethodGenerator {
-  const DartEqualsAndHashCodeMethodGenerator();
+class EqualsAndHashCodeMethodGenerator with DartMethodGenerator {
+  const EqualsAndHashCodeMethodGenerator();
 
   @override
   GeneratorExtras? generateMethod(
@@ -53,7 +53,7 @@ final class DartGeneratorOptions with GeneratorOptions {
     this.insertBeforeConstructorArg,
     this.methodGenerators = const [
       DartToStringMethodGenerator(),
-      DartEqualsAndHashCodeMethodGenerator()
+      EqualsAndHashCodeMethodGenerator()
     ],
   });
 }
@@ -62,7 +62,7 @@ final class DartGeneratorOptions with GeneratorOptions {
 ///
 /// The generated code is written to the buffer provided in the argument,
 /// or a new one is created if not provided, and then returned.
-StringBuffer generateDart(List<Objects> schemaTypes,
+StringBuffer generateDartClasses(List<Objects> schemaTypes,
     {StringBuffer? buffer,
     DartGeneratorOptions options = const DartGeneratorOptions()}) {
   final writer = buffer ?? StringBuffer();
