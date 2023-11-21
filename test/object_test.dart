@@ -20,25 +20,24 @@ const _companySchema = Objects('Company', {
 void main() {
   group('Schemake objects', () {
     test('can convert from YAML object to custom type (full object)', () {
-      expect(_personSchema.convertToDart(loadYaml('name: Joe\nage: 30')),
+      expect(_personSchema.convert(loadYaml('name: Joe\nage: 30')),
           equals({'name': 'Joe', 'age': 30}));
     });
 
     test('can convert from YAML object to custom type (missing field)', () {
-      expect(_personSchema.convertToDart(loadYaml('name: Joe')),
+      expect(_personSchema.convert(loadYaml('name: Joe')),
           equals({'name': 'Joe'}));
     });
 
     test(
         'cannot convert from YAML object to custom type (missing mandatory field)',
         () {
-      expect(() => _personSchema.convertToDart(loadYaml('age: 10')),
+      expect(() => _personSchema.convert(loadYaml('age: 10')),
           throwsMissingPropertyException([], _personSchema, ['name']));
     });
 
     test('cannot convert from YAML object to custom type (unknown field)', () {
-      expect(
-          () => _personSchema.convertToDart(loadYaml('name: Joe\nheight: 180')),
+      expect(() => _personSchema.convert(loadYaml('name: Joe\nheight: 180')),
           throwsUnknownPropertyException(['height'], _personSchema));
     });
   });
@@ -46,7 +45,7 @@ void main() {
   group('Schemake JSON', () {
     test('can convert from JSON to custom type (nested schema)', () {
       expect(
-          _companySchema.convertToDart(jsonDecode('{'
+          _companySchema.convert(jsonDecode('{'
               '  "name": "ACME",'
               '  "employees": [ {'
               '    "name": "Joe",'
@@ -63,7 +62,7 @@ void main() {
 
     test('cannot convert from JSON to custom type (nested schema problem)', () {
       expect(
-          () => _companySchema.convertToDart(jsonDecode('{'
+          () => _companySchema.convert(jsonDecode('{'
               '  "name": "ACME",'
               '  "employees": [ {'
               '    "name": true,'

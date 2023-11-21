@@ -58,13 +58,20 @@ final class DartGeneratorOptions with GeneratorOptions {
   });
 }
 
-StringBuffer generateDart(List<Objects> schemaTypes) {
-  final writer = StringBuffer();
+/// Generates Dart code for the given schema types.
+///
+/// The generated code is written to the buffer provided in the argument,
+/// or a new one is created if not provided, and then returned.
+StringBuffer generateDart(List<Objects> schemaTypes,
+    {StringBuffer? buffer,
+    DartGeneratorOptions options = const DartGeneratorOptions()}) {
+  final writer = buffer ?? StringBuffer();
   final remainingSchemas = [...schemaTypes];
   final generatorExtras = <GeneratorExtras>[];
   while (remainingSchemas.isNotEmpty) {
     final schemaType = remainingSchemas.removeLast();
-    generatorExtras.addAll(writer.writeObjects(schemaType, remainingSchemas));
+    generatorExtras
+        .addAll(writer.writeObjects(schemaType, remainingSchemas, options));
   }
   if (generatorExtras.isNotEmpty) {
     final extras = StringBuffer();
@@ -106,12 +113,8 @@ extension on StringBuffer {
     };
   }
 
-  List<GeneratorExtras> writeObjects(
-      Objects objects, List<Objects> remainingObjects) {
-    final options = objects.generatorOptions
-            .whereType<DartGeneratorOptions>()
-            .firstOrNull ??
-        const DartGeneratorOptions();
+  List<GeneratorExtras> writeObjects(Objects objects,
+      List<Objects> remainingObjects, DartGeneratorOptions options) {
     options.insertBeforeClass?.vmap(write);
     writeln('\nclass ${objects.name} {');
     writeFields(objects, options, remainingObjects);
