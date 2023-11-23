@@ -16,8 +16,6 @@ abstract class Validator<T> {
   /// to re-create this validator instance.
   String get ownArgumentsString;
 
-  String get dartType;
-
   List<ValidatorGenerationOptions> get generatorOptions => const [];
 }
 
@@ -76,9 +74,6 @@ class EnumValidator extends Validator<String> {
   String get ownArgumentsString =>
       "'$name', {${values.entries.map((e) => '${quote(e.key)}: '
           '${e.value.vmapOr(quote, () => 'null')}').join(", ")}}";
-
-  @override
-  String get dartType => name;
 
   @override
   String toString() {

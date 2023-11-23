@@ -63,6 +63,9 @@ abstract class DartValidatorGenerationOptions<V extends Validator<dynamic>>
     implements ValidatorGenerationOptions {
   Type get validatorType => V;
 
+  String dartTypeFor(V type);
+
+  /// Generates a Dart type representing the validator type.
   void generateDartType(StringBuffer buffer, V type);
 }
 
@@ -143,13 +146,17 @@ extension on StringBuffer {
   void writeValidatableType(
       Validatable<dynamic> schemaType, List<_Remaining> remaining) {
     final validator = schemaType.validator;
-    write(validator.dartType);
-    validator.generatorOptions
+    final generator = validator.generatorOptions
         .whereType<DartValidatorGenerationOptions<dynamic>>()
         .where((options) =>
             options.validatorType == schemaType.validator.runtimeType)
-        .forEach((options) => remaining
-            .add(_Writer((w) => options.generateDartType(w, validator))));
+        .firstOrNull;
+    if (generator == null) {
+      writeType(schemaType.type, remaining);
+    } else {
+      write(generator.dartTypeFor(validator));
+      remaining.add(_Writer((w) => generator.generateDartType(w, validator)));
+    }
   }
 
   List<GeneratorExtras> writeObjects(Objects objects,
