@@ -39,7 +39,7 @@ class EqualsAndHashCodeMethodGenerator with DartMethodGenerator {
   }
 }
 
-final class DartGeneratorOptions with GeneratorOptions {
+final class DartGeneratorOptions {
   final String? insertBeforeClass;
   final String Function(String propertyName)? fieldName;
   final String Function(Property<Object?> property)? insertBeforeField;
@@ -115,7 +115,9 @@ extension on StringBuffer {
 
   List<GeneratorExtras> writeObjects(Objects objects,
       List<Objects> remainingObjects, DartGeneratorOptions options) {
-    options.insertBeforeClass?.vmap(write);
+    writeln(options.insertBeforeClass ??
+        "import 'dart:convert';\n\n"
+            "import 'package:schemake/schemake.dart';");
     writeln('\nclass ${objects.name} {');
     writeFields(objects, options, remainingObjects);
     // constructor

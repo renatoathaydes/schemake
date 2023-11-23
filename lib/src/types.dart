@@ -86,8 +86,6 @@ final class Arrays<S, T extends SchemaType<S>> extends NonNull<List<S>> {
   String toString() => 'schemake.Arrays{$itemsType}';
 }
 
-mixin GeneratorOptions {}
-
 class Objects extends ObjectsBase<Map<String, Object?>> {
   final Map<String, Property<Object?>> properties;
 
