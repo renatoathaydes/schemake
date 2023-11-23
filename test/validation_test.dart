@@ -10,7 +10,10 @@ const myObject = Objects('Person', {
   'name': Property<String>(type: Strings()),
   'age': Property<int>(type: Validatable(Ints(), ages)),
   'status': Property<String>(
-      type: Validatable(Strings(), EnumValidator({'alive', 'dead', 'unknown'})))
+      type: Validatable(
+          Strings(),
+          EnumValidator(
+              'Status', {'alive': null, 'dead': null, 'unknown': null})))
 });
 
 void main() {
@@ -60,7 +63,7 @@ void main() {
       expect(
           () => myObject.convert(loadYaml('name: Joe\nage: 0\nstatus: unborn')),
           throwsPropertyValidationException(['status'], myObject,
-              ['"unborn" not in {alive, dead, unknown}']));
+              ['"unborn" not in (alive, dead, unknown)']));
     });
   });
 

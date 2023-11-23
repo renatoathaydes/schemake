@@ -3,8 +3,10 @@
 /// More dartdocs go here.
 library;
 
-export 'src/types.dart';
+export 'src/dart_gen/dart_gen.dart';
+export 'src/dart_gen/enum.dart';
+export 'src/dart_gen/json.dart';
 export 'src/errors.dart';
 export 'src/property.dart';
+export 'src/types.dart';
 export 'src/validator.dart';
-export 'src/dart_gen/dart_gen.dart';

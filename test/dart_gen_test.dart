@@ -1,7 +1,14 @@
 import 'package:schemake/schemake.dart';
 import 'package:test/test.dart';
 
-const _generatedPersonClass = r'''
+const _imports = r'''
+import 'dart:convert';
+
+import 'package:schemake/schemake.dart';
+''';
+
+const _generatedPersonClass = _imports +
+    r'''
 
 class Person {
   String name;
@@ -29,6 +36,40 @@ class Person {
 }
 ''';
 
+const _generatedEnumClass = r'''
+enum Foo {
+  foo,
+  BAR,
+  ;
+  static Foo from(String s) => switch(s) {
+    'foo' => foo,
+    'bar' => BAR,
+    _ => throw ValidationException(['value not allowed for Foo: "$s"']), 
+  };
+}
+
+class Validated {
+  Foo some;
+  Validated({
+    required this.some,
+  });
+  @override
+  String toString() =>
+    \'Validated{\'
+    \'some = $some,\'
+    \'}\';
+  @override
+  bool operator ==(Object other) =>
+    identical(this, other) ||
+    other is Validated &&
+    runtimeType == other.runtimeType &&
+    some == other.some;
+  @override
+  int get hashCode =>
+    some.hashCode;
+}
+''';
+
 const personSchema = Objects('Person', {
   'name': Property<String>(type: Strings()),
   'age': Property<int?>(type: Nullable(Ints())),
@@ -42,6 +83,12 @@ const nestedObjectSchema = Objects('Nested', {
   'inner': Property(type: personSchema),
 });
 
+const validatableObjectSchema = Objects('Validated', {
+  'some': Property(
+      type: Validatable(
+          Strings(), EnumValidator('Foo', {'foo': null, 'bar': 'BAR'}))),
+});
+
 void main() {
   group('Schemake Dart class gen', () {
     test('can write simple Dart class', () {
@@ -52,7 +99,7 @@ void main() {
     test('can write Dart class with array', () {
       expect(
           generateDartClasses([stringItemsSchema]).toString(),
-          equals('\n'
+          equals('$_imports\n'
               'class StringItems {\n'
               '  List<String> items;\n'
               '  StringItems({\n'
@@ -75,10 +122,12 @@ void main() {
               '}\n'));
     });
 
-    test('can write Dart class with nested Objects', () {
+    test('can write Dart class with nested Objects and Enum', () {
       expect(
-          generateDartClasses([nestedObjectSchema]).toString(),
-          equals('\n'
+          generateDartClasses([nestedObjectSchema, validatableObjectSchema])
+              .toString(),
+          equals('$_imports'
+              '$_generatedEnumClass\n'
               'class Nested {\n'
               '  Person inner;\n'
               '  Nested({\n'

@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:schemake/schemake.dart';
-import 'package:schemake/src/dart_gen/json.dart';
 import 'package:test/test.dart';
 
 class _Testing {}
@@ -41,6 +40,25 @@ void main() {
 
     test('floats', () {
       expect(schemaTypeString(Floats()), equals('Floats()'));
+    });
+
+    test('enums', () {
+      expect(
+          schemaTypeString(Validatable(
+              Strings(), EnumValidator('MyEnum', {'abc': null, 'def': 'DEF'}))),
+          equals(
+              "Validatable(Strings(), EnumValidator('MyEnum', {'abc': null, 'def': 'DEF'}))"));
+    });
+
+    test('int ranges', () {
+      expect(schemaTypeString(Validatable(Ints(), IntRangeValidator(2, 3))),
+          equals('Validatable(Ints(), IntRangeValidator(2, 3))'));
+    });
+
+    test('non-blank strings', () {
+      expect(
+          schemaTypeString(Validatable(Strings(), NonBlankStringValidator())),
+          equals('Validatable(Strings(), NonBlankStringValidator())'));
     });
 
     test('custom objects', () {
