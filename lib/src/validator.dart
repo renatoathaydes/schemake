@@ -26,6 +26,29 @@ class IntRangeValidator implements Validator<int> {
       throw ValidationException(errors);
     }
   }
+
+  @override
+  String toString() {
+    return 'IntRangeValidator{min: $min, max: $max}';
+  }
+}
+
+class EnumValidator implements Validator<String> {
+  final Set<String> values;
+
+  const EnumValidator(this.values);
+
+  @override
+  void validate(String value) {
+    if (!values.contains(value)) {
+      throw ValidationException(['"$value" not in $values']);
+    }
+  }
+
+  @override
+  String toString() {
+    return 'EnumValidator{values: $values}';
+  }
 }
 
 /// Obtained by running Java `Character.isWhitespace(i)`
