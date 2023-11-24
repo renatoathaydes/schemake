@@ -1,5 +1,4 @@
 import 'package:schemake/schemake.dart';
-import 'package:schemake/src/dart_gen/json.dart';
 import 'package:yaml/yaml.dart';
 
 /// this defines a schema that can be used for code generation.

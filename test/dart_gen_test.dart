@@ -3,12 +3,10 @@ import 'package:test/test.dart';
 
 const _imports = r'''
 import 'dart:convert';
-
 import 'package:schemake/schemake.dart';
 ''';
 
-const _generatedPersonClass = _imports +
-    r'''
+const _generatedPersonClass = r'''
 
 class Person {
   String name;
@@ -37,16 +35,6 @@ class Person {
 ''';
 
 const _generatedEnumClass = r'''
-enum Foo {
-  foo,
-  BAR,
-  ;
-  static Foo from(String s) => switch(s) {
-    'foo' => foo,
-    'bar' => BAR,
-    _ => throw ValidationException(['value not allowed for Foo: "$s"']), 
-  };
-}
 
 class Validated {
   Foo some;
@@ -55,9 +43,9 @@ class Validated {
   });
   @override
   String toString() =>
-    \'Validated{\'
-    \'some = $some,\'
-    \'}\';
+    'Validated{'
+    'some = $some,'
+    '}';
   @override
   bool operator ==(Object other) =>
     identical(this, other) ||
@@ -67,6 +55,16 @@ class Validated {
   @override
   int get hashCode =>
     some.hashCode;
+}
+enum Foo {
+  foo,
+  BAR,
+  ;
+  static Foo from(String s) => switch(s) {
+    'foo' => foo,
+    'bar' => BAR,
+    _ => throw ValidationException(['value not allowed for Foo: "$s"']),
+  };
 }
 ''';
 
@@ -93,7 +91,7 @@ void main() {
   group('Schemake Dart class gen', () {
     test('can write simple Dart class', () {
       expect(generateDartClasses([personSchema]).toString(),
-          equals(_generatedPersonClass));
+          equals(_imports + _generatedPersonClass));
     });
 
     test('can write Dart class with array', () {

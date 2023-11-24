@@ -17,14 +17,14 @@ class DartEnumGeneratorOptions
   @override
   void generateDartType(StringBuffer buffer, EnumValidator validator) {
     final name = dartTypeName ?? validator.name;
-    buffer.writeln('enum $name {\n');
+    buffer.writeln('enum $name {');
     validator.values.forEach((name, dartName) {
       buffer.writeln('  ${dartName ?? name},');
     });
-    buffer.writeln(';\n'
+    buffer.writeln('  ;\n'
         '  static $name from(String s) => switch(s) {');
     validator.values.forEach((name, dartName) {
-      buffer.writeln('    "$name" => ${dartName ?? name},');
+      buffer.writeln("    '$name' => ${dartName ?? name},");
     });
     buffer.writeln("    _ => throw ValidationException("
         "['value not allowed for $name: \"\$s\"']),");

@@ -88,13 +88,14 @@ class _Writer implements _Remaining {
 /// The generated code is written to the buffer provided in the argument,
 /// or a new one is created if not provided, and then returned.
 StringBuffer generateDartClasses(List<Objects> schemaTypes,
-    {StringBuffer? buffer,
-    DartGeneratorOptions options = const DartGeneratorOptions()}) {
-  final writer = buffer ?? StringBuffer();
+    {DartGeneratorOptions options = const DartGeneratorOptions()}) {
+  final writer = StringBuffer();
   final remaining = <_Remaining>[
     for (var s in schemaTypes) _ObjectsRemaining(s)
   ];
-  final generatorExtras = <GeneratorExtras>[];
+  final generatorExtras = <GeneratorExtras>[
+    GeneratorExtras({'dart:convert', 'package:schemake/schemake.dart'}, (_) {})
+  ];
   while (remaining.isNotEmpty) {
     switch (remaining.removeLast()) {
       case _ObjectsRemaining(objects: var objects):
@@ -115,8 +116,8 @@ StringBuffer generateDartClasses(List<Objects> schemaTypes,
 }
 
 extension on StringBuffer {
-  StringBuffer acceptIfObjects(List<_Remaining> list,
-      ObjectsBase<dynamic> objects) {
+  StringBuffer acceptIfObjects(
+      List<_Remaining> list, ObjectsBase<dynamic> objects) {
     if (objects is Objects) {
       list.add(_ObjectsRemaining(objects));
     } else {
@@ -161,9 +162,7 @@ extension on StringBuffer {
 
   List<GeneratorExtras> writeObjects(Objects objects,
       List<_Remaining> remaining, DartGeneratorOptions options) {
-    writeln(options.insertBeforeClass ??
-        "import 'dart:convert';\n\n"
-            "import 'package:schemake/schemake.dart';");
+    write(options.insertBeforeClass ?? '');
     writeln('\nclass ${objects.name} {');
     writeFields(objects, options, remaining);
     // constructor
@@ -252,7 +251,7 @@ extension on StringBuffer {
   }
 
   void writeExtras(Iterable<GeneratorExtras> extras) {
-    for (final imp in extras.expand((e) => e.imports)) {
+    for (final imp in extras.expand((e) => e.imports).toSet()) {
       writeln('import ${quote(imp)};');
     }
     for (final extra in extras) {

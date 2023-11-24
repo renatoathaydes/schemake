@@ -45,9 +45,6 @@ class IntRangeValidator extends Validator<int> {
   String get ownArgumentsString => '$min, $max';
 
   @override
-  String get dartType => 'int';
-
-  @override
   String toString() {
     return 'IntRangeValidator{min: $min, max: $max}';
   }
@@ -123,7 +120,4 @@ class NonBlankStringValidator extends Validator<String> {
 
   @override
   String get ownArgumentsString => '';
-
-  @override
-  String get dartType => 'String';
 }
