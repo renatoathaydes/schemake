@@ -49,8 +49,8 @@ class PropertyTypeException extends TypeException with PropertyException {
   @override
   String toString() {
     return 'PropertyTypeException{propertyPath: $propertyPath, '
-        'cannot cast $actualValue (type ${actualValue.runtimeType}) to $targetType}'
-        'objectType: $objectType}';
+        'cannot cast $actualValue (type ${actualValue.runtimeType}) '
+        'to $targetType}, objectType: $objectType}';
   }
 }
 
@@ -127,6 +127,7 @@ class PropertyValidationException extends ValidationException
 
   @override
   String toString() {
-    return 'PropertyValidationException{propertyPath: $propertyPath, objectType: $objectType}';
+    return 'PropertyValidationException{propertyPath: $propertyPath, '
+        'objectType: $objectType}';
   }
 }
