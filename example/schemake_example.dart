@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:schemake/dart_gen.dart';
 import 'package:schemake/schemake.dart';
 import 'package:yaml/yaml.dart';
 
@@ -5,12 +8,14 @@ import 'package:yaml/yaml.dart';
 const personSchema = Objects('Person', {
   'name': Property<String>(type: Strings()),
   'age': Property<int?>(type: Nullable(Ints())),
+  'friends': Property(type: Arrays<String, Strings>(Strings()))
 });
 
 void main() {
   final yaml = loadYaml('''
   name: Joe Doe
   age: 42
+  friends: [ "Mary", "Fred" ]
   ''');
 
   // when used directly, Objects simply verifies the schema and makes sure
@@ -18,43 +23,26 @@ void main() {
   Map<String, Object?> joe = personSchema.convert(yaml);
   print('// Full name: ${joe['name']}');
   print('// Age:       ${joe['age']}');
+  // you get a List<String>, not a YamlList!
+  final friends = joe['friends'] as List<String>;
+  print('// Friends:   ${friends.join(', ')}');
+
+  // if the schema does not validate, an Exception gets thrown!
+  try {
+    // missing "friends", which is mandatory
+    personSchema.convert(loadYaml('name: Fred'));
+  } on MissingPropertyException catch (e) {
+    stderr.writeln('Missing properties: ${e.missingProperties}');
+  }
 
   // now to the interesting bits...
 
   // generate a Dart class from the schema... by default, it generates a
-  // simple Dart class with toString, equals and hashCode implemented:
-  //
-  // class Person {
-  //   String name;
-  //   int? age;
-  //   Person({
-  //     required this.name,
-  //     this.age,
-  //   });
-  //   @override
-  //   String toString() =>
-  //     'Person{'
-  //     'name = "$name",'
-  //     'age = $age,'
-  //     '}';
-  //   @override
-  //   bool operator ==(Object other) =>
-  //     identical(this, other) ||
-  //     other is Person &&
-  //     runtimeType == other.runtimeType &&
-  //     name == other.name &&
-  //     age == other.age;
-  //   @override
-  //   int get hashCode =>
-  //     name.hashCode ^ age.hashCode;
-  // }
-  //
-  // There are many options to generate more things, like toJson and fromJson.
-  //
-  // In this example, we include some of them:
+  // simple Dart class with toString, equals and hashCode implemented,
+  // but we can also add JSON methods.
   print(generateDartClasses([personSchema],
       options: const DartGeneratorOptions(methodGenerators: [
-        EqualsAndHashCodeMethodGenerator(),
+        ...DartGeneratorOptions.defaultMethodGenerators,
         ToJsonMethodGenerator(),
         FromJsonMethodGenerator(),
       ])));
@@ -63,9 +51,9 @@ void main() {
   // that file!
   print(r'''
 void main() {
-  final person = Person(name: 'Joe Doe', age: 42);
+  final person = Person(name: 'Joe Doe', age: 42, friends: ['Mary']);
   print(jsonEncode(person));
-  final otherPerson = jsonDecode('{"name": "Mary Jane"}',
+  final otherPerson = jsonDecode('{"name": "Mary Jane", "friends": ["Joe"]}',
       reviver: const PersonJsonReviver()) as Person;
   print('Other person is called ${otherPerson.name}');
 }

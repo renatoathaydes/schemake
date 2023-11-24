@@ -9,7 +9,9 @@ class GeneratorExtras {
   final Set<String> imports;
   final void Function(StringBuffer) topLevelWriter;
 
-  const GeneratorExtras(this.imports, this.topLevelWriter);
+  const GeneratorExtras(this.imports, [this.topLevelWriter = _noOpWriter]);
+
+  static void _noOpWriter(StringBuffer _) {}
 }
 
 mixin DartMethodGenerator {
@@ -34,28 +36,32 @@ class EqualsAndHashCodeMethodGenerator with DartMethodGenerator {
   @override
   GeneratorExtras? generateMethod(
       StringBuffer buffer, Objects objects, DartGeneratorOptions options) {
-    buffer.writeEquals(objects, options);
+    final extras = buffer.writeEquals(objects, options);
     buffer.writeHashCode(objects, options);
-    return null;
+    return extras;
   }
 }
 
 final class DartGeneratorOptions {
+  static const defaultMethodGenerators = [
+    DartToStringMethodGenerator(),
+    EqualsAndHashCodeMethodGenerator(),
+  ];
+
   final String? insertBeforeClass;
   final String Function(String propertyName)? fieldName;
   final String Function(Property<Object?> property)? insertBeforeField;
   final String Function(Property<Object?> property)? insertBeforeConstructorArg;
   final List<DartMethodGenerator> methodGenerators;
+  final bool encodeNulls;
 
   const DartGeneratorOptions({
     this.insertBeforeClass,
     this.fieldName,
     this.insertBeforeField,
     this.insertBeforeConstructorArg,
-    this.methodGenerators = const [
-      DartToStringMethodGenerator(),
-      EqualsAndHashCodeMethodGenerator()
-    ],
+    this.methodGenerators = defaultMethodGenerators,
+    this.encodeNulls = false,
   });
 }
 
@@ -214,24 +220,31 @@ extension on StringBuffer {
     writeln(';');
   }
 
-  void writeEquals(Objects objects, DartGeneratorOptions options) {
+  GeneratorExtras? writeEquals(Objects objects, DartGeneratorOptions options) {
     writeln('  @override\n'
         '  bool operator ==(Object other) =>\n'
         '    identical(this, other) ||');
     write('    other is ${objects.name} &&\n'
         '    runtimeType == other.runtimeType');
+    GeneratorExtras? extras;
     if (objects.properties.isNotEmpty) {
       writeln(' &&');
       write(objects.properties.entries.map((entry) {
         final fieldName =
             options.fieldName?.vmap((f) => f(entry.key)) ?? entry.key;
-        final isList = entry.value.type is Arrays<Object?, Object?>;
-        return isList
-            ? '    const ListEquality().equals($fieldName, other.$fieldName)'
-            : '    $fieldName == other.$fieldName';
+        final type = entry.value.type;
+        if (type is Arrays<Object?, Object?>) {
+          extras =
+              const GeneratorExtras({'package:collection/collection.dart'});
+          return '    const ListEquality<'
+              '${(type.itemsType as SchemaType<dynamic>).dartType()}>()'
+              '.equals($fieldName, other.$fieldName)';
+        }
+        return '    $fieldName == other.$fieldName';
       }).join(' &&\n'));
     }
     writeln(';');
+    return extras;
   }
 
   void writeHashCode(Objects objects, DartGeneratorOptions options) {

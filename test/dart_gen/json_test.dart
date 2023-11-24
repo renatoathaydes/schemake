@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:schemake/dart_gen.dart';
 import 'package:schemake/schemake.dart';
 import 'package:test/test.dart';
 

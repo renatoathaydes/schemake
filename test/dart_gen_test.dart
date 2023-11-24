@@ -1,3 +1,4 @@
+import 'package:schemake/dart_gen.dart';
 import 'package:schemake/schemake.dart';
 import 'package:test/test.dart';
 
@@ -97,7 +98,8 @@ void main() {
     test('can write Dart class with array', () {
       expect(
           generateDartClasses([stringItemsSchema]).toString(),
-          equals('$_imports\n'
+          equals('$_imports'
+              'import \'package:collection/collection.dart\';\n\n'
               'class StringItems {\n'
               '  List<String> items;\n'
               '  StringItems({\n'
@@ -113,7 +115,7 @@ void main() {
               "    identical(this, other) ||\n"
               "    other is StringItems &&\n"
               "    runtimeType == other.runtimeType &&\n"
-              "    const ListEquality().equals(items, other.items);\n"
+              "    const ListEquality<String>().equals(items, other.items);\n"
               '  @override\n'
               '  int get hashCode =>\n'
               "    items.hashCode;\n"
