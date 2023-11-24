@@ -32,8 +32,11 @@ extension on StringBuffer {
   void writeToJson(Objects objects, DartGeneratorOptions options) {
     writeln('  Map<String, Object?> toJson() => {');
     objects.properties.forEach((key, value) {
-      write('       ');
+      write('    ');
       final fieldName = options.fieldName?.vmap((f) => f(key)) ?? key;
+      if (!options.encodeNulls && value.type is Nullable<dynamic, dynamic>) {
+        write('if ($fieldName != null) ');
+      }
       writeln("'$fieldName': $fieldName,");
     });
     writeln('  };');
@@ -41,7 +44,12 @@ extension on StringBuffer {
 
   void writeFromJson(Objects objects, DartGeneratorOptions options) {
     writeln('  static ${objects.name} fromJson(Object? value) =>');
-    writeln('    const ${_reviverName(objects.name)}().convert(value);');
+    writeln(
+        '      const ${_reviverName(objects.name)}().convert(switch(value) {\n'
+        '    String() => jsonDecode(value),\n'
+        '    List<int>() => jsonDecode(utf8.decode(value)),\n'
+        '    _ => value,\n'
+        '  });');
   }
 
   void writeJsonReviver(Objects objects, DartGeneratorOptions options) {

@@ -25,6 +25,95 @@ class _TestObject extends ObjectsBase<_Testing> {
   }
 }
 
+const _someSchema = Objects('SomeSchema', {
+  'mandatory': Property(type: Strings()),
+  'optional': Property(type: Nullable(Floats())),
+  'list': Property(type: Arrays<int, Ints>(Ints())),
+});
+
+const _someSchemaToJsonGeneration = r'''
+import 'dart:convert';
+import 'package:schemake/schemake.dart';
+
+class SomeSchema {
+  String mandatory;
+  double? optional;
+  List<int> list;
+  SomeSchema({
+    required this.mandatory,
+    this.optional,
+    required this.list,
+  });
+  Map<String, Object?> toJson() => {
+    'mandatory': mandatory,
+    if (optional != null) 'optional': optional,
+    'list': list,
+  };
+}
+''';
+
+const _someSchemaFromJsonGeneration = r'''
+import 'dart:convert';
+import 'package:schemake/schemake.dart';
+class SomeSchemaJsonReviver extends ObjectsBase<SomeSchema> {
+  const SomeSchemaJsonReviver(): super("SomeSchema");
+  Object? call(Object? key, Object? value) {
+    if (key == null) {
+      return convert(value);
+    }
+    return value;
+  }
+
+  @override
+  SomeSchema convert(Object? value) {
+    if (value is! Map) throw TypeException(SomeSchema, value);
+    final keys = value.keys.map((key) {
+      if (key is! String) {
+        throw TypeException(String, key, "object key is not a String");
+      }
+      return key;
+    }).toSet();
+    checkRequiredProperties(keys);
+      return SomeSchema(
+        mandatory: convertProperty(const Strings(), 'mandatory', value),
+        optional: convertProperty(const Nullable<double, Floats>(Floats()), 'optional', value),
+        list: convertProperty(const Arrays<int, Ints>(Ints()), 'list', value),
+      );
+  }
+
+  @override
+  Converter<Object?, Object?>? getPropertyConverter(String property) {
+    switch(property) {
+      case 'mandatory': return const Strings();
+      case 'optional': return const Nullable<double, Floats>(Floats());
+      case 'list': return const Arrays<int, Ints>(Ints());
+      default: return null;
+    }
+  }
+  @override
+  Iterable<String> getRequiredProperties() {
+    return const {'mandatory', 'list'};
+  }
+}
+
+class SomeSchema {
+  String mandatory;
+  double? optional;
+  List<int> list;
+  SomeSchema({
+    required this.mandatory,
+    this.optional,
+    required this.list,
+  });
+  static SomeSchema fromJson(Object? value) =>
+      const SomeSchemaJsonReviver().convert(switch(value) {
+    String() => jsonDecode(value),
+    List<int>() => jsonDecode(utf8.decode(value)),
+    _ => value,
+  });
+}
+''';
+
 void main() {
   group('schemaTypeString', () {
     test('strings', () {
@@ -96,6 +185,25 @@ void main() {
     test('nullable custom object', () {
       expect(schemaTypeString(Nullable<_Testing, _TestObject>(_TestObject())),
           equals('Nullable<_Testing, _TestObject>(_TestObject())'));
+    });
+  });
+
+  group('Json methods', () {
+    test('toJson', () {
+      final result = generateDartClasses([_someSchema],
+          options: DartGeneratorOptions(
+            methodGenerators: [const ToJsonMethodGenerator()],
+          ));
+      expect(result.toString(), equals(_someSchemaToJsonGeneration));
+    });
+
+    test('fromJson', () {
+      final result = generateDartClasses([_someSchema],
+          options: DartGeneratorOptions(
+            methodGenerators: [const FromJsonMethodGenerator()],
+          ));
+      print(result);
+      expect(result.toString(), equals(_someSchemaFromJsonGeneration));
     });
   });
 }
