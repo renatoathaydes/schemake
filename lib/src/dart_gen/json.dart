@@ -56,13 +56,7 @@ extension on StringBuffer {
     final name = objects.name;
     writeln('class ${_reviverName(name)} extends ObjectsBase<$name> {\n'
         '  const ${_reviverName(name)}(): super("$name");\n'
-        '  Object? call(Object? key, Object? value) {\n'
-        '    if (key == null) {\n'
-        '      return convert(value);\n'
-        '    }\n'
-        '    return value;\n'
-        '  }');
-    writeln('\n'
+        '\n'
         '  @override\n'
         '  $name convert(Object? value) {\n'
         '    if (value is! Map) throw TypeException($name, value);\n'
@@ -121,7 +115,7 @@ extension on StringBuffer {
   }
 }
 
-String _reviverName(String name) => '${name}JsonReviver';
+String _reviverName(String name) => '_${name}JsonReviver';
 
 /// Returns a String that represents the [SchemaType] in "Dart syntax".
 ///

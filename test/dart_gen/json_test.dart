@@ -55,14 +55,8 @@ class SomeSchema {
 const _someSchemaFromJsonGeneration = r'''
 import 'dart:convert';
 import 'package:schemake/schemake.dart';
-class SomeSchemaJsonReviver extends ObjectsBase<SomeSchema> {
-  const SomeSchemaJsonReviver(): super("SomeSchema");
-  Object? call(Object? key, Object? value) {
-    if (key == null) {
-      return convert(value);
-    }
-    return value;
-  }
+class _SomeSchemaJsonReviver extends ObjectsBase<SomeSchema> {
+  const _SomeSchemaJsonReviver(): super("SomeSchema");
 
   @override
   SomeSchema convert(Object? value) {
@@ -106,7 +100,7 @@ class SomeSchema {
     required this.list,
   });
   static SomeSchema fromJson(Object? value) =>
-      const SomeSchemaJsonReviver().convert(switch(value) {
+      const _SomeSchemaJsonReviver().convert(switch(value) {
     String() => jsonDecode(value),
     List<int>() => jsonDecode(utf8.decode(value)),
     _ => value,
@@ -202,7 +196,6 @@ void main() {
           options: DartGeneratorOptions(
             methodGenerators: [const FromJsonMethodGenerator()],
           ));
-      print(result);
       expect(result.toString(), equals(_someSchemaFromJsonGeneration));
     });
   });

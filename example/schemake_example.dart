@@ -53,9 +53,9 @@ void main() {
 void main() {
   final person = Person(name: 'Joe Doe', age: 42, friends: ['Mary']);
   print(jsonEncode(person));
-  final otherPerson = jsonDecode('{"name": "Mary Jane", "friends": ["Joe"]}',
-      reviver: const PersonJsonReviver()) as Person;
-  print('Other person is called ${otherPerson.name}');
+  final otherPerson = Person.fromJson(
+    '{"name": "Mary Jane", "friends": ["Joe"]}');
+  print(otherPerson);
 }
   ''');
 }
