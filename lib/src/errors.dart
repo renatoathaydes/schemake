@@ -50,7 +50,7 @@ class PropertyTypeException extends TypeException with PropertyException {
   String toString() {
     return 'PropertyTypeException{propertyPath: $propertyPath, '
         'cannot cast $actualValue (type ${actualValue.runtimeType}) '
-        'to $targetType}, objectType: $objectType}';
+        'to $targetType, objectType: $objectType}';
   }
 }
 

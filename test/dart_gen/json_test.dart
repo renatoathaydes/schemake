@@ -92,6 +92,8 @@ class _SomeSchemaJsonReviver extends ObjectsBase<SomeSchema> {
   Iterable<String> getRequiredProperties() {
     return const {'mandatory', 'list'};
   }
+  @override
+  String toString() => 'SomeSchema';
 }
 
 class SomeSchema {
@@ -244,6 +246,47 @@ void main() {
           ]));
       expect(stderr, isEmpty);
       expect(stdout, equals(['Counter{count: 42}', 'Counter{count: null}']));
+    });
+
+    test('error message on missing mandatory property', () async {
+      final (stdout, stderr) = await generateAndRunDartClass(
+          Objects('Counter', {
+            'foo': Property(type: Bools()),
+            'count': Property(type: Ints()),
+          }),
+          '''
+      void main() {
+        print(Counter.fromJson({'foo': true}));
+      }''',
+          const DartGeneratorOptions(methodGenerators: [
+            FromJsonMethodGenerator(),
+            DartToStringMethodGenerator(),
+          ]));
+      expect(stderr,
+          contains('MissingPropertyException{missingProperties: [count]}'));
+      expect(stdout, isEmpty);
+    });
+
+    test('error message on wrong type property', () async {
+      final (stdout, stderr) = await generateAndRunDartClass(
+          Objects('Foo', {
+            'foo': Property(type: Bools()),
+          }),
+          '''
+      void main() {
+        print(Foo.fromJson({'foo': 'yes'}));
+      }''',
+          const DartGeneratorOptions(methodGenerators: [
+            FromJsonMethodGenerator(),
+            DartToStringMethodGenerator(),
+          ]));
+      expect(
+          stderr,
+          contains('PropertyTypeException{'
+              'propertyPath: [foo], '
+              'cannot cast yes (type String) to bool, '
+              'objectType: Foo}'));
+      expect(stdout, isEmpty);
     });
   });
 }

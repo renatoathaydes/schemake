@@ -73,6 +73,7 @@ extension on StringBuffer {
     writeln('  }');
     writePropertyConverter(objects, options);
     writeGetRequiredProperties(objects, options);
+    writeToString(objects);
     writeln('}');
   }
 
@@ -114,6 +115,11 @@ extension on StringBuffer {
     write(mandatoryKeys.join(', '));
     writeln('};\n'
         '  }');
+  }
+
+  void writeToString(Objects objects) {
+    writeln('  @override\n'
+        "  String toString() => '${objects.name}';");
   }
 }
 
