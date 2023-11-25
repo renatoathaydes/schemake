@@ -209,11 +209,14 @@ extension on StringBuffer {
         '  String toString() =>\n'
         '    ');
     writeln(quote('${objects.name}{'));
+    final lastIndex = objects.properties.length - 1;
+    var index = 0;
     objects.properties.forEach((key, value) {
       write('    ');
       final fieldName = options.fieldName?.vmap((f) => f(key)) ?? key;
       final wrapValue = value.type.isStringOrNull() ? quoteAndDollar : dollar;
-      writeln(quote('$fieldName = ${wrapValue(fieldName)},'));
+      writeln(quote(
+          '$fieldName: ${wrapValue(fieldName)}${index++ == lastIndex ? '' : ','}'));
     });
     write('    ');
     write(quote('}'));

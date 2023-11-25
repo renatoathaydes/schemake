@@ -19,8 +19,8 @@ class Person {
   @override
   String toString() =>
     'Person{'
-    'name = "$name",'
-    'age = $age,'
+    'name: "$name",'
+    'age: $age'
     '}';
   @override
   bool operator ==(Object other) =>
@@ -45,7 +45,7 @@ class Validated {
   @override
   String toString() =>
     'Validated{'
-    'some = $some,'
+    'some: $some'
     '}';
   @override
   bool operator ==(Object other) =>
@@ -108,7 +108,7 @@ void main() {
               '  @override\n'
               '  String toString() =>\n'
               "    'StringItems{'\n"
-              "    'items = \$items,'\n"
+              "    'items: \$items'\n"
               "    '}';\n"
               '  @override\n'
               '  bool operator ==(Object other) =>\n'
@@ -136,7 +136,7 @@ void main() {
               '  @override\n'
               '  String toString() =>\n'
               "    'Nested{'\n"
-              "    'inner = \$inner,'\n"
+              "    'inner: \$inner'\n"
               "    '}';\n"
               '  @override\n'
               '  bool operator ==(Object other) =>\n'
