@@ -50,11 +50,13 @@ Supported data types:
 | Bools          | bool                 |
 | Strings        | String               |
 | Arrays(T)      | List<S>              |
+| ObjectsBase<C> | C                    |
 | Objects        | Map<String, Object?> |
 | Nullable(T)    | S?                   |
 | Validatable(T) | S                    |
 
 > In the table above, `T` stands for some other Schemake type, and `S` for the Dart type associated with `T`.
+> `ObjectsBase<C>` is convertable to some Dart class `C`, as explained below.
 
 All Schemake types implement Dart's `Converter<Object?, T>` where `T` is the associated Dart type.
 
