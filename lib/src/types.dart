@@ -140,10 +140,7 @@ abstract class ObjectsBase<T> extends NonNull<T> {
           if (ignoreUnknownProperties) continue;
           throw UnknownPropertyException([...location, name], this);
         }
-        final value = convertProperty(converter, name, input);
-        if (value != #skipEntry) {
-          result[name] = value;
-        }
+        result[name] = convertProperty(converter, name, input);
       }
       checkRequiredProperties(result.keys);
       return result;
@@ -177,6 +174,12 @@ class Validatable<T> extends SchemaType<T> {
   final Validator<T> validator;
 
   const Validatable(this.type, this.validator);
+
+  static Validatable<String> enum$(String name, Set<String> values,
+      {List<ValidatorGenerationOptions> generatorOptions = const []}) {
+    return Validatable(Strings(),
+        EnumValidator(name, values, generatorOptions: generatorOptions));
+  }
 
   @override
   T convert(Object? input) {

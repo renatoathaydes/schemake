@@ -59,13 +59,20 @@ class Validated {
 }
 enum Foo {
   foo,
-  BAR,
+  bar,
   ;
   static Foo from(String s) => switch(s) {
     'foo' => foo,
-    'bar' => BAR,
-    _ => throw ValidationException(['value not allowed for Foo: "$s"']),
+    'bar' => bar,
+    _ => throw ValidationException(['value not allowed for Foo: "$s" - should be one of {foo, bar}']),
   };
+}
+class _FooConverter extends Converter<Object?, Foo> {
+  const _FooConverter();
+  @override
+  Foo convert(Object? input) {
+    return Foo.from(const Strings().convert(input));
+  }
 }
 ''';
 
@@ -84,8 +91,7 @@ const nestedObjectSchema = Objects('Nested', {
 
 const validatableObjectSchema = Objects('Validated', {
   'some': Property(
-      type: Validatable(
-          Strings(), EnumValidator('Foo', {'foo': null, 'bar': 'BAR'}))),
+      type: Validatable(Strings(), EnumValidator('Foo', {'foo', 'bar'}))),
 });
 
 void main() {

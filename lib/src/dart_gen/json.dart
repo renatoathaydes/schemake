@@ -1,8 +1,8 @@
 import 'package:conveniently/conveniently.dart';
+import 'package:schemake/src/dart_gen/_utils.dart';
 
 import '../_text.dart';
 import '../types.dart';
-import '../validator.dart';
 import 'dart_gen.dart';
 
 class ToJsonMethodGenerator with DartMethodGenerator {
@@ -142,8 +142,7 @@ String schemaTypeString(SchemaType<Object?> type) {
     ObjectsBase<Object?>() => '${type.runtimeType}()',
     Nullable<dynamic, NonNull>(type: var inner) =>
       _schemaTypeStringWrapper('Nullable', inner),
-    Validatable<Object?>(type: var inner, validator: var val) =>
-      _schemaTypeValidatable(inner, val),
+    Validatable<Object?>() => _schemaTypeValidatable(type),
     Ints() => 'Ints()',
     Floats() => 'Floats()',
     Strings() => 'Strings()',
@@ -174,9 +173,11 @@ String _schemaTypeBasicWrapper(String kind, SchemaType<Object?> items) {
   return "$kind<${items.dartType()}, ${_schemaTypeBasic(items)}>";
 }
 
-String _schemaTypeValidatable(
-    SchemaType<Object?> inner, Validator<Object?> validator) {
-  final typeParam = validator.runtimeType;
-  return "Validatable(${schemaTypeString(inner)}, "
-      "$typeParam(${validator.ownArgumentsString}))";
+String _schemaTypeValidatable(Validatable<Object?> validatable) {
+  return validatable.dartGenOption
+      .orThrow(() => StateError(
+          'Validatable does not support Dart code generation: $validatable. '
+          'Add a DartValidatorGenerationOptions to its "generatorOptions" '
+          'to fix the problem.'))
+      .selfCreateString(validatable.validator);
 }

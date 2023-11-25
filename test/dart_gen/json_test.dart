@@ -134,10 +134,9 @@ void main() {
 
     test('enums', () {
       expect(
-          schemaTypeString(Validatable(
-              Strings(), EnumValidator('MyEnum', {'abc': null, 'def': 'DEF'}))),
-          equals(
-              "Validatable(Strings(), EnumValidator('MyEnum', {'abc': null, 'def': 'DEF'}))"));
+          schemaTypeString(
+              Validatable(Strings(), EnumValidator('MyEnum', {'abc', 'def'}))),
+          equals("_MyEnumConverter()"));
     });
 
     test('int ranges', () {

@@ -4,6 +4,7 @@ import '../_text.dart';
 import '../property.dart';
 import '../types.dart';
 import '../validator.dart';
+import '_utils.dart';
 
 class GeneratorExtras {
   final Set<String> imports;
@@ -67,12 +68,18 @@ final class DartGeneratorOptions {
 
 abstract class DartValidatorGenerationOptions<V extends Validator<dynamic>>
     implements ValidatorGenerationOptions {
-  Type get validatorType => V;
+  /// Returns Dart code that re-creates the Validatable instance
+  /// or the equivalent [Converter] instance that can be used to convert
+  /// properties of the type the validator validates.
+  String selfCreateString(V validator);
 
-  String dartTypeFor(V type);
+  /// The Dart type name for the given validator type.
+  String dartTypeFor(V validator);
 
   /// Generates a Dart type representing the validator type.
-  void generateDartType(StringBuffer buffer, V type);
+  /// The type should have the name given by [dartTypeFor] for any given
+  /// [Validator].
+  void generateDartType(StringBuffer buffer, V validator);
 }
 
 sealed class _Remaining {}
@@ -153,11 +160,7 @@ extension on StringBuffer {
   void writeValidatableType(
       Validatable<dynamic> schemaType, List<_Remaining> remaining) {
     final validator = schemaType.validator;
-    final generator = validator.generatorOptions
-        .whereType<DartValidatorGenerationOptions<dynamic>>()
-        .where((options) =>
-            options.validatorType == schemaType.validator.runtimeType)
-        .firstOrNull;
+    final generator = schemaType.dartGenOption;
     if (generator == null) {
       writeType(schemaType.type, remaining);
     } else {

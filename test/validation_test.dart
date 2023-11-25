@@ -11,9 +11,7 @@ const myObject = Objects('Person', {
   'age': Property<int>(type: Validatable(Ints(), ages)),
   'status': Property<String>(
       type: Validatable(
-          Strings(),
-          EnumValidator(
-              'Status', {'alive': null, 'dead': null, 'unknown': null})))
+          Strings(), EnumValidator('Status', {'alive', 'dead', 'unknown'})))
 });
 
 void main() {
@@ -54,26 +52,26 @@ void main() {
   });
 
   group('Schemake enum validator', () {
-    test('validator allows field within enum values', () {
+    test('allows field within enum values', () {
       expect(myObject.convert(loadYaml('name: Joe\nage: 30\nstatus: alive')),
           equals({'name': 'Joe', 'age': 30, 'status': 'alive'}));
     });
 
-    test('validator does not allow field enum values', () {
+    test('does not allow field enum values', () {
       expect(
           () => myObject.convert(loadYaml('name: Joe\nage: 0\nstatus: unborn')),
           throwsPropertyValidationException(['status'], myObject,
-              ['"unborn" not in (alive, dead, unknown)']));
+              ['"unborn" not in {alive, dead, unknown}']));
     });
   });
 
   group('Schemake object validator', () {
-    test('validator allows field within range', () {
+    test('allows field within range', () {
       expect(myObject.convert(loadYaml('name: Joe\nage: 30\nstatus: alive')),
           equals({'name': 'Joe', 'age': 30, 'status': 'alive'}));
     });
 
-    test('validator does not allow field outside range', () {
+    test('does not allow field outside range', () {
       expect(
           () =>
               myObject.convert(loadYaml('name: Joe\nage: 130\nstatus: alive')),

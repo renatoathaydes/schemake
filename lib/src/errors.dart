@@ -128,6 +128,7 @@ class PropertyValidationException extends ValidationException
   @override
   String toString() {
     return 'PropertyValidationException{propertyPath: $propertyPath, '
+        'errors: $errors, '
         'objectType: $objectType}';
   }
 }

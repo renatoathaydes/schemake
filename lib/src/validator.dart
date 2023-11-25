@@ -1,8 +1,5 @@
 import 'package:collection/collection.dart';
-import 'package:conveniently/conveniently.dart';
 
-import '_text.dart';
-import 'dart_gen/enum.dart';
 import 'errors.dart';
 
 typedef ValidationResult = List<String>;
@@ -12,11 +9,7 @@ abstract class Validator<T> {
 
   void validate(T value);
 
-  /// For code generation, create a representation of the arguments necessary
-  /// to re-create this validator instance.
-  String get ownArgumentsString;
-
-  List<ValidatorGenerationOptions> get generatorOptions => const [];
+  List<ValidatorGenerationOptions> get generatorOptions;
 }
 
 mixin ValidatorGenerationOptions {}
@@ -24,8 +17,14 @@ mixin ValidatorGenerationOptions {}
 class IntRangeValidator extends Validator<int> {
   final int min;
   final int max;
+  @override
+  final List<ValidatorGenerationOptions> generatorOptions;
 
-  const IntRangeValidator(this.min, this.max);
+  const IntRangeValidator(
+    this.min,
+    this.max, {
+    this.generatorOptions = const [],
+  });
 
   const IntRangeValidator.maxExclusive(int min, int max) : this(min, max - 1);
 
@@ -42,9 +41,6 @@ class IntRangeValidator extends Validator<int> {
   }
 
   @override
-  String get ownArgumentsString => '$min, $max';
-
-  @override
   String toString() {
     return 'IntRangeValidator{min: $min, max: $max}';
   }
@@ -52,25 +48,22 @@ class IntRangeValidator extends Validator<int> {
 
 class EnumValidator extends Validator<String> {
   final String name;
-  final Map<String, String?> values;
-
+  final Set<String> values;
   @override
   final List<ValidatorGenerationOptions> generatorOptions;
 
-  const EnumValidator(this.name, this.values,
-      {this.generatorOptions = const [DartEnumGeneratorOptions()]});
+  const EnumValidator(
+    this.name,
+    this.values, {
+    this.generatorOptions = const [],
+  });
 
   @override
   void validate(String value) {
-    if (!values.keys.contains(value)) {
-      throw ValidationException(['"$value" not in ${values.keys}']);
+    if (!values.contains(value)) {
+      throw ValidationException(['"$value" not in $values']);
     }
   }
-
-  @override
-  String get ownArgumentsString =>
-      "'$name', {${values.entries.map((e) => '${quote(e.key)}: '
-          '${e.value.vmapOr(quote, () => 'null')}').join(", ")}}";
 
   @override
   String toString() {
@@ -109,7 +102,12 @@ const _whitespace = [
 ];
 
 class NonBlankStringValidator extends Validator<String> {
-  const NonBlankStringValidator();
+  @override
+  final List<ValidatorGenerationOptions> generatorOptions;
+
+  const NonBlankStringValidator({
+    this.generatorOptions = const [],
+  });
 
   @override
   void validate(String value) {
@@ -117,7 +115,4 @@ class NonBlankStringValidator extends Validator<String> {
       throw const ValidationException(['blank string']);
     }
   }
-
-  @override
-  String get ownArgumentsString => '';
 }
