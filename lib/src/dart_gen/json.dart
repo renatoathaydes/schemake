@@ -55,7 +55,9 @@ extension on StringBuffer {
   void writeJsonReviver(Objects objects, DartGeneratorOptions options) {
     final name = objects.name;
     writeln('class ${_reviverName(name)} extends ObjectsBase<$name> {\n'
-        '  const ${_reviverName(name)}(): super("$name");\n'
+        '  const ${_reviverName(name)}(): super("$name",\n'
+        '    ignoreUnknownProperties: ${objects.ignoreUnknownProperties},\n'
+        '    location: const [${objects.location.map(quote).join(', ')}]);\n'
         '\n'
         '  @override\n'
         '  $name convert(Object? value) {\n'

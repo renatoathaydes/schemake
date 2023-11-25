@@ -4,6 +4,8 @@ import 'package:schemake/dart_gen.dart';
 import 'package:schemake/schemake.dart';
 import 'package:test/test.dart';
 
+import 'test_helper.dart';
+
 class _Testing {}
 
 class _TestObject extends ObjectsBase<_Testing> {
@@ -56,7 +58,9 @@ const _someSchemaFromJsonGeneration = r'''
 import 'dart:convert';
 import 'package:schemake/schemake.dart';
 class _SomeSchemaJsonReviver extends ObjectsBase<SomeSchema> {
-  const _SomeSchemaJsonReviver(): super("SomeSchema");
+  const _SomeSchemaJsonReviver(): super("SomeSchema",
+    ignoreUnknownProperties: false,
+    location: const []);
 
   @override
   SomeSchema convert(Object? value) {
@@ -197,6 +201,49 @@ void main() {
             methodGenerators: [const FromJsonMethodGenerator()],
           ));
       expect(result.toString(), equals(_someSchemaFromJsonGeneration));
+    });
+  });
+
+  group('generated classes', () {
+    test('toJson works', () async {
+      final (stdout, stderr) = await generateAndRunDartClass(
+          Objects('Foo', {
+            'bar': Property(type: Strings()),
+          }),
+          '''
+      void main() {
+        print(Foo(bar: 'good').toJson());
+      }''',
+          DartGeneratorOptions(methodGenerators: [
+            ToJsonMethodGenerator(),
+          ]));
+      expect(stderr, isEmpty);
+      expect(
+          stdout,
+          equals([
+            {'bar': 'good'}.toString()
+          ]));
+    });
+
+    test('fromJson and toString work', () async {
+      final (stdout, stderr) = await generateAndRunDartClass(
+          Objects(
+              'Counter',
+              {
+                'count': Property(type: Nullable(Ints())),
+              },
+              ignoreUnknownProperties: true),
+          '''
+      void main() {
+        print(Counter.fromJson({'count': 42}));
+        print(Counter.fromJson({'zort': 'ignored'}));
+      }''',
+          const DartGeneratorOptions(methodGenerators: [
+            FromJsonMethodGenerator(),
+            DartToStringMethodGenerator(),
+          ]));
+      expect(stderr, isEmpty);
+      expect(stdout, equals(['Counter{count: 42}', 'Counter{count: null}']));
     });
   });
 }
