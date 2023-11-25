@@ -91,7 +91,7 @@ We could create a Schemake type for it extending `ObjectBase` as follows:
 
 ```dart
 class MyTypes extends ObjectsBase<MyType> {
-  MyTypes() : super('MyType');
+  const MyTypes() : super('MyType');
 
   @override
   MyType convert(Object? input) {
@@ -217,15 +217,12 @@ Nearly everything can be customized. For example, to make the class' fields non-
 and only generate the `toString` method, use the following options:
 
 ```dart
-generateDartClasses
-([someSchema],
-options: const DartGeneratorOptions(
-methodGenerators: [DartToStringMethodGenerator()],
-insertBeforeField: null,
-insertBeforeConstructor:
-null
-)
-);
+generateDartClasses([someSchema],
+  options: const DartGeneratorOptions(
+    methodGenerators: [DartToStringMethodGenerator()],
+    insertBeforeField: null,
+    insertBeforeConstructor:
+    null));
 ```
 
 You can also write your own implementations of `DartMethodGenerator` to generate any other methods.
