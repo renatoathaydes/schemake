@@ -3,9 +3,11 @@
 ![Schemake CI](https://github.com/renatoathaydes/schemake/workflows/Schemake%20CI/badge.svg)
 [![pub package](https://img.shields.io/pub/v/schemake.svg)](https://pub.dev/packages/schemake)
 
-Schemake (schema make) is a library for generating Dart code and schemas from a programmatic schema specification.
+Schemake (schema make) is a package for describing schemas from a programmatic specification.
 
-A Schemake specification is easy to write and is just Dart code:
+Specifications can then be used for validating data, generating code or other schemas like JSON Schema and more.
+
+A Schemake specification is easy to write and is just plain Dart code:
 
 ```dart
 import 'package:schemake/schemake.dart';
@@ -16,7 +18,7 @@ const person = Objects('Person', {
 });
 ```
 
-With such a schema specification, you can now validate data from JSON or YAML:
+With such a schema specification, you can now validate data you receive, for example, from JSON or YAML:
 
 ```dart
 import 'package:schemake/schemake.dart';
@@ -37,10 +39,133 @@ void main() {
 }
 ```
 
+## Data types
+
+Supported data types:
+
+| Schemake type  | Dart type            |
+|----------------|----------------------|
+| Ints           | int                  |
+| Floats         | double               |
+| Bools          | bool                 |
+| Strings        | String               |
+| Arrays(T)      | List<S>              |
+| Objects        | Map<String, Object?> |
+| Nullable(T)    | S?                   |
+| Validatable(T) | S                    |
+
+> In the table above, `T` stands for some other Schemake type, and `S` for the Dart type associated with `T`.
+
+All Schemake types implement Dart's `Converter<Object?, T>` where `T` is the associated Dart type.
+
+Schemake types are supposed to be declared with `const`, as they are, semantically, types.
+
+### `Objects` and `ObjectsBase`
+
+`Objects` represents `Map` data structures with a known schema, similar to Dart classes.
+We've seen an example of `Objects` earlier, the `Person` schema.
+
+Calling `convert` on a `Map` will convert it to a "pure" data `Map<String, Object?>` which is guaranteed to match the
+schema described by the `Objects` instance.
+
+> By "pure data", we mean values whose Dart types are present in the types table shown earlier.
+
+`Objects` extends `ObjectsBase`, which can also be used to create schema types that convert to arbitrary Dart data
+classes
+(which is normally done by code generation, as explained in the next section), which means that their `convert` method
+returns a specific Dart class instead of `Map`.
+
+As an example, given a simple type:
+
+```dart
+class MyType {
+  final String example;
+
+  const MyType({required this.example});
+}
+```
+
+We could create a Schemake type for it extending `ObjectBase` as follows:
+
+```dart
+class MyTypes extends ObjectsBase<MyType> {
+  MyTypes() : super('MyType');
+
+  @override
+  MyType convert(Object? input) {
+    final map = input as Map<String, Object?>;
+    checkRequiredProperties(map.keys);
+    return MyType(
+      example: convertProperty(const Strings(), 'example', map),
+    );
+  }
+
+  @override
+  Converter<Object?, Object?>? getPropertyConverter(String property) =>
+      switch (property) {
+        'example' => const Strings(),
+        _ => null,
+      };
+
+  @override
+  Iterable<String> getRequiredProperties() => const {'example'};
+}
+```
+
+The `dart_gen` library (see next section) would produce something similar, but with more complete error handling
+and functionality (i.e. `toString`, `==`, `hashCode`, `toString`, `fromString`),
+when given the `MyType` equivalent schema:
+
+```dart
+
+const myTypes = Objects('MyTypes', {
+  'example': Property(type: Strings()),
+});
+```
+
+To represent any `Map<String, Object?>`, you can use the following `Objects` schema:
+
+```dart
+
+const maps = Objects('Map', {}, ignoreUnknownProperties: true);
+```
+
+### Validatable
+
+`Validatable` wraps another Schemake type, adding further constraints to values that may be accepted.
+
+For example:
+
+```dart
+import 'package:schemake/schemake.dart';
+
+const nonBlankStrings = Validatable(Strings(), NonBlankStringValidator());
+
+void main() {
+  // OK! Prints "foo"
+  print(nonBlankStrings.convert('foo'));
+
+  // ValidationException{errors: [blank string]}
+  print(nonBlankStrings.convert('  '));
+}
+```
+
+You could now modify the `Person` schema mentioned earlier to only accept non-blank names:
+
+```dart
+import 'package:schemake/schemake.dart';
+
+const nonBlankStrings = Validatable(Strings(), NonBlankStringValidator());
+
+const person = Objects('Person', {
+  'name': Property<String>(type: nonBlankStrings),
+  'age': Property<int?>(type: Nullable(Ints())),
+});
+```
+
 ## Dart code generation
 
-If you don't want to manually wrap `Map`s into data classes, you can generate them automatically from `Objects`
-schemas using the `dart_gen` library:
+You can generate data classes automatically from `Objects` schemas using the `dart_gen` library:
 
 ```dart
 import 'package:schemake/dart_gen.dart' as dg;
@@ -85,7 +210,7 @@ class Person {
 }
 ```
 
-## JSON and YAML
+### JSON and YAML
 
 To include `toJson`, `fromJson` and other methods, you need to configure the Dart generator:
 
