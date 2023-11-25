@@ -12,7 +12,8 @@ class ToJsonMethodGenerator with DartMethodGenerator {
   GeneratorExtras? generateMethod(
       StringBuffer buffer, Objects objects, DartGeneratorOptions options) {
     buffer.writeToJson(objects, options);
-    return null;
+    return const GeneratorExtras(
+        {'dart:convert', 'package:schemake/schemake.dart'});
   }
 }
 
@@ -24,7 +25,8 @@ class FromJsonMethodGenerator with DartMethodGenerator {
       StringBuffer buffer, Objects objects, DartGeneratorOptions options) {
     buffer.writeFromJson(objects, options);
     return GeneratorExtras(
-        const {}, (writer) => writer.writeJsonReviver(objects, options));
+        const {'dart:convert', 'package:schemake/schemake.dart'},
+        (writer) => writer.writeJsonReviver(objects, options));
   }
 }
 

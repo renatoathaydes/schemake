@@ -38,10 +38,10 @@ import 'dart:convert';
 import 'package:schemake/schemake.dart';
 
 class SomeSchema {
-  String mandatory;
-  double? optional;
-  List<int> list;
-  SomeSchema({
+  final String mandatory;
+  final double? optional;
+  final List<int> list;
+  const SomeSchema({
     required this.mandatory,
     this.optional,
     required this.list,
@@ -97,10 +97,10 @@ class _SomeSchemaJsonReviver extends ObjectsBase<SomeSchema> {
 }
 
 class SomeSchema {
-  String mandatory;
-  double? optional;
-  List<int> list;
-  SomeSchema({
+  final String mandatory;
+  final double? optional;
+  final List<int> list;
+  const SomeSchema({
     required this.mandatory,
     this.optional,
     required this.list,

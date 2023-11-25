@@ -10,3 +10,5 @@ pubspec.lock
 
 .idea/
 *.iml
+
+build/

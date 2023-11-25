@@ -49,9 +49,14 @@ final class DartGeneratorOptions {
     EqualsAndHashCodeMethodGenerator(),
   ];
 
+  static String _finalField(Property<Object?> _) => 'final ';
+
+  static String _const() => 'const ';
+
   final String? insertBeforeClass;
   final String Function(String propertyName)? fieldName;
   final String Function(Property<Object?> property)? insertBeforeField;
+  final String Function()? insertBeforeConstructor;
   final String Function(Property<Object?> property)? insertBeforeConstructorArg;
   final List<DartMethodGenerator> methodGenerators;
   final bool encodeNulls;
@@ -59,7 +64,8 @@ final class DartGeneratorOptions {
   const DartGeneratorOptions({
     this.insertBeforeClass,
     this.fieldName,
-    this.insertBeforeField,
+    this.insertBeforeField = _finalField,
+    this.insertBeforeConstructor = _const,
     this.insertBeforeConstructorArg,
     this.methodGenerators = defaultMethodGenerators,
     this.encodeNulls = false,
@@ -106,9 +112,7 @@ StringBuffer generateDartClasses(List<Objects> schemaTypes,
   final remaining = <_Remaining>[
     for (var s in schemaTypes) _ObjectsRemaining(s)
   ];
-  final generatorExtras = <GeneratorExtras>[
-    GeneratorExtras({'dart:convert', 'package:schemake/schemake.dart'}, (_) {})
-  ];
+  final generatorExtras = <GeneratorExtras>[];
   while (remaining.isNotEmpty) {
     switch (remaining.removeLast()) {
       case _ObjectsRemaining(objects: var objects):
@@ -188,20 +192,22 @@ extension on StringBuffer {
       List<_Remaining> remaining) {
     objects.properties.forEach((key, value) {
       write('  ');
-      options.insertBeforeField?.vmap((insert) => insert(value));
+      options.insertBeforeField?.vmap((get) => write(get(value)));
       writeType(value.type, remaining);
-      write(' ${options.fieldName?.vmap((f) => f(key)) ?? key}');
+      write(' ${options.fieldName?.vmap((name) => name(key)) ?? key}');
       writeln(';');
     });
   }
 
   void writeConstructor(Objects objects, DartGeneratorOptions options) {
-    writeln('  ${objects.name}({');
+    write('  ');
+    options.insertBeforeConstructor?.vmap((get) => write(get()));
+    writeln('${objects.name}({');
     objects.properties.forEach((key, value) {
-      options.insertBeforeConstructorArg?.vmap((insert) => insert(value));
+      options.insertBeforeConstructorArg?.vmap((get) => get(value));
       write(value.type is Nullable ? '    ' : '    required ');
       write('this.');
-      write(options.fieldName?.vmap((f) => f(key)) ?? key);
+      write(options.fieldName?.vmap((name) => name(key)) ?? key);
       writeln(',');
     });
     writeln('  });');
@@ -216,7 +222,7 @@ extension on StringBuffer {
     var index = 0;
     objects.properties.forEach((key, value) {
       write('    ');
-      final fieldName = options.fieldName?.vmap((f) => f(key)) ?? key;
+      final fieldName = options.fieldName?.vmap((name) => name(key)) ?? key;
       final wrapValue = value.type.isStringOrNull() ? quoteAndDollar : dollar;
       writeln(quote(
           '$fieldName: ${wrapValue(fieldName)}${index++ == lastIndex ? '' : ','}'));

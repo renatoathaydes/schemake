@@ -187,9 +187,10 @@ The following basic Dart class is generated:
 
 ```dart
 class Person {
-  String name;
-  int? age;
-  Person({
+  final String name;
+  final int? age;
+
+  const Person({
     required this.name,
     this.age,
   });
@@ -212,9 +213,27 @@ class Person {
 }
 ```
 
+Nearly everything can be customized. For example, to make the class' fields non-final and the constructor non-const,
+and only generate the `toString` method, use the following options:
+
+```dart
+generateDartClasses
+([someSchema],
+options: const DartGeneratorOptions(
+methodGenerators: [DartToStringMethodGenerator()],
+insertBeforeField: null,
+insertBeforeConstructor:
+null
+)
+);
+```
+
+You can also write your own implementations of `DartMethodGenerator` to generate any other methods.
+
 ### JSON and YAML
 
-To include `toJson`, `fromJson` and other methods, you need to configure the Dart generator:
+To include `toJson`, `fromJson` and other methods, you need to configure the Dart generator
+with the appropriate `DartMethodGenerator`s:
 
 ```dart
 void main() {

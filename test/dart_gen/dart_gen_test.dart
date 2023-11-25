@@ -2,17 +2,12 @@ import 'package:schemake/dart_gen.dart';
 import 'package:schemake/schemake.dart';
 import 'package:test/test.dart';
 
-const _imports = r'''
-import 'dart:convert';
-import 'package:schemake/schemake.dart';
-''';
-
 const _generatedPersonClass = r'''
 
 class Person {
-  String name;
-  int? age;
-  Person({
+  final String name;
+  final int? age;
+  const Person({
     required this.name,
     this.age,
   });
@@ -38,8 +33,8 @@ class Person {
 const _generatedEnumClass = r'''
 
 class Validated {
-  Foo some;
-  Validated({
+  final Foo some;
+  const Validated({
     required this.some,
   });
   @override
@@ -98,17 +93,16 @@ void main() {
   group('Schemake Dart class gen', () {
     test('can write simple Dart class', () {
       expect(generateDartClasses([personSchema]).toString(),
-          equals(_imports + _generatedPersonClass));
+          equals(_generatedPersonClass));
     });
 
     test('can write Dart class with array', () {
       expect(
           generateDartClasses([stringItemsSchema]).toString(),
-          equals('$_imports'
-              'import \'package:collection/collection.dart\';\n\n'
+          equals('import \'package:collection/collection.dart\';\n\n'
               'class StringItems {\n'
-              '  List<String> items;\n'
-              '  StringItems({\n'
+              '  final List<String> items;\n'
+              '  const StringItems({\n'
               '    required this.items,\n'
               '  });\n'
               '  @override\n'
@@ -132,11 +126,10 @@ void main() {
       expect(
           generateDartClasses([nestedObjectSchema, validatableObjectSchema])
               .toString(),
-          equals('$_imports'
-              '$_generatedEnumClass\n'
+          equals('$_generatedEnumClass\n'
               'class Nested {\n'
-              '  Person inner;\n'
-              '  Nested({\n'
+              '  final Person inner;\n'
+              '  const Nested({\n'
               '    required this.inner,\n'
               '  });\n'
               '  @override\n'
@@ -155,6 +148,29 @@ void main() {
               "    inner.hashCode;\n"
               '}\n'
               '$_generatedPersonClass'));
+    });
+
+    test(
+        'can write Dart class without const constructor and final fields and default methods',
+        () {
+      expect(
+          generateDartClasses([
+            Objects('Example', {
+              'field': Property(type: Bools()),
+            })
+          ],
+                  options: DartGeneratorOptions(
+                      methodGenerators: [],
+                      insertBeforeField: null,
+                      insertBeforeConstructor: null))
+              .toString(),
+          equals('\n'
+              'class Example {\n'
+              '  bool field;\n'
+              '  Example({\n'
+              '    required this.field,\n'
+              '  });\n'
+              '}\n'));
     });
   });
 }
