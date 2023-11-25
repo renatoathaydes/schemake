@@ -58,6 +58,8 @@ Supported data types:
 > In the table above, `T` stands for some other Schemake type, and `S` for the Dart type associated with `T`.
 > `ObjectsBase<C>` is convertable to some Dart class `C`, as explained below.
 
+Dart `enum`s are also supported as a special-case of `Strings` (see the `Validatable` section).
+
 All Schemake types implement Dart's `Converter<Object?, T>` where `T` is the associated Dart type.
 
 Schemake types are supposed to be declared with `const`, as they are, semantically, types.
@@ -164,6 +166,25 @@ const person = Objects('Person', {
   'age': Property<int?>(type: Nullable(Ints())),
 });
 ```
+
+#### enums
+
+A special case of `Strings` where the allowed values are all known can be modelled as a `Validatable(Strings(), validator)`
+where `validator` ensures only certain String values are allowed.
+
+Because this is such a common use case, Schemake provides the `Validatable.enum$` helper method to make declaring enums
+easier:
+
+```dart
+// the someEnum field is a String whose value must be one of
+// "one", "two" or "three"
+const typeWithEnumField = Objects('EnumExample', {
+  'someEnum': Property(type: Validatable.enum$('SmallInt', {'one', 'two', 'three'})),
+});
+```
+
+The Dart code generator creates an actual Dart `enum` to represent enum properties, but their _serialized_ type is
+still String.
 
 ## Dart code generation
 
