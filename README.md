@@ -43,17 +43,17 @@ void main() {
 
 Supported data types:
 
-| Schemake type  | Dart type            |
-|----------------|----------------------|
-| Ints           | int                  |
-| Floats         | double               |
-| Bools          | bool                 |
-| Strings        | String               |
-| Arrays(T)      | List<S>              |
-| ObjectsBase<C> | C                    |
-| Objects        | Map<String, Object?> |
-| Nullable(T)    | S?                   |
-| Validatable(T) | S                    |
+| Schemake type    | Dart type              |
+|------------------|------------------------|
+| `Ints`           | `int`                  |
+| `Floats`         | `double`               |
+| `Bools`          | `bool`                 |
+| `Strings`        | `String`               |
+| `Arrays(T)`      | `List<S>`              |
+| `ObjectsBase<C>` | `C`                    |
+| `Objects`        | `Map<String, Object?>` |
+| `Nullable(T)`    | `S?`                   |
+| `Validatable(T)` | `S`                    |
 
 > In the table above, `T` stands for some other Schemake type, and `S` for the Dart type associated with `T`.
 > `ObjectsBase<C>` is convertable to some Dart class `C`, as explained below.
