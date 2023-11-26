@@ -238,12 +238,13 @@ Nearly everything can be customized. For example, to make the class' fields non-
 and only generate the `toString` method, use the following options:
 
 ```dart
-generateDartClasses([someSchema],
-  options: const DartGeneratorOptions(
-    methodGenerators: [DartToStringMethodGenerator()],
-    insertBeforeField: null,
-    insertBeforeConstructor:
-    null));
+void main() {
+  print(dg.generateDartClasses([someSchema],
+      options: const dg.DartGeneratorOptions(
+          methodGenerators: [dg.DartToStringMethodGenerator()],
+          insertBeforeField: null,
+          insertBeforeConstructor: null)));
+}
 ```
 
 You can also write your own implementations of `DartMethodGenerator` to generate any other methods.
