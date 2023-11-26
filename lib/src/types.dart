@@ -94,6 +94,7 @@ class Objects extends ObjectsBase<Map<String, Object?>> {
     this.properties, {
     super.ignoreUnknownProperties = false,
     super.location = const [],
+    super.description = '',
   });
 
   @override
@@ -122,9 +123,14 @@ abstract class ObjectsBase<T> extends NonNull<T> {
   final String name;
   final bool ignoreUnknownProperties;
   final List<String> location;
+  final String description;
 
-  const ObjectsBase(this.name,
-      {this.ignoreUnknownProperties = false, this.location = const []});
+  const ObjectsBase(
+    this.name, {
+    this.ignoreUnknownProperties = false,
+    this.location = const [],
+    this.description = '',
+  });
 
   Converter<Object?, Object?>? getPropertyConverter(String property);
 

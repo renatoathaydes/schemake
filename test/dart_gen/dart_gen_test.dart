@@ -96,34 +96,72 @@ class Nested {
 }
 ''';
 
-const personSchema = Objects('Person', {
+const _generatedWithMetadata = '''
+/// My metadata.
+/// This should appear in the class.
+final class Meta {
+  /// A property.
+  final String name;
+  /// some
+  /// integer
+  /// values.
+  final List<int> ints;
+  final Map<String, Object?> noDescription;
+  const Meta({
+    this.name = 'foo',
+    this.ints = const [1, 2, 3],
+    this.noDescription = const {'a': 1, 'bc': [4]},
+  });
+}
+''';
+
+const _personSchema = Objects('Person', {
   'name': Property<String>(type: Strings()),
   'age': Property<int?>(type: Nullable(Ints())),
 });
 
-const stringItemsSchema = Objects('StringItems', {
+const _stringItemsSchema = Objects('StringItems', {
   'items': Property(type: Arrays<String, Strings>(Strings())),
 });
 
-const nestedObjectSchema = Objects('Nested', {
-  'inner': Property(type: personSchema),
+const _nestedObjectSchema = Objects('Nested', {
+  'inner': Property(type: _personSchema),
 });
 
-const validatableObjectSchema = Objects('Validated', {
+const _validatableObjectSchema = Objects('Validated', {
   'some': Property(
       type: Validatable(Strings(), EnumValidator('Foo', {'foo', 'bar'}))),
 });
 
+const _schemaWithMetadata = Objects(
+    'meta',
+    {
+      'name': Property(
+          type: Strings(), defaultValue: 'foo', description: 'A property.'),
+      'ints': Property(
+          type: Arrays<int, Ints>(Ints()),
+          defaultValue: [1, 2, 3],
+          description: 'some\ninteger\nvalues.'),
+      'no-description': Property(
+          type: Objects('Map', {}, ignoreUnknownProperties: true),
+          defaultValue: {
+            'a': 1,
+            'bc': [4],
+          })
+    },
+    description: 'My metadata.\n'
+        'This should appear in the class.');
+
 void main() {
   group('Schemake Dart class gen', () {
     test('can write simple Dart class', () {
-      expect(generateDartClasses([personSchema]).toString(),
+      expect(generateDartClasses([_personSchema]).toString(),
           equals(_generatedPersonClass));
     });
 
     test('can write Dart class with array', () {
       expect(
-          generateDartClasses([stringItemsSchema]).toString(),
+          generateDartClasses([_stringItemsSchema]).toString(),
           equals('import \'package:collection/collection.dart\';\n\n'
               'class StringItems {\n'
               '  final List<String> items;\n'
@@ -149,7 +187,7 @@ void main() {
 
     test('can write Dart class with nested Objects and Enum', () {
       expect(
-          generateDartClasses([nestedObjectSchema, validatableObjectSchema])
+          generateDartClasses([_nestedObjectSchema, _validatableObjectSchema])
               .toString(),
           equals('import \'dart:convert\';\n'
               'import \'package:schemake/schemake.dart\';\n'
@@ -180,6 +218,15 @@ void main() {
               '    required this.field,\n'
               '  });\n'
               '}\n'));
+    });
+
+    test('can generate description and default value', () {
+      expect(
+          generateDartClasses([_schemaWithMetadata],
+                  options: DartGeneratorOptions(
+                      methodGenerators: [], insertBeforeClass: 'final '))
+              .toString(),
+          equals(_generatedWithMetadata));
     });
   });
 }

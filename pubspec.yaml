@@ -9,6 +9,7 @@ environment:
 dependencies:
   collection: ^1.18.0
   conveniently: ^1.2.0
+  dart_casing: ^3.0.1
 
 dev_dependencies:
   yaml: ^3.1.2

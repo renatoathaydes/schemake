@@ -21,3 +21,12 @@ extension ValidatableDartGenerationExtension<T> on Validatable<T> {
     return result as DartValidatorGenerationOptions<Validator<T>>?;
   }
 }
+
+extension ObjectsExtension on ObjectsBase<Object?> {
+  bool get isSimpleMap {
+    final self = this;
+    return self is Objects &&
+        self.ignoreUnknownProperties &&
+        self.properties.isEmpty;
+  }
+}

@@ -34,7 +34,7 @@ extension on StringBuffer {
     writeln('  Map<String, Object?> toJson() => {');
     objects.properties.forEach((key, value) {
       write('    ');
-      final fieldName = options.fieldName?.vmap((f) => f(key)) ?? key;
+      final fieldName = options.fieldName(key);
       if (!options.encodeNulls && value.type is Nullable<dynamic, dynamic>) {
         write('if ($fieldName != null) ');
       }
@@ -82,7 +82,7 @@ extension on StringBuffer {
       {required String indent}) {
     writeln('${indent}return ${objects.name}(');
     objects.properties.forEach((key, value) {
-      final fieldName = options.fieldName?.vmap((f) => f(key)) ?? key;
+      final fieldName = options.fieldName(key);
       write("  $indent$fieldName: convertProperty(const ");
       write(schemaTypeString(value.type));
       writeln(', ${quote(fieldName)}, value),');
@@ -95,7 +95,7 @@ extension on StringBuffer {
         '  Converter<Object?, Object?>? getPropertyConverter(String property) {\n'
         '    switch(property) {');
     objects.properties.forEach((key, value) {
-      final fieldName = options.fieldName?.vmap((f) => f(key)) ?? key;
+      final fieldName = options.fieldName(key);
       write('      case ${quote(fieldName)}: return const ');
       write(schemaTypeString(value.type));
       writeln(';');

@@ -3,9 +3,10 @@ import 'types.dart';
 class Property<T> {
   final SchemaType<T> type;
   final T? defaultValue;
-  final String? description;
+  final String description;
 
-  const Property({required this.type, this.defaultValue, this.description});
+  const Property(
+      {required this.type, this.defaultValue, this.description = ''});
 
   @override
   String toString() {

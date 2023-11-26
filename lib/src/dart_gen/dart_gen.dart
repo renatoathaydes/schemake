@@ -55,7 +55,8 @@ final class DartGeneratorOptions {
   static String _const() => 'const ';
 
   final String? insertBeforeClass;
-  final String Function(String propertyName)? fieldName;
+  final String Function(String propertyName) fieldName;
+  final String Function(String className) className;
   final String Function(Property<Object?> property)? insertBeforeField;
   final String Function()? insertBeforeConstructor;
   final String Function(Property<Object?> property)? insertBeforeConstructorArg;
@@ -64,7 +65,8 @@ final class DartGeneratorOptions {
 
   const DartGeneratorOptions({
     this.insertBeforeClass,
-    this.fieldName,
+    this.fieldName = toCamelCase,
+    this.className = toPascalCase,
     this.insertBeforeField = _finalField,
     this.insertBeforeConstructor = _const,
     this.insertBeforeConstructorArg,
@@ -112,14 +114,18 @@ StringBuffer generateDartClasses(List<Objects> schemaTypes,
 }
 
 extension on StringBuffer {
-  StringBuffer acceptIfObjects(List<GeneratorExtras> extras,
+  StringBuffer addExtrasIfOwnType(List<GeneratorExtras> extras,
       ObjectsBase<dynamic> objects, DartGeneratorOptions options) {
     if (objects is Objects) {
-      extras.add(GeneratorExtras(
-          const {}, (writer) => writer.writeObjects(objects, extras, options)));
+      // in case of a simple Map, there's no extra type to write
+      if (!objects.isSimpleMap) {
+        extras.add(GeneratorExtras(const {},
+            (writer) => writer.writeObjects(objects, extras, options)));
+      }
     } else {
       throw UnsupportedError('The only subtype of ObjectsBase allowed to be '
-          'used for code generation is Objects.');
+          'used for code generation is Objects. '
+          'Cannot generate Dart code for $objects');
     }
     return this;
   }
@@ -139,8 +145,9 @@ extension on StringBuffer {
       Arrays<dynamic, SchemaType>(itemsType: var type) =>
         writeType(type, generatorExtras, options, array),
       ObjectsBase(name: var className) =>
-        acceptIfObjects(generatorExtras, schemaType, options)
-            .write(typeWrapper(className)),
+        addExtrasIfOwnType(generatorExtras, schemaType, options).write(
+            typeWrapper(
+                schemaType.isSimpleMap ? 'Map<String, Object?>' : className)),
     };
   }
 
@@ -158,8 +165,9 @@ extension on StringBuffer {
 
   void writeObjects(Objects objects, List<GeneratorExtras> extras,
       DartGeneratorOptions options) {
-    write(options.insertBeforeClass ?? '');
-    writeln('\nclass ${objects.name} {');
+    writeComments(objects.description);
+    write(options.insertBeforeClass ?? '\n');
+    writeln('class ${options.className(objects.name)} {');
     writeFields(objects, extras, options);
     writeConstructor(objects, options);
     options.methodGenerators
@@ -169,13 +177,26 @@ extension on StringBuffer {
     writeln('}');
   }
 
+  void writeComments(String comments, [String indent = '']) {
+    if (comments.isEmpty) return;
+    for (final line in comments.split("\n")) {
+      if (line.isEmpty) {
+        writeln('$indent///');
+      } else {
+        write('$indent/// ');
+        writeln(line);
+      }
+    }
+  }
+
   void writeFields(Objects objects, List<GeneratorExtras> extras,
       DartGeneratorOptions options) {
     objects.properties.forEach((key, value) {
+      writeComments(value.description, '  ');
       write('  ');
       options.insertBeforeField?.vmap((get) => write(get(value)));
       writeType(value.type, extras, options);
-      write(' ${options.fieldName?.vmap((name) => name(key)) ?? key}');
+      write(' ${options.fieldName(key)}');
       writeln(';');
     });
   }
@@ -183,27 +204,76 @@ extension on StringBuffer {
   void writeConstructor(Objects objects, DartGeneratorOptions options) {
     write('  ');
     options.insertBeforeConstructor?.vmap((get) => write(get()));
-    writeln('${objects.name}({');
+    writeln('${options.className(objects.name)}({');
     objects.properties.forEach((key, value) {
       options.insertBeforeConstructorArg?.vmap((get) => get(value));
-      write(value.type is Nullable ? '    ' : '    required ');
+      write((value.defaultValue != null || value.type is Nullable)
+          ? '    '
+          : '    required ');
       write('this.');
-      write(options.fieldName?.vmap((name) => name(key)) ?? key);
+      write(options.fieldName(key));
+      value.defaultValue?.vmap((def) {
+        final type = value.type;
+        if (type is ObjectsBase && !type.isSimpleMap) {
+          throw UnsupportedError(
+              'default values of type ObjectsBase are not supported '
+              'unless the type is Objects with empty properties '
+              'and named "Map"');
+        }
+        write(' = ');
+        writeValue(def, consted: true);
+      });
       writeln(',');
     });
     writeln('  });');
+  }
+
+  void writeValue(final Object? value, {bool consted = false}) {
+    final _ = switch (value) {
+      null => write('null'),
+      int() || bool() || double() => write(value.toString()),
+      String() => writeStringLiteral(value),
+      List<Object?>() => writeListValue(value, consted: consted),
+      Map<String, Object?>() => writeMapValue(value, consted: consted),
+      _ => throw UnsupportedError(
+          'Cannot write default value of type ${value.runtimeType}'),
+    };
+  }
+
+  void writeMapValue(Map<String, Object?> map, {bool consted = false}) {
+    if (consted) write('const ');
+    write('{');
+    final lastIndex = map.length - 1;
+    for (final (i, entry) in map.entries.indexed) {
+      writeStringLiteral(entry.key);
+      write(': ');
+      writeValue(entry.value);
+      if (i != lastIndex) write(', ');
+    }
+    write('}');
+  }
+
+  void writeListValue(List<Object?> value, {bool consted = false}) {
+    if (consted) write('const ');
+    write('[');
+    final lastIndex = value.length - 1;
+    for (var i = 0; i <= lastIndex; i++) {
+      writeValue(value[i]);
+      if (i != lastIndex) write(', ');
+    }
+    write(']');
   }
 
   void writeToString(Objects objects, DartGeneratorOptions options) {
     write('  @override\n'
         '  String toString() =>\n'
         '    ');
-    writeln(quote('${objects.name}{'));
+    writeln(quote('${options.className(objects.name)}{'));
     final lastIndex = objects.properties.length - 1;
     var index = 0;
     objects.properties.forEach((key, value) {
       write('    ');
-      final fieldName = options.fieldName?.vmap((name) => name(key)) ?? key;
+      final fieldName = options.fieldName(key);
       final wrapValue = value.type.isStringOrNull() ? quoteAndDollar : dollar;
       writeln(quote(
           '$fieldName: ${wrapValue(fieldName)}${index++ == lastIndex ? '' : ', '}'));
@@ -217,14 +287,13 @@ extension on StringBuffer {
     writeln('  @override\n'
         '  bool operator ==(Object other) =>\n'
         '    identical(this, other) ||');
-    write('    other is ${objects.name} &&\n'
+    write('    other is ${options.className(objects.name)} &&\n'
         '    runtimeType == other.runtimeType');
     GeneratorExtras? extras;
     if (objects.properties.isNotEmpty) {
       writeln(' &&');
       write(objects.properties.entries.map((entry) {
-        final fieldName =
-            options.fieldName?.vmap((f) => f(entry.key)) ?? entry.key;
+        final fieldName = options.fieldName(entry.key);
         final type = entry.value.type;
         if (type is Arrays<Object?, Object?>) {
           extras =
@@ -248,8 +317,7 @@ extension on StringBuffer {
     } else {
       write('    ');
       write(objects.properties.entries.map((entry) {
-        final fieldName =
-            options.fieldName?.vmap((f) => f(entry.key)) ?? entry.key;
+        final fieldName = options.fieldName(entry.key);
         return '$fieldName.hashCode';
       }).join(' ^ '));
     }
@@ -263,6 +331,10 @@ extension on StringBuffer {
     for (final extra in extras) {
       extra.topLevelWriter(this);
     }
+  }
+
+  void writeStringLiteral(String value) {
+    write(quote(value.replaceAll("'", "\\'")));
   }
 }
 
