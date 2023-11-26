@@ -206,7 +206,7 @@ extension on StringBuffer {
       final fieldName = options.fieldName?.vmap((name) => name(key)) ?? key;
       final wrapValue = value.type.isStringOrNull() ? quoteAndDollar : dollar;
       writeln(quote(
-          '$fieldName: ${wrapValue(fieldName)}${index++ == lastIndex ? '' : ','}'));
+          '$fieldName: ${wrapValue(fieldName)}${index++ == lastIndex ? '' : ', '}'));
     });
     write('    ');
     write(quote('}'));
