@@ -3,8 +3,7 @@
 ![Schemake CI](https://github.com/renatoathaydes/schemake/workflows/Schemake%20CI/badge.svg)
 [![pub package](https://img.shields.io/pub/v/schemake.svg)](https://pub.dev/packages/schemake)
 
-Schemake (schema make) is a package for describing schemas from a programmatic specification.
-
+Schemake (schema make) is a package for describing schemas from a declarative specification.
 Specifications can then be used for validating data, generating code or other schemas like JSON Schema and more.
 
 A Schemake specification is easy to write and is just plain Dart code:
