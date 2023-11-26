@@ -31,7 +31,26 @@ class Person {
 ''';
 
 const _generatedEnumClass = r'''
+enum Foo {
+  foo,
+  bar,
+  ;
+  static Foo from(String s) => switch(s) {
+    'foo' => foo,
+    'bar' => bar,
+    _ => throw ValidationException(['value not allowed for Foo: "$s" - should be one of {foo, bar}']),
+  };
+}
+class _FooConverter extends Converter<Object?, Foo> {
+  const _FooConverter();
+  @override
+  Foo convert(Object? input) {
+    return Foo.from(const Strings().convert(input));
+  }
+}
+''';
 
+const _generatedValidatedClass = r'''
 class Validated {
   final Foo some;
   const Validated({
@@ -52,22 +71,28 @@ class Validated {
   int get hashCode =>
     some.hashCode;
 }
-enum Foo {
-  foo,
-  bar,
-  ;
-  static Foo from(String s) => switch(s) {
-    'foo' => foo,
-    'bar' => bar,
-    _ => throw ValidationException(['value not allowed for Foo: "$s" - should be one of {foo, bar}']),
-  };
-}
-class _FooConverter extends Converter<Object?, Foo> {
-  const _FooConverter();
+''';
+
+const _generatedNestedClass = r'''
+class Nested {
+  final Person inner;
+  const Nested({
+    required this.inner,
+  });
   @override
-  Foo convert(Object? input) {
-    return Foo.from(const Strings().convert(input));
-  }
+  String toString() =>
+    'Nested{'
+    'inner: $inner'
+    '}';
+  @override
+  bool operator ==(Object other) =>
+    identical(this, other) ||
+    other is Nested &&
+    runtimeType == other.runtimeType &&
+    inner == other.inner;
+  @override
+  int get hashCode =>
+    inner.hashCode;
 }
 ''';
 
@@ -126,28 +151,12 @@ void main() {
       expect(
           generateDartClasses([nestedObjectSchema, validatableObjectSchema])
               .toString(),
-          equals('$_generatedEnumClass\n'
-              'class Nested {\n'
-              '  final Person inner;\n'
-              '  const Nested({\n'
-              '    required this.inner,\n'
-              '  });\n'
-              '  @override\n'
-              '  String toString() =>\n'
-              "    'Nested{'\n"
-              "    'inner: \$inner'\n"
-              "    '}';\n"
-              '  @override\n'
-              '  bool operator ==(Object other) =>\n'
-              "    identical(this, other) ||\n"
-              "    other is Nested &&\n"
-              "    runtimeType == other.runtimeType &&\n"
-              "    inner == other.inner;\n"
-              '  @override\n'
-              '  int get hashCode =>\n'
-              "    inner.hashCode;\n"
-              '}\n'
-              '$_generatedPersonClass'));
+          equals('import \'dart:convert\';\n'
+              'import \'package:schemake/schemake.dart\';\n'
+              '$_generatedPersonClass'
+              '$_generatedEnumClass\n'
+              '$_generatedNestedClass\n'
+              '$_generatedValidatedClass'));
     });
 
     test(

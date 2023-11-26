@@ -19,9 +19,12 @@ class DartEnumGeneratorOptions
   }
 
   @override
-  void generateDartType(StringBuffer buffer, EnumValidator validator) {
-    _generateEnum(buffer, validator);
-    _generateConverter(buffer, validator);
+  GeneratorExtras? getDartTypeGenerator(EnumValidator validator) {
+    return GeneratorExtras(
+        const {'dart:convert', 'package:schemake/schemake.dart'}, (writer) {
+      _generateEnum(writer, validator);
+      _generateConverter(writer, validator);
+    });
   }
 
   void _generateEnum(StringBuffer buffer, EnumValidator validator) {
@@ -74,8 +77,9 @@ class DartIntRangeGeneratorOptions
   String dartTypeFor(IntRangeValidator validator) => 'int';
 
   @override
-  void generateDartType(StringBuffer buffer, IntRangeValidator validator) {
+  GeneratorExtras? getDartTypeGenerator(IntRangeValidator validator) {
     // nothing to do: a plain int is used
+    return null;
   }
 
   @override
@@ -94,9 +98,9 @@ class DartNonBlankStringGeneratorOptions
   String dartTypeFor(NonBlankStringValidator validator) => 'String';
 
   @override
-  void generateDartType(
-      StringBuffer buffer, NonBlankStringValidator validator) {
+  GeneratorExtras? getDartTypeGenerator(NonBlankStringValidator validator) {
     // nothing to do: a plain String is used
+    return null;
   }
 
   @override

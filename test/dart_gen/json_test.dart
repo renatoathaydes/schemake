@@ -34,8 +34,6 @@ const _someSchema = Objects('SomeSchema', {
 });
 
 const _someSchemaToJsonGeneration = r'''
-import 'dart:convert';
-import 'package:schemake/schemake.dart';
 
 class SomeSchema {
   final String mandatory;
@@ -72,11 +70,11 @@ class _SomeSchemaJsonReviver extends ObjectsBase<SomeSchema> {
       return key;
     }).toSet();
     checkRequiredProperties(keys);
-      return SomeSchema(
-        mandatory: convertProperty(const Strings(), 'mandatory', value),
-        optional: convertProperty(const Nullable<double, Floats>(Floats()), 'optional', value),
-        list: convertProperty(const Arrays<int, Ints>(Ints()), 'list', value),
-      );
+    return SomeSchema(
+      mandatory: convertProperty(const Strings(), 'mandatory', value),
+      optional: convertProperty(const Nullable<double, Floats>(Floats()), 'optional', value),
+      list: convertProperty(const Arrays<int, Ints>(Ints()), 'list', value),
+    );
   }
 
   @override

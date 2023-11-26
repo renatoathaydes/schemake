@@ -58,11 +58,11 @@ Supported data types:
 > In the table above, `T` stands for some other Schemake type, and `S` for the Dart type associated with `T`.
 > `ObjectsBase<C>` is convertable to some Dart class `C`, as explained below.
 
-Dart `enum`s are also supported as a special-case of `Strings` (see the `Validatable` section).
+`enum`s are also supported as a special-case of `Validatable(Strings)` (see the `Validatable` section).
 
 All Schemake types implement Dart's `Converter<Object?, T>` where `T` is the associated Dart type.
 
-Schemake types are supposed to be declared with `const`, as they are, semantically, types.
+Schemake types are normally declared with `const`, as they are, semantically, types.
 
 ### `Objects` and `ObjectsBase`
 
@@ -169,17 +169,17 @@ const person = Objects('Person', {
 
 #### enums
 
-A special case of `Strings` where the allowed values are all known can be modelled as a `Validatable(Strings(), validator)`
-where `validator` ensures only certain String values are allowed.
+A special case of `Strings` where the allowed values are all known at compile-time can be modelled as a
+`Validatable(Strings(), EnumValidator(...))`, which ensures only certain String values are allowed.
 
-Because this is such a common use case, Schemake provides the `Validatable.enum$` helper method to make declaring enums
+Because this is such a common use case, Schemake provides the `Enums` type, which makes declaring enums
 easier:
 
 ```dart
 // the someEnum field is a String whose value must be one of
 // "one", "two" or "three"
 const typeWithEnumField = Objects('EnumExample', {
-  'someEnum': Property(type: Validatable.enum$('SmallInt', {'one', 'two', 'three'})),
+  'someEnum': Property(type: Enums(EnumValidator('SmallInt', {'one', 'two', 'three'}))),
 });
 ```
 

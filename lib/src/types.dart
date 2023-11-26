@@ -169,17 +169,11 @@ abstract class ObjectsBase<T> extends NonNull<T> {
   }
 }
 
-class Validatable<T> extends SchemaType<T> {
-  final SchemaType<T> type;
+class Validatable<T> extends NonNull<T> {
+  final NonNull<T> type;
   final Validator<T> validator;
 
   const Validatable(this.type, this.validator);
-
-  static Validatable<String> enum$(String name, Set<String> values,
-      {List<ValidatorGenerationOptions> generatorOptions = const []}) {
-    return Validatable(Strings(),
-        EnumValidator(name, values, generatorOptions: generatorOptions));
-  }
 
   @override
   T convert(Object? input) {
@@ -187,6 +181,10 @@ class Validatable<T> extends SchemaType<T> {
     validator.validate(result);
     return result;
   }
+}
+
+class Enums extends Validatable<String> {
+  const Enums(EnumValidator validator) : super(const Strings(), validator);
 }
 
 T _cast<T>(Object? value) {

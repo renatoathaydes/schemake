@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:conveniently/conveniently.dart';
 
 import '../_text.dart';
@@ -82,24 +83,11 @@ abstract class DartValidatorGenerationOptions<V extends Validator<dynamic>>
   /// The Dart type name for the given validator type.
   String dartTypeFor(V validator);
 
-  /// Generates a Dart type representing the validator type.
+  /// Return a Dart type generator for the validator type if necessary.
+  ///
   /// The type should have the name given by [dartTypeFor] for any given
   /// [Validator].
-  void generateDartType(StringBuffer buffer, V validator);
-}
-
-sealed class _Remaining {}
-
-class _ObjectsRemaining implements _Remaining {
-  final Objects objects;
-
-  _ObjectsRemaining(this.objects);
-}
-
-class _Writer implements _Remaining {
-  final void Function(StringBuffer) write;
-
-  _Writer(this.write);
+  GeneratorExtras? getDartTypeGenerator(V validator);
 }
 
 /// Generates Dart code for the given schema types.
@@ -109,34 +97,26 @@ class _Writer implements _Remaining {
 StringBuffer generateDartClasses(List<Objects> schemaTypes,
     {DartGeneratorOptions options = const DartGeneratorOptions()}) {
   final writer = StringBuffer();
-  final remaining = <_Remaining>[
-    for (var s in schemaTypes) _ObjectsRemaining(s)
-  ];
   final generatorExtras = <GeneratorExtras>[];
-  while (remaining.isNotEmpty) {
-    switch (remaining.removeLast()) {
-      case _ObjectsRemaining(objects: var objects):
-        generatorExtras
-            .addAll(writer.writeObjects(objects, remaining, options));
-      case _Writer(write: var write):
-        write(writer);
-    }
+  for (final type in schemaTypes) {
+    writer.writeObjects(type, generatorExtras, options);
   }
   if (generatorExtras.isNotEmpty) {
-    final extras = StringBuffer();
+    final withExtras = StringBuffer();
     // prepend the extras to the result
-    extras.writeExtras(generatorExtras);
-    extras.write(writer);
-    return extras;
+    withExtras.writeExtras(generatorExtras);
+    withExtras.write(writer);
+    return withExtras;
   }
   return writer;
 }
 
 extension on StringBuffer {
-  StringBuffer acceptIfObjects(
-      List<_Remaining> list, ObjectsBase<dynamic> objects) {
+  StringBuffer acceptIfObjects(List<GeneratorExtras> extras,
+      ObjectsBase<dynamic> objects, DartGeneratorOptions options) {
     if (objects is Objects) {
-      list.add(_ObjectsRemaining(objects));
+      extras.add(GeneratorExtras(
+          const {}, (writer) => writer.writeObjects(objects, extras, options)));
     } else {
       throw UnsupportedError('The only subtype of ObjectsBase allowed to be '
           'used for code generation is Objects.');
@@ -144,56 +124,57 @@ extension on StringBuffer {
     return this;
   }
 
-  void writeType(SchemaType<dynamic> schemaType, List<_Remaining> remaining,
+  void writeType(SchemaType<dynamic> schemaType,
+      List<GeneratorExtras> generatorExtras, DartGeneratorOptions options,
       [String Function(String) typeWrapper = identityString]) {
     final _ = switch (schemaType) {
       Nullable<dynamic, NonNull>(type: var type) =>
-        writeType(type, remaining, nullable),
-      Validatable() => writeValidatableType(schemaType, remaining),
+        writeType(type, generatorExtras, options, nullable),
+      Validatable() =>
+        writeValidatableType(schemaType, generatorExtras, options),
       Ints() => write(typeWrapper('int')),
       Floats() => write(typeWrapper('double')),
       Strings() => write(typeWrapper('String')),
       Bools() => write(typeWrapper('bool')),
       Arrays<dynamic, SchemaType>(itemsType: var type) =>
-        writeType(type, remaining, array),
+        writeType(type, generatorExtras, options, array),
       ObjectsBase(name: var className) =>
-        acceptIfObjects(remaining, schemaType).write(typeWrapper(className)),
+        acceptIfObjects(generatorExtras, schemaType, options)
+            .write(typeWrapper(className)),
     };
   }
 
-  void writeValidatableType(
-      Validatable<dynamic> schemaType, List<_Remaining> remaining) {
+  void writeValidatableType(Validatable<dynamic> schemaType,
+      List<GeneratorExtras> generatorExtras, DartGeneratorOptions options) {
     final validator = schemaType.validator;
     final generator = schemaType.dartGenOption;
     if (generator == null) {
-      writeType(schemaType.type, remaining);
+      writeType(schemaType.type, generatorExtras, options);
     } else {
       write(generator.dartTypeFor(validator));
-      remaining.add(_Writer((w) => generator.generateDartType(w, validator)));
+      generator.getDartTypeGenerator(validator)?.vmap(generatorExtras.add);
     }
   }
 
-  List<GeneratorExtras> writeObjects(Objects objects,
-      List<_Remaining> remaining, DartGeneratorOptions options) {
+  void writeObjects(Objects objects, List<GeneratorExtras> extras,
+      DartGeneratorOptions options) {
     write(options.insertBeforeClass ?? '');
     writeln('\nclass ${objects.name} {');
-    writeFields(objects, options, remaining);
-    // constructor
+    writeFields(objects, extras, options);
     writeConstructor(objects, options);
-    final generatorExtras = options.methodGenerators
+    options.methodGenerators
         .map((gen) => gen.generateMethod(this, objects, options))
-        .whereType<GeneratorExtras>()
-        .toList(growable: false);
+        .whereNotNull()
+        .forEach(extras.add);
     writeln('}');
-    return generatorExtras;
   }
 
-  void writeFields(Objects objects, DartGeneratorOptions options,
-      List<_Remaining> remaining) {
+  void writeFields(Objects objects, List<GeneratorExtras> extras,
+      DartGeneratorOptions options) {
     objects.properties.forEach((key, value) {
       write('  ');
       options.insertBeforeField?.vmap((get) => write(get(value)));
-      writeType(value.type, remaining);
+      writeType(value.type, extras, options);
       write(' ${options.fieldName?.vmap((name) => name(key)) ?? key}');
       writeln(';');
     });

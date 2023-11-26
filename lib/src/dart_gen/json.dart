@@ -12,8 +12,7 @@ class ToJsonMethodGenerator with DartMethodGenerator {
   GeneratorExtras? generateMethod(
       StringBuffer buffer, Objects objects, DartGeneratorOptions options) {
     buffer.writeToJson(objects, options);
-    return const GeneratorExtras(
-        {'dart:convert', 'package:schemake/schemake.dart'});
+    return null;
   }
 }
 
@@ -71,7 +70,7 @@ extension on StringBuffer {
         '      return key;\n'
         '    }).toSet();\n'
         '    checkRequiredProperties(keys);');
-    writeConstructorCall(objects, options, indent: '      ');
+    writeConstructorCall(objects, options, indent: '    ');
     writeln('  }');
     writePropertyConverter(objects, options);
     writeGetRequiredProperties(objects, options);

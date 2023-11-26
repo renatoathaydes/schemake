@@ -9,7 +9,8 @@ void main() {
     test('toJson works', () async {
       final (stdout, stderr) = await generateAndRunDartClass(
           Objects('Foo', {
-            'prop': Property(type: Validatable.enum$('Bar', {'bar', 'zort'})),
+            'prop':
+                Property(type: Enums(EnumValidator('Bar', {'bar', 'zort'}))),
           }),
           '''
       void main() {
@@ -31,7 +32,8 @@ void main() {
     test('fromJson works', () async {
       final (stdout, stderr) = await generateAndRunDartClass(
           Objects('Foo', {
-            'prop': Property(type: Validatable.enum$('Bar', {'bar', 'zort'})),
+            'prop':
+                Property(type: Enums(EnumValidator('Bar', {'bar', 'zort'}))),
           }),
           '''
       void main() {
@@ -54,7 +56,8 @@ void main() {
     test('error message on disallowed enum value', () async {
       final (stdout, stderr) = await generateAndRunDartClass(
           Objects('Foo', {
-            'prop': Property(type: Validatable.enum$('Bar', {'bar', 'zort'})),
+            'prop':
+                Property(type: Enums(EnumValidator('Bar', {'bar', 'zort'}))),
           }),
           '''
       void main() {
