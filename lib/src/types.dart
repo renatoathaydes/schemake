@@ -119,6 +119,39 @@ class Objects extends ObjectsBase<Map<String, Object?>> {
   String toString() => 'schemake.Objects{$properties}';
 }
 
+class Maps<V, T extends NonNull<V>> extends ObjectsBase<Map<String, V>> {
+  final T valueType;
+
+  const Maps(super.name,
+      {required this.valueType,
+      super.location = const [],
+      super.description = ''});
+
+  @override
+  Map<String, V> convert(Object? input) {
+    if (input is Map) {
+      final result = <String, V>{};
+      for (final entry in input.entries) {
+        final name = _cast<String>(entry.key);
+        result[name] = convertProperty(valueType, name, input);
+      }
+      checkRequiredProperties(result.keys);
+      return result;
+    }
+    throw TypeException(Map<String, Object?>, input);
+  }
+
+  @override
+  Converter<Object?, V> getPropertyConverter(String property) {
+    return valueType;
+  }
+
+  @override
+  Iterable<String> getRequiredProperties() {
+    return const [];
+  }
+}
+
 abstract class ObjectsBase<T> extends NonNull<T> {
   final String name;
   final bool ignoreUnknownProperties;
@@ -186,6 +219,11 @@ class Validatable<T> extends NonNull<T> {
     final result = type.convert(input);
     validator.validate(result);
     return result;
+  }
+
+  @override
+  String toString() {
+    return 'schemake.Validatable{type: $type, validator: $validator}';
   }
 }
 

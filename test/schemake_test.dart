@@ -26,6 +26,24 @@ void main() {
       expect(const Arrays<int, Ints>(Ints()).convert(loadYaml('[]')),
           equals(<int>[]));
     });
+    test('can convert from YAML to empty Map', () {
+      expect(
+          const Maps<String, Strings>('MyMap', valueType: Strings())
+              .convert(loadYaml('{}')),
+          equals(<String, String>{}));
+    });
+    test('can convert from YAML to Map<String, String>', () {
+      expect(
+          const Maps<String, Strings>('MyMap', valueType: Strings())
+              .convert(loadYaml('{"hello": "hi"}')),
+          equals({'hello': 'hi'}));
+    });
+    test('can convert from YAML to Map<String, int>', () {
+      expect(
+          const Maps<int, Ints>('MyMap', valueType: Ints())
+              .convert(loadYaml('{"number": 2}')),
+          equals({'number': 2}));
+    });
   });
 
   group('Schemake null errors', () {
@@ -48,6 +66,12 @@ void main() {
     test('cannot convert from YAML null to List', () {
       expect(() => const Arrays<int, Ints>(Ints()).convert(loadYaml('null')),
           throwsTypeException(List<int>, null));
+    });
+    test('cannot convert from YAML null to Map', () {
+      expect(
+          () => const Maps<int, Ints>('MyMap', valueType: Ints())
+              .convert(loadYaml('null')),
+          throwsTypeException(Map<String, Object?>, null));
     });
   });
 
@@ -86,6 +110,12 @@ void main() {
       expect(
           const Nullable(Arrays<int, Ints>(Ints())).convert(loadYaml('null')),
           isNull);
+    });
+    test('can convert from YAML to Map<String, int>?', () {
+      expect(
+          const Nullable(Maps<int, Ints>('MyMap', valueType: Ints()))
+              .convert(loadYaml('{"number": 2}')),
+          equals({'number': 2}));
     });
   });
 }
