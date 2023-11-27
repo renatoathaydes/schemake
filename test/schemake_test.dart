@@ -117,5 +117,11 @@ void main() {
               .convert(loadYaml('{"number": 2}')),
           equals({'number': 2}));
     });
+    test('can convert from YAML to Map<String, int>? null', () {
+      expect(
+          const Nullable(Maps<int, Ints>('MyMap', valueType: Ints()))
+              .convert(loadYaml('null')),
+          isNull);
+    });
   });
 }

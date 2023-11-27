@@ -59,7 +59,10 @@ Supported data types:
 
 `enum`s are also supported as a special-case of `Validatable(Strings)` (see the `Validatable` section).
 
-All Schemake types implement Dart's `Converter<Object?, T>` where `T` is the associated Dart type.
+Maps from `String` to some type `T` (for a given Dart type `S`) are supported with the `Maps` Schemake type,
+which is a subtype of `ObjectsBase<Map<String, S>>`.
+
+All Schemake types implement Dart's `Converter<Object?, S>` for some Dart type `S`.
 
 Schemake types are normally declared with `const`, as they are, semantically, types.
 
