@@ -32,8 +32,8 @@ class DartToStringMethodGenerator with DartMethodGenerator {
   }
 }
 
-class EqualsAndHashCodeMethodGenerator with DartMethodGenerator {
-  const EqualsAndHashCodeMethodGenerator();
+class DartEqualsAndHashCodeMethodGenerator with DartMethodGenerator {
+  const DartEqualsAndHashCodeMethodGenerator();
 
   @override
   GeneratorExtras? generateMethod(
@@ -47,7 +47,7 @@ class EqualsAndHashCodeMethodGenerator with DartMethodGenerator {
 final class DartGeneratorOptions {
   static const defaultMethodGenerators = [
     DartToStringMethodGenerator(),
-    EqualsAndHashCodeMethodGenerator(),
+    DartEqualsAndHashCodeMethodGenerator(),
   ];
 
   static String _finalField(Property<Object?> _) => 'final ';
@@ -116,15 +116,14 @@ StringBuffer generateDartClasses(List<Objects> schemaTypes,
 extension on StringBuffer {
   StringBuffer addExtrasIfOwnType(List<GeneratorExtras> extras,
       ObjectsBase<dynamic> objects, DartGeneratorOptions options) {
+    // in case of a simple Map, there's no extra type to write
+    if (objects.isSimpleMap) return this;
     if (objects is Objects) {
-      // in case of a simple Map, there's no extra type to write
-      if (!objects.isSimpleMap) {
-        extras.add(GeneratorExtras(const {},
-            (writer) => writer.writeObjects(objects, extras, options)));
-      }
+      extras.add(GeneratorExtras(
+          const {}, (writer) => writer.writeObjects(objects, extras, options)));
     } else {
-      throw UnsupportedError('The only subtype of ObjectsBase allowed to be '
-          'used for code generation is Objects. '
+      throw UnsupportedError('The only subtypes of ObjectsBase allowed to be '
+          'used for code generation are Objects and Maps. '
           'Cannot generate Dart code for $objects');
     }
     return this;
@@ -146,8 +145,9 @@ extension on StringBuffer {
         writeType(type, generatorExtras, options, array),
       ObjectsBase(name: var className) =>
         addExtrasIfOwnType(generatorExtras, schemaType, options).write(
-            typeWrapper(
-                schemaType.isSimpleMap ? 'Map<String, Object?>' : className)),
+            typeWrapper(schemaType.isSimpleMap
+                ? schemaType.dartType().toString()
+                : className)),
     };
   }
 
@@ -217,8 +217,7 @@ extension on StringBuffer {
         if (type is ObjectsBase && !type.isSimpleMap) {
           throw UnsupportedError(
               'default values of type ObjectsBase are not supported '
-              'unless the type is Objects with empty properties '
-              'and named "Map"');
+              'unless the type is Objects with empty properties, or Maps.');
         }
         write(' = ');
         writeValue(def, consted: true);
@@ -295,11 +294,18 @@ extension on StringBuffer {
       write(objects.properties.entries.map((entry) {
         final fieldName = options.fieldName(entry.key);
         final type = entry.value.type;
-        if (type is Arrays<Object?, Object?>) {
+        final listItemType = type.listItemsTypeOrNull;
+        if (listItemType != null) {
           extras =
               const GeneratorExtras({'package:collection/collection.dart'});
-          return '    const ListEquality<'
-              '${(type.itemsType as SchemaType<dynamic>).dartType()}>()'
+          return '    const ListEquality<$listItemType>()'
+              '.equals($fieldName, other.$fieldName)';
+        }
+        final mapValueType = type.mapValueTypeOrNull;
+        if (mapValueType != null) {
+          extras =
+              const GeneratorExtras({'package:collection/collection.dart'});
+          return '    const MapEquality<String, $mapValueType>()'
               '.equals($fieldName, other.$fieldName)';
         }
         return '    $fieldName == other.$fieldName';
@@ -318,6 +324,17 @@ extension on StringBuffer {
       write('    ');
       write(objects.properties.entries.map((entry) {
         final fieldName = options.fieldName(entry.key);
+        final type = entry.value.type;
+        final listItemType = type.listItemsTypeOrNull;
+        if (listItemType != null) {
+          return 'const ListEquality<$listItemType>()'
+              '.hash($fieldName)';
+        }
+        final mapValueType = type.mapValueTypeOrNull;
+        if (mapValueType != null) {
+          return 'const MapEquality<String, $mapValueType>()'
+              '.hash($fieldName)';
+        }
         return '$fieldName.hashCode';
       }).join(' ^ '));
     }

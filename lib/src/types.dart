@@ -116,7 +116,11 @@ class Objects extends ObjectsBase<Map<String, Object?>> {
   }
 
   @override
-  String toString() => 'schemake.Objects{$properties}';
+  String toString() => 'schemake.Objects{name: $name, '
+      'ignoreUnknownProperties: $ignoreUnknownProperties, '
+      'location: $location, '
+      'description: $description, '
+      'properties: $properties}';
 }
 
 class Maps<V, T extends NonNull<V>> extends ObjectsBase<Map<String, V>> {

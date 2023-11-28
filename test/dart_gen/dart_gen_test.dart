@@ -115,6 +115,32 @@ final class Meta {
 }
 ''';
 
+const _generatedClassWithMaps = r'''
+import 'package:collection/collection.dart';
+
+class HasMaps {
+  /// Property with Map of Strings.
+  final Map<String, String> maps;
+  const HasMaps({
+    required this.maps,
+  });
+  @override
+  String toString() =>
+    'HasMaps{'
+    'maps: $maps'
+    '}';
+  @override
+  bool operator ==(Object other) =>
+    identical(this, other) ||
+    other is HasMaps &&
+    runtimeType == other.runtimeType &&
+    const MapEquality<String, String>().equals(maps, other.maps);
+  @override
+  int get hashCode =>
+    const MapEquality<String, String>().hash(maps);
+}
+''';
+
 const _personSchema = Objects('Person', {
   'name': Property<String>(type: Strings()),
   'age': Property<int?>(type: Nullable(Ints())),
@@ -152,6 +178,13 @@ const _schemaWithMetadata = Objects(
     description: 'My metadata.\n'
         'This should appear in the class.');
 
+const _schemaWithMaps = Objects('HasMaps', {
+  'maps': Property(
+      type: Maps<String, Strings>('MapToStrings',
+          valueType: Strings(), description: 'map with string values.'),
+      description: 'Property with Map of Strings.'),
+});
+
 void main() {
   group('Schemake Dart class gen', () {
     test('can write simple Dart class', () {
@@ -181,7 +214,7 @@ void main() {
               "    const ListEquality<String>().equals(items, other.items);\n"
               '  @override\n'
               '  int get hashCode =>\n'
-              "    items.hashCode;\n"
+              "    const ListEquality<String>().hash(items);\n"
               '}\n'));
     });
 
@@ -227,6 +260,11 @@ void main() {
                       methodGenerators: [], insertBeforeClass: 'final '))
               .toString(),
           equals(_generatedWithMetadata));
+    });
+
+    test('can write Maps', () {
+      expect(generateDartClasses([_schemaWithMaps]).toString(),
+          equals(_generatedClassWithMaps));
     });
   });
 }
