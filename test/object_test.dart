@@ -16,6 +16,13 @@ const _companySchema = Objects('Company', {
   'employees': Property<List<Map<String, Object?>>>(Arrays(_personSchema)),
 });
 
+const _semiStructuredObjects = Objects(
+    'SemiStructured',
+    {
+      'str': Property(Nullable(Strings())),
+    },
+    unknownPropertiesStrategy: UnknownPropertiesStrategy.keep);
+
 void main() {
   group('Schemake objects', () {
     test('can convert from YAML object to custom type (full object)', () {
@@ -26,6 +33,27 @@ void main() {
     test('can convert from YAML object to custom type (missing field)', () {
       expect(_personSchema.convert(loadYaml('name: Joe')),
           equals({'name': 'Joe'}));
+    });
+
+    test('can convert from YAML object to semi-structured type (only known fields)', () {
+      expect(_semiStructuredObjects.convert(loadYaml('str: OK')),
+          equals({'str': 'OK'}));
+    });
+
+    test('can convert from YAML object to semi-structured type (only unknown fields)', () {
+      expect(_semiStructuredObjects.convert(loadYaml('foo: FOO\nbar: true')),
+          equals({'foo': 'FOO', 'bar': true}));
+    });
+
+    test('can convert from YAML object to semi-structured type (known and unknown fields)', () {
+      expect(_semiStructuredObjects.convert(loadYaml('foo: FOO\nstr: STRING')),
+          equals({'foo': 'FOO', 'str': 'STRING'}));
+    });
+
+    test('cannot convert from YAML object to semi-structured type (known field type mismatch)', () {
+      expect(() => _semiStructuredObjects.convert(loadYaml('foo: FOO\nstr: 1')),
+          throwsPropertyTypeException(
+              String, 1, ['str'], _semiStructuredObjects));
     });
 
     test(
