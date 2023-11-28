@@ -6,9 +6,9 @@ import 'package:yaml/yaml.dart';
 
 /// this defines a schema that can be used for code generation.
 const personSchema = Objects('Person', {
-  'name': Property<String>(type: Strings()),
-  'age': Property<int?>(type: Nullable(Ints())),
-  'friends': Property(type: Arrays<String, Strings>(Strings()))
+  'name': Property(Strings()),
+  'age': Property(Nullable(Ints())),
+  'friends': Property(Arrays<String, Strings>(Strings()))
 });
 
 void main() {

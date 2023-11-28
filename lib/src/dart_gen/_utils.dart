@@ -27,12 +27,12 @@ extension ObjectsExtension on ObjectsBase<Object?> {
     final self = this;
     return self is Maps ||
         (self is Objects &&
-            self.ignoreUnknownProperties &&
+            self.unknownPropertiesStrategy == UnknownPropertiesStrategy.keep &&
             self.properties.isEmpty);
   }
 }
 
-Type _type<T>() => T;
+typedef _TypeOf<T> = T;
 
 extension SchemakeTypeExtension on SchemaType<Object?> {
   Type? get listItemsTypeOrNull {
@@ -49,7 +49,7 @@ extension SchemakeTypeExtension on SchemaType<Object?> {
       return (self.valueType as NonNull<Object?>).dartType();
     }
     if (self is Objects && self.isSimpleMap) {
-      return _type<Object?>();
+      return _TypeOf<Object?>;
     }
     return null;
   }

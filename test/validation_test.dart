@@ -7,11 +7,10 @@ import 'matchers.dart';
 const ages = IntRangeValidator(0, 100);
 
 const myObject = Objects('Person', {
-  'name': Property<String>(type: Strings()),
-  'age': Property<int>(type: Validatable(Ints(), ages)),
-  'status': Property<String>(
-      type: Validatable(
-          Strings(), EnumValidator('Status', {'alive', 'dead', 'unknown'})))
+  'name': Property<String>(Strings()),
+  'age': Property<int>(Validatable(Ints(), ages)),
+  'status': Property<String>(Validatable(
+      Strings(), EnumValidator('Status', {'alive', 'dead', 'unknown'})))
 });
 
 void main() {

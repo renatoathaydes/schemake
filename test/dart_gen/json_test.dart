@@ -28,9 +28,18 @@ class _TestObject extends ObjectsBase<_Testing> {
 }
 
 const _someSchema = Objects('SomeSchema', {
-  'mandatory': Property(type: Strings()),
-  'optional': Property(type: Nullable(Floats())),
-  'list': Property(type: Arrays<int, Ints>(Ints())),
+  'mandatory': Property(Strings()),
+  'optional': Property(Nullable(Floats())),
+  'list': Property(Arrays<int, Ints>(Ints())),
+});
+
+const _schemaWithMaps = Objects('HasMaps', {
+  'maps': Property(
+      Maps<String, Strings>('MapToStrings',
+          valueType: Strings(), description: 'map with string values.'),
+      description: 'Property with Map of Strings.'),
+  'objectsMap': Property(Objects('SimpleMap', {},
+      unknownPropertiesStrategy: UnknownPropertiesStrategy.keep)),
 });
 
 const _someSchemaToJsonGeneration = r'''
@@ -57,7 +66,7 @@ import 'dart:convert';
 import 'package:schemake/schemake.dart';
 class _SomeSchemaJsonReviver extends ObjectsBase<SomeSchema> {
   const _SomeSchemaJsonReviver(): super("SomeSchema",
-    ignoreUnknownProperties: false,
+    unknownPropertiesStrategy: UnknownPropertiesStrategy.forbid,
     location: const []);
 
   @override
@@ -109,6 +118,67 @@ class SomeSchema {
     List<int>() => jsonDecode(utf8.decode(value)),
     _ => value,
   });
+}
+''';
+
+const _schemaWithMapsToAndFromJsonGeneration = r'''
+import 'dart:convert';
+import 'package:schemake/schemake.dart';
+class _HasMapsJsonReviver extends ObjectsBase<HasMaps> {
+  const _HasMapsJsonReviver(): super("HasMaps",
+    unknownPropertiesStrategy: UnknownPropertiesStrategy.forbid,
+    location: const []);
+
+  @override
+  HasMaps convert(Object? value) {
+    if (value is! Map) throw TypeException(HasMaps, value);
+    final keys = value.keys.map((key) {
+      if (key is! String) {
+        throw TypeException(String, key, "object key is not a String");
+      }
+      return key;
+    }).toSet();
+    checkRequiredProperties(keys);
+    return HasMaps(
+      maps: convertProperty(const Maps('MapToStrings', valueType: Strings()), 'maps', value),
+      objectsMap: convertProperty(const Objects('SimpleMap', {}, unknownPropertiesStrategy: UnknownPropertiesStrategy.keep), 'objectsMap', value),
+    );
+  }
+
+  @override
+  Converter<Object?, Object?>? getPropertyConverter(String property) {
+    switch(property) {
+      case 'maps': return const Maps('MapToStrings', valueType: Strings());
+      case 'objectsMap': return const Objects('SimpleMap', {}, unknownPropertiesStrategy: UnknownPropertiesStrategy.keep);
+      default: return null;
+    }
+  }
+  @override
+  Iterable<String> getRequiredProperties() {
+    return const {'maps', 'objectsMap'};
+  }
+  @override
+  String toString() => 'HasMaps';
+}
+
+class HasMaps {
+  /// Property with Map of Strings.
+  final Map<String, String> maps;
+  final Map<String, Object?> objectsMap;
+  const HasMaps({
+    required this.maps,
+    required this.objectsMap,
+  });
+  static HasMaps fromJson(Object? value) =>
+      const _HasMapsJsonReviver().convert(switch(value) {
+    String() => jsonDecode(value),
+    List<int>() => jsonDecode(utf8.decode(value)),
+    _ => value,
+  });
+  Map<String, Object?> toJson() => {
+    'maps': maps,
+    'objectsMap': objectsMap,
+  };
 }
 ''';
 
@@ -201,13 +271,24 @@ void main() {
           ));
       expect(result.toString(), equals(_someSchemaFromJsonGeneration));
     });
+
+    test('both toJson and fromJson for Map objects', () {
+      final result = generateDartClasses([_schemaWithMaps],
+          options: DartGeneratorOptions(
+            methodGenerators: [
+              const FromJsonMethodGenerator(),
+              const ToJsonMethodGenerator()
+            ],
+          ));
+      expect(result.toString(), equals(_schemaWithMapsToAndFromJsonGeneration));
+    });
   });
 
   group('generated classes', () {
     test('toJson works', () async {
       final (stdout, stderr) = await generateAndRunDartClass(
           Objects('Foo', {
-            'bar': Property(type: Strings()),
+            'bar': Property(Strings()),
           }),
           '''
       void main() {
@@ -229,9 +310,9 @@ void main() {
           Objects(
               'Counter',
               {
-                'count': Property(type: Nullable(Ints())),
+                'count': Property(Nullable(Ints())),
               },
-              ignoreUnknownProperties: true),
+              unknownPropertiesStrategy: UnknownPropertiesStrategy.ignore),
           '''
       void main() {
         print(Counter.fromJson({'count': 42}));
@@ -245,11 +326,40 @@ void main() {
       expect(stdout, equals(['Counter{count: 42}', 'Counter{count: null}']));
     });
 
+    test('toJson and fromJson work for Maps', () async {
+      final (stdout, stderr) = await generateAndRunDartClass(
+          _schemaWithMaps,
+          '''
+          void main() {
+            final maps = HasMaps(
+                maps: {'foo': 'bar'},
+                objectsMap: {'one': 1});
+            final jsonMaps = jsonEncode(maps);
+            print(jsonMaps);
+            print(HasMaps.fromJson(jsonMaps));
+          }''',
+          DartGeneratorOptions(
+            methodGenerators: [
+              const FromJsonMethodGenerator(),
+              const ToJsonMethodGenerator(),
+              const DartToStringMethodGenerator(),
+            ],
+          ));
+      expect(stderr, isEmpty);
+      expect(
+          stdout,
+          equals([
+            '{"maps":{"foo":"bar"},'
+                '"objectsMap":{"one":1}}',
+            'HasMaps{maps: {foo: bar}, objectsMap: {one: 1}}'
+          ]));
+    });
+
     test('error message on missing mandatory property', () async {
       final (stdout, stderr) = await generateAndRunDartClass(
           Objects('Counter', {
-            'foo': Property(type: Bools()),
-            'count': Property(type: Ints()),
+            'foo': Property(Bools()),
+            'count': Property(Ints()),
           }),
           '''
       void main() {
@@ -267,7 +377,7 @@ void main() {
     test('error message on wrong type property', () async {
       final (stdout, stderr) = await generateAndRunDartClass(
           Objects('Foo', {
-            'foo': Property(type: Bools()),
+            'foo': Property(Bools()),
           }),
           '''
       void main() {

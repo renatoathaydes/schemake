@@ -57,7 +57,7 @@ extension on StringBuffer {
     final name = objects.name;
     writeln('class ${_reviverName(name)} extends ObjectsBase<$name> {\n'
         '  const ${_reviverName(name)}(): super("$name",\n'
-        '    ignoreUnknownProperties: ${objects.ignoreUnknownProperties},\n'
+        '    unknownPropertiesStrategy: ${objects.unknownPropertiesStrategy},\n'
         '    location: const [${objects.location.map(quote).join(', ')}]);\n'
         '\n'
         '  @override\n'
@@ -138,8 +138,10 @@ String schemaTypeString(SchemaType<Object?> type) {
   return switch (type) {
     Arrays<dynamic, SchemaType>(itemsType: var items) =>
       _schemaTypeStringWrapper('Arrays', items),
+    ObjectsBase<dynamic>() when type.mapValueTypeOrNull != null =>
+      _schemaTypeMaps(type),
     Objects() => throw ArgumentError.value(
-        type, 'type', 'Objects schema type String cannot be generated'),
+        type, 'type', 'Objects schema type cannot be generated'),
     ObjectsBase<Object?>() => '${type.runtimeType}()',
     Nullable<dynamic, NonNull>(type: var inner) =>
       _schemaTypeStringWrapper('Nullable', inner),
@@ -181,4 +183,16 @@ String _schemaTypeValidatable(Validatable<Object?> validatable) {
           'Add a DartValidatorGenerationOptions to its "generatorOptions" '
           'to fix the problem.'))
       .selfCreateString(validatable.validator);
+}
+
+String _schemaTypeMaps(ObjectsBase<dynamic> objects) {
+  if (objects is Maps) {
+    return "Maps(${quote(objects.name)}, "
+        "valueType: ${schemaTypeString(objects.valueType)})";
+  }
+  if (objects is Objects && objects.isSimpleMap) {
+    return "Objects(${quote(objects.name)}, {}, "
+        "unknownPropertiesStrategy: UnknownPropertiesStrategy.keep)";
+  }
+  throw StateError('cannot generate Maps Schemake type for $objects');
 }

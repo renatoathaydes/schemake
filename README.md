@@ -12,8 +12,8 @@ A Schemake specification is easy to write and is just plain Dart code:
 import 'package:schemake/schemake.dart';
 
 const person = Objects('Person', {
-  'name': Property<String>(type: Strings()),
-  'age': Property<int?>(type: Nullable(Ints())),
+  'name': Property(Strings()),
+  'age': Property(Nullable(Ints())),
 });
 ```
 
@@ -125,7 +125,7 @@ when given the `MyType` equivalent schema:
 ```dart
 
 const myTypes = Objects('MyTypes', {
-  'example': Property(type: Strings()),
+  'example': Property(Strings()),
 });
 ```
 
@@ -133,7 +133,8 @@ To represent any `Map<String, Object?>`, you can use the following `Objects` sch
 
 ```dart
 
-const maps = Objects('Map', {}, ignoreUnknownProperties: true);
+const maps = Objects('Map', {},
+    unknownPropertiesStrategy: UnknownPropertiesStrategy.keep);
 ```
 
 ### Validatable
@@ -164,8 +165,8 @@ import 'package:schemake/schemake.dart';
 const nonBlankStrings = Validatable(Strings(), NonBlankStringValidator());
 
 const person = Objects('Person', {
-  'name': Property<String>(type: nonBlankStrings),
-  'age': Property<int?>(type: Nullable(Ints())),
+  'name': Property<String>(nonBlankStrings),
+  'age': Property<int?>(Nullable(Ints())),
 });
 ```
 
@@ -181,7 +182,7 @@ easier:
 // the someEnum field is a String whose value must be one of
 // "one", "two" or "three"
 const typeWithEnumField = Objects('EnumExample', {
-  'someEnum': Property(type: Enums(EnumValidator('SmallInt', {'one', 'two', 'three'}))),
+  'someEnum': Property(Enums(EnumValidator('SmallInt', {'one', 'two', 'three'}))),
 });
 ```
 
@@ -197,8 +198,8 @@ import 'package:schemake/dart_gen.dart' as dg;
 import 'package:schemake/schemake.dart';
 
 const person = Objects('Person', {
-  'name': Property<String>(type: Strings()),
-  'age': Property<int?>(type: Nullable(Ints())),
+  'name': Property(Strings()),
+  'age': Property(Nullable(Ints())),
 });
 
 void main() {

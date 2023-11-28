@@ -7,14 +7,13 @@ import 'package:yaml/yaml.dart';
 import 'matchers.dart';
 
 const _personSchema = Objects('Person', {
-  'name': Property<String>(type: Strings()),
-  'age': Property<int?>(type: Nullable(Ints())),
+  'name': Property(Strings()),
+  'age': Property(Nullable(Ints())),
 });
 
 const _companySchema = Objects('Company', {
-  'name': Property<String>(type: Strings()),
-  'employees':
-      Property<List<Map<String, Object?>>>(type: Arrays(_personSchema)),
+  'name': Property<String>(Strings()),
+  'employees': Property<List<Map<String, Object?>>>(Arrays(_personSchema)),
 });
 
 void main() {

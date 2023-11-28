@@ -5,8 +5,7 @@ class Property<T> {
   final T? defaultValue;
   final String description;
 
-  const Property(
-      {required this.type, this.defaultValue, this.description = ''});
+  const Property(this.type, {this.defaultValue, this.description = ''});
 
   @override
   String toString() {

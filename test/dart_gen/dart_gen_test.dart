@@ -142,34 +142,33 @@ class HasMaps {
 ''';
 
 const _personSchema = Objects('Person', {
-  'name': Property<String>(type: Strings()),
-  'age': Property<int?>(type: Nullable(Ints())),
+  'name': Property<String>(Strings()),
+  'age': Property<int?>(Nullable(Ints())),
 });
 
 const _stringItemsSchema = Objects('StringItems', {
-  'items': Property(type: Arrays<String, Strings>(Strings())),
+  'items': Property(Arrays<String, Strings>(Strings())),
 });
 
 const _nestedObjectSchema = Objects('Nested', {
-  'inner': Property(type: _personSchema),
+  'inner': Property(_personSchema),
 });
 
 const _validatableObjectSchema = Objects('Validated', {
-  'some': Property(
-      type: Validatable(Strings(), EnumValidator('Foo', {'foo', 'bar'}))),
+  'some':
+      Property(Validatable(Strings(), EnumValidator('Foo', {'foo', 'bar'}))),
 });
 
 const _schemaWithMetadata = Objects(
     'meta',
     {
-      'name': Property(
-          type: Strings(), defaultValue: 'foo', description: 'A property.'),
-      'ints': Property(
-          type: Arrays<int, Ints>(Ints()),
-          defaultValue: [1, 2, 3],
-          description: 'some\ninteger\nvalues.'),
+      'name':
+          Property(Strings(), defaultValue: 'foo', description: 'A property.'),
+      'ints': Property(Arrays<int, Ints>(Ints()),
+          defaultValue: [1, 2, 3], description: 'some\ninteger\nvalues.'),
       'no-description': Property(
-          type: Objects('Map', {}, ignoreUnknownProperties: true),
+          Objects('Map', {},
+              unknownPropertiesStrategy: UnknownPropertiesStrategy.keep),
           defaultValue: {
             'a': 1,
             'bc': [4],
@@ -180,7 +179,7 @@ const _schemaWithMetadata = Objects(
 
 const _schemaWithMaps = Objects('HasMaps', {
   'maps': Property(
-      type: Maps<String, Strings>('MapToStrings',
+      Maps<String, Strings>('MapToStrings',
           valueType: Strings(), description: 'map with string values.'),
       description: 'Property with Map of Strings.'),
 });
@@ -236,7 +235,7 @@ void main() {
       expect(
           generateDartClasses([
             Objects('Example', {
-              'field': Property(type: Bools()),
+              'field': Property(Bools()),
             })
           ],
                   options: DartGeneratorOptions(

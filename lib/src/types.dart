@@ -86,13 +86,15 @@ final class Arrays<S, T extends SchemaType<S>> extends NonNull<List<S>> {
   String toString() => 'schemake.Arrays{$itemsType}';
 }
 
+enum UnknownPropertiesStrategy { ignore, keep, forbid }
+
 class Objects extends ObjectsBase<Map<String, Object?>> {
   final Map<String, Property<Object?>> properties;
 
   const Objects(
     super.name,
     this.properties, {
-    super.ignoreUnknownProperties = false,
+    super.unknownPropertiesStrategy = UnknownPropertiesStrategy.forbid,
     super.location = const [],
     super.description = '',
   });
@@ -117,7 +119,7 @@ class Objects extends ObjectsBase<Map<String, Object?>> {
 
   @override
   String toString() => 'schemake.Objects{name: $name, '
-      'ignoreUnknownProperties: $ignoreUnknownProperties, '
+      'unknownPropertiesStrategy: $unknownPropertiesStrategy, '
       'location: $location, '
       'description: $description, '
       'properties: $properties}';
@@ -129,7 +131,8 @@ class Maps<V, T extends NonNull<V>> extends ObjectsBase<Map<String, V>> {
   const Maps(super.name,
       {required this.valueType,
       super.location = const [],
-      super.description = ''});
+      super.description = ''})
+      : super(unknownPropertiesStrategy: UnknownPropertiesStrategy.keep);
 
   @override
   Map<String, V> convert(Object? input) {
@@ -158,13 +161,13 @@ class Maps<V, T extends NonNull<V>> extends ObjectsBase<Map<String, V>> {
 
 abstract class ObjectsBase<T> extends NonNull<T> {
   final String name;
-  final bool ignoreUnknownProperties;
+  final UnknownPropertiesStrategy unknownPropertiesStrategy;
   final List<String> location;
   final String description;
 
   const ObjectsBase(
     this.name, {
-    this.ignoreUnknownProperties = false,
+    this.unknownPropertiesStrategy = UnknownPropertiesStrategy.forbid,
     this.location = const [],
     this.description = '',
   });
@@ -180,10 +183,17 @@ abstract class ObjectsBase<T> extends NonNull<T> {
         final name = _cast<String>(entry.key);
         final converter = getPropertyConverter(name);
         if (converter == null) {
-          if (ignoreUnknownProperties) continue;
-          throw UnknownPropertyException([...location, name], this);
+          switch (unknownPropertiesStrategy) {
+            case UnknownPropertiesStrategy.ignore:
+              break;
+            case UnknownPropertiesStrategy.keep:
+              result[name] = entry.value;
+            case UnknownPropertiesStrategy.forbid:
+              throw UnknownPropertyException([...location, name], this);
+          }
+        } else {
+          result[name] = convertProperty(converter, name, input);
         }
-        result[name] = convertProperty(converter, name, input);
       }
       checkRequiredProperties(result.keys);
       return result;
