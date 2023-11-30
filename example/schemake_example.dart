@@ -4,7 +4,8 @@ import 'package:schemake/dart_gen.dart';
 import 'package:schemake/schemake.dart';
 import 'package:yaml/yaml.dart';
 
-/// this defines a schema that can be used for code generation.
+/// this defines a schema that can be used for
+/// data validation and code generation.
 const personSchema = Objects('Person', {
   'name': Property(Strings()),
   'age': Property(Nullable(Ints())),
@@ -55,7 +56,7 @@ void main() {
   print(jsonEncode(person));
   final otherPerson = Person.fromJson(
     '{"name": "Mary Jane", "friends": ["Joe"]}');
-  print(otherPerson);
+  print(otherPerson.toJson());
 }
   ''');
 }
