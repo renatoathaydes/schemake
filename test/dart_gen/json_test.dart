@@ -339,7 +339,7 @@ void main() {
     test('toJson', () {
       final result = generateDartClasses([_someSchema],
           options: DartGeneratorOptions(
-            methodGenerators: [const ToJsonMethodGenerator()],
+            methodGenerators: [const DartToJsonMethodGenerator()],
           ));
       expect(result.toString(), equals(_someSchemaToJsonGeneration));
     });
@@ -347,7 +347,7 @@ void main() {
     test('fromJson', () {
       final result = generateDartClasses([_someSchema],
           options: DartGeneratorOptions(
-            methodGenerators: [const FromJsonMethodGenerator()],
+            methodGenerators: [const DartFromJsonMethodGenerator()],
           ));
       expect(result.toString(), equals(_someSchemaFromJsonGeneration));
     });
@@ -356,8 +356,8 @@ void main() {
       final result = generateDartClasses([_schemaWithMaps],
           options: DartGeneratorOptions(
             methodGenerators: [
-              const FromJsonMethodGenerator(),
-              const ToJsonMethodGenerator()
+              const DartFromJsonMethodGenerator(),
+              const DartToJsonMethodGenerator()
             ],
           ));
       expect(result.toString(), equals(_schemaWithMapsToAndFromJsonGeneration));
@@ -367,8 +367,8 @@ void main() {
       final result = generateDartClasses([_semiStructuredObjects],
           options: DartGeneratorOptions(
             methodGenerators: [
-              const FromJsonMethodGenerator(),
-              const ToJsonMethodGenerator()
+              const DartFromJsonMethodGenerator(),
+              const DartToJsonMethodGenerator()
             ],
           ));
       expect(result.toString(), equals(_schemaSemiStructuredObjects));
@@ -386,7 +386,7 @@ void main() {
         print(Foo(bar: 'good').toJson());
       }''',
           DartGeneratorOptions(methodGenerators: [
-            ToJsonMethodGenerator(),
+            DartToJsonMethodGenerator(),
           ]));
       expect(stderr, isEmpty);
       expect(
@@ -410,7 +410,7 @@ void main() {
         print(Counter.fromJson({'zort': 'ignored'}));
       }''',
           const DartGeneratorOptions(methodGenerators: [
-            FromJsonMethodGenerator(),
+            DartFromJsonMethodGenerator(),
             DartToStringMethodGenerator(),
           ]));
       expect(stderr, isEmpty);
@@ -431,8 +431,8 @@ void main() {
           }''',
           DartGeneratorOptions(
             methodGenerators: [
-              const FromJsonMethodGenerator(),
-              const ToJsonMethodGenerator(),
+              const DartFromJsonMethodGenerator(),
+              const DartToJsonMethodGenerator(),
               const DartToStringMethodGenerator(),
             ],
           ));
@@ -458,8 +458,8 @@ void main() {
           }''',
           DartGeneratorOptions(
             methodGenerators: [
-              const FromJsonMethodGenerator(),
-              const ToJsonMethodGenerator(),
+              const DartFromJsonMethodGenerator(),
+              const DartToJsonMethodGenerator(),
               const DartToStringMethodGenerator(),
             ],
           ));
@@ -483,7 +483,7 @@ void main() {
         print(Counter.fromJson({'foo': true}));
       }''',
           const DartGeneratorOptions(methodGenerators: [
-            FromJsonMethodGenerator(),
+            DartFromJsonMethodGenerator(),
             DartToStringMethodGenerator(),
           ]));
       expect(stderr,
@@ -501,7 +501,7 @@ void main() {
         print(Foo.fromJson({'foo': 'yes'}));
       }''',
           const DartGeneratorOptions(methodGenerators: [
-            FromJsonMethodGenerator(),
+            DartFromJsonMethodGenerator(),
             DartToStringMethodGenerator(),
           ]));
       expect(

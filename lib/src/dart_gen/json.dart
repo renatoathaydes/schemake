@@ -5,8 +5,8 @@ import '../_text.dart';
 import '../types.dart';
 import 'dart_gen.dart';
 
-class ToJsonMethodGenerator with DartMethodGenerator {
-  const ToJsonMethodGenerator();
+class DartToJsonMethodGenerator with DartMethodGenerator {
+  const DartToJsonMethodGenerator();
 
   @override
   GeneratorExtras? generateMethod(
@@ -16,8 +16,8 @@ class ToJsonMethodGenerator with DartMethodGenerator {
   }
 }
 
-class FromJsonMethodGenerator with DartMethodGenerator {
-  const FromJsonMethodGenerator();
+class DartFromJsonMethodGenerator with DartMethodGenerator {
+  const DartFromJsonMethodGenerator();
 
   @override
   GeneratorExtras generateMethod(

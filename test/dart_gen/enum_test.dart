@@ -17,7 +17,7 @@ void main() {
         print(Foo(prop: Bar.zort).toJson());
       }''',
           DartGeneratorOptions(methodGenerators: [
-            ToJsonMethodGenerator(),
+            DartToJsonMethodGenerator(),
           ]));
       expect(stderr, isEmpty);
       expect(
@@ -39,7 +39,7 @@ void main() {
         print(Foo.fromJson({'prop': 'zort'}));
       }''',
           DartGeneratorOptions(methodGenerators: [
-            FromJsonMethodGenerator(),
+            DartFromJsonMethodGenerator(),
             DartToStringMethodGenerator(),
           ]));
       expect(stderr, isEmpty);
@@ -61,7 +61,7 @@ void main() {
         print(Foo.fromJson({'prop': 'no'}));
       }''',
           DartGeneratorOptions(methodGenerators: [
-            FromJsonMethodGenerator(),
+            DartFromJsonMethodGenerator(),
           ]));
       expect(
           stderr,

@@ -306,8 +306,8 @@ void main() {
   print(dg.generateDartClasses([person],
       options: const dg.DartGeneratorOptions(methodGenerators: [
         ...dg.DartGeneratorOptions.defaultMethodGenerators,
-        dg.ToJsonMethodGenerator(),
-        dg.FromJsonMethodGenerator(),
+        dg.DartToJsonMethodGenerator(),
+        dg.DartFromJsonMethodGenerator(),
       ])));
 }
 ```
