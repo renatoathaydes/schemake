@@ -40,17 +40,20 @@ extension on StringBuffer {
       }
       writeln("'$fieldName': $fieldName,");
     });
+    if (objects.unknownPropertiesStrategy == UnknownPropertiesStrategy.keep) {
+      writeln("    ...extras,");
+    }
     writeln('  };');
   }
 
   void writeFromJson(Objects objects, DartGeneratorOptions options) {
     writeln('  static ${objects.name} fromJson(Object? value) =>');
     writeln(
-        '      const ${_reviverName(objects.name)}().convert(switch(value) {\n'
-        '    String() => jsonDecode(value),\n'
-        '    List<int>() => jsonDecode(utf8.decode(value)),\n'
-        '    _ => value,\n'
-        '  });');
+        '    const ${_reviverName(objects.name)}().convert(switch(value) {\n'
+        '      String() => jsonDecode(value),\n'
+        '      List<int>() => jsonDecode(utf8.decode(value)),\n'
+        '      _ => value,\n'
+        '    });');
   }
 
   void writeJsonReviver(Objects objects, DartGeneratorOptions options) {
@@ -75,6 +78,7 @@ extension on StringBuffer {
     writePropertyConverter(objects, options);
     writeGetRequiredProperties(objects, options);
     writeToString(objects);
+    writeUnknownPropertiesMap(objects);
     writeln('}');
   }
 
@@ -87,6 +91,9 @@ extension on StringBuffer {
       write(schemaTypeString(value.type));
       writeln(', ${quote(fieldName)}, value),');
     });
+    if (objects.unknownPropertiesStrategy == UnknownPropertiesStrategy.keep) {
+      writeln('  ${indent}extras: _unknownPropertiesMap(value),');
+    }
     writeln('$indent);');
   }
 
@@ -116,6 +123,27 @@ extension on StringBuffer {
     write(mandatoryKeys.join(', '));
     writeln('};\n'
         '  }');
+  }
+
+  void writeUnknownPropertiesMap(Objects objects) {
+    if (objects.unknownPropertiesStrategy != UnknownPropertiesStrategy.keep) {
+      return;
+    }
+    writeln('''
+  Map<String, Object?> _unknownPropertiesMap(Map<Object?, Object?> value) {
+    final result = <String, Object?>{};
+    const knownProperties = {${objects.properties.keys.map(quote).join(', ')}};
+    for (final entry in value.entries) {
+      final key = entry.key;
+      if (!knownProperties.contains(key)) {
+        if (key is! String) {
+          throw TypeException(String, key, "object key is not a String");
+        }
+        result[key] = entry.value;
+      }
+    }
+    return result;
+  }''');
   }
 
   void writeToString(Objects objects) {

@@ -51,6 +51,7 @@ Supported data types:
 | `Arrays(T)`      | `List<S>`              |
 | `ObjectsBase<C>` | `C`                    |
 | `Objects`        | `Map<String, Object?>` |
+| `Maps(T)`        | `Map<String, S>`       |
 | `Nullable(T)`    | `S?`                   |
 | `Validatable(T)` | `S`                    |
 
@@ -68,7 +69,7 @@ Schemake types are normally declared with `const`, as they are, semantically, ty
 
 ### `Objects` and `ObjectsBase`
 
-`Objects` represents `Map` data structures with a known schema, similar to Dart classes.
+`Objects` are data structures with a known schema, similar to Dart classes.
 We've seen an example of `Objects` earlier, the `Person` schema.
 
 Calling `convert` on a `Map` will convert it to a "pure" data `Map<String, Object?>` which is guaranteed to match the
@@ -79,9 +80,9 @@ schema described by the `Objects` instance.
 `Objects` extends `ObjectsBase`, which can also be used to create schema types that convert to arbitrary Dart data
 classes
 (which is normally done by code generation, as explained in the next section), which means that their `convert` method
-returns a specific Dart class instead of `Map`.
+returns instances of a specific Dart class instead of `Map`.
 
-As an example, given a simple type:
+As an example, given a simple Dart class:
 
 ```dart
 class MyType {
@@ -91,7 +92,15 @@ class MyType {
 }
 ```
 
-We could create a Schemake type for it extending `ObjectBase` as follows:
+We could specify a Schemake type for it using `Objects`:
+
+```dart
+const myTypes = Objects('MyTypes', {
+  'example': Property(Strings()),
+});
+```
+
+We could also write a `ObjectsBase` subtype that converts directly to `MyType`:
 
 ```dart
 class MyTypes extends ObjectsBase<MyType> {
@@ -118,24 +127,59 @@ class MyTypes extends ObjectsBase<MyType> {
 }
 ```
 
+The above class can convert a `Map<String, Object?>` to an instance of `MyType` while validating its schema.
+
 The `dart_gen` library (see next section) would produce something similar, but with more complete error handling
-and functionality (i.e. `toString`, `==`, `hashCode`, `toString`, `fromString`),
-when given the `MyType` equivalent schema:
+and functionality (i.e. `toString`, `==`, `hashCode`, `toString`, `fromString`, `toJson`, `fromJson` etc.).
 
-```dart
+To summarize:
 
-const myTypes = Objects('MyTypes', {
-  'example': Property(Strings()),
-});
+```
+Schema type     converts to
+ObjectsBase<S>      --->         S
+Maps<T>             --->         Map<String, T>
+Objects             --->         Map<String, Object?>
+   +---- can be used to generate some class S
+         and a subclass of ObjectsBase<S> that converts between S and other Map
 ```
 
-To represent any `Map<String, Object?>`, you can use the following `Objects` schema:
+#### Semi structured objects
+
+In a Schemake schema, you can represent any `Map<String, Object?>` (unstructured data)
+using the following `Objects` schema:
 
 ```dart
-
 const maps = Objects('Map', {},
     unknownPropertiesStrategy: UnknownPropertiesStrategy.keep);
 ```
+
+With the above schema, the values of the unknown properties are not validated at all, but are kept in the converted
+object.
+
+`UnknownPropertiesStrategy` allows the following values:
+
+* `forbid` - the default: forbids unknown properties (used for data whose structure is fully known).
+* `keep`   - allow any properties besides the known ones, and keep them in the converted object.
+* `ignore` - allow any properties besides the known ones, but discard them.
+
+For cases where some properties are known, but not all (which is common in RFCs as this allows extensions to provide
+meaning to additional properties), it's simple to define a _partial schema_:
+
+```dart
+const maps = Objects('PartialSchemaa', {
+  'knownProperty': Property(String()),
+}, unknownPropertiesStrategy: UnknownPropertiesStrategy.keep);
+```
+
+This schema determines that the `knownProperty` property must have type `String`, but allows any other properties with
+any type to exist. So, the following would be both valid instances of this schema:
+
+* `{'knownProperty': 'good'}`
+* `{'knownProperty': 'good', 'whatever': true}`
+
+But this value would NOT be valid:
+
+* `{'knownProperty': false}` --> error: cannot cast `false` to `String`
 
 ### Validatable
 

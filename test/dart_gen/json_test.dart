@@ -42,6 +42,13 @@ const _schemaWithMaps = Objects('HasMaps', {
       unknownPropertiesStrategy: UnknownPropertiesStrategy.keep)),
 });
 
+const _semiStructuredObjects = Objects(
+    'SemiStructured',
+    {
+      'str': Property(Nullable(Strings())),
+    },
+    unknownPropertiesStrategy: UnknownPropertiesStrategy.keep);
+
 const _someSchemaToJsonGeneration = r'''
 
 class SomeSchema {
@@ -113,11 +120,11 @@ class SomeSchema {
     required this.list,
   });
   static SomeSchema fromJson(Object? value) =>
-      const _SomeSchemaJsonReviver().convert(switch(value) {
-    String() => jsonDecode(value),
-    List<int>() => jsonDecode(utf8.decode(value)),
-    _ => value,
-  });
+    const _SomeSchemaJsonReviver().convert(switch(value) {
+      String() => jsonDecode(value),
+      List<int>() => jsonDecode(utf8.decode(value)),
+      _ => value,
+    });
 }
 ''';
 
@@ -170,14 +177,87 @@ class HasMaps {
     required this.objectsMap,
   });
   static HasMaps fromJson(Object? value) =>
-      const _HasMapsJsonReviver().convert(switch(value) {
-    String() => jsonDecode(value),
-    List<int>() => jsonDecode(utf8.decode(value)),
-    _ => value,
-  });
+    const _HasMapsJsonReviver().convert(switch(value) {
+      String() => jsonDecode(value),
+      List<int>() => jsonDecode(utf8.decode(value)),
+      _ => value,
+    });
   Map<String, Object?> toJson() => {
     'maps': maps,
     'objectsMap': objectsMap,
+  };
+}
+''';
+
+const _schemaSemiStructuredObjects = r'''
+import 'dart:convert';
+import 'package:schemake/schemake.dart';
+class _SemiStructuredJsonReviver extends ObjectsBase<SemiStructured> {
+  const _SemiStructuredJsonReviver(): super("SemiStructured",
+    unknownPropertiesStrategy: UnknownPropertiesStrategy.keep,
+    location: const []);
+
+  @override
+  SemiStructured convert(Object? value) {
+    if (value is! Map) throw TypeException(SemiStructured, value);
+    final keys = value.keys.map((key) {
+      if (key is! String) {
+        throw TypeException(String, key, "object key is not a String");
+      }
+      return key;
+    }).toSet();
+    checkRequiredProperties(keys);
+    return SemiStructured(
+      str: convertProperty(const Nullable<String, Strings>(Strings()), 'str', value),
+      extras: _unknownPropertiesMap(value),
+    );
+  }
+
+  @override
+  Converter<Object?, Object?>? getPropertyConverter(String property) {
+    switch(property) {
+      case 'str': return const Nullable<String, Strings>(Strings());
+      default: return null;
+    }
+  }
+  @override
+  Iterable<String> getRequiredProperties() {
+    return const {};
+  }
+  @override
+  String toString() => 'SemiStructured';
+  Map<String, Object?> _unknownPropertiesMap(Map<Object?, Object?> value) {
+    final result = <String, Object?>{};
+    const knownProperties = {'str'};
+    for (final entry in value.entries) {
+      final key = entry.key;
+      if (!knownProperties.contains(key)) {
+        if (key is! String) {
+          throw TypeException(String, key, "object key is not a String");
+        }
+        result[key] = entry.value;
+      }
+    }
+    return result;
+  }
+}
+
+class SemiStructured {
+  final String? str;
+  final Map<String, Object?> extras;
+  const SemiStructured({
+    this.str,
+    this.extras = const {},
+  });
+  static SemiStructured fromJson(Object? value) =>
+    const _SemiStructuredJsonReviver().convert(switch(value) {
+      String() => jsonDecode(value),
+      List<int>() => jsonDecode(utf8.decode(value)),
+      _ => value,
+    });
+  Map<String, Object?> toJson() => {
+    if (str != null) 'str': str,
+    ...extras,
   };
 }
 ''';
@@ -282,6 +362,17 @@ void main() {
           ));
       expect(result.toString(), equals(_schemaWithMapsToAndFromJsonGeneration));
     });
+
+    test('both toJson and fromJson for semi-structured objects', () {
+      final result = generateDartClasses([_semiStructuredObjects],
+          options: DartGeneratorOptions(
+            methodGenerators: [
+              const FromJsonMethodGenerator(),
+              const ToJsonMethodGenerator()
+            ],
+          ));
+      expect(result.toString(), equals(_schemaSemiStructuredObjects));
+    });
   });
 
   group('generated classes', () {
@@ -326,7 +417,7 @@ void main() {
       expect(stdout, equals(['Counter{count: 42}', 'Counter{count: null}']));
     });
 
-    test('toJson and fromJson work for Maps', () async {
+    test('toJson and fromJson and toString work for Maps', () async {
       final (stdout, stderr) = await generateAndRunDartClass(
           _schemaWithMaps,
           '''
@@ -352,6 +443,32 @@ void main() {
             '{"maps":{"foo":"bar"},'
                 '"objectsMap":{"one":1}}',
             'HasMaps{maps: {foo: bar}, objectsMap: {one: 1}}'
+          ]));
+    });
+
+    test('toJson and fromJson and toString work for semi-structured objects',
+        () async {
+      final (stdout, stderr) = await generateAndRunDartClass(
+          _semiStructuredObjects,
+          '''
+          void main() {
+            final data = SemiStructured.fromJson('{"str":"ab","cd":1,"d":"e"}');
+            print(data);
+            print(data.toJson());
+          }''',
+          DartGeneratorOptions(
+            methodGenerators: [
+              const FromJsonMethodGenerator(),
+              const ToJsonMethodGenerator(),
+              const DartToStringMethodGenerator(),
+            ],
+          ));
+      expect(stderr, isEmpty);
+      expect(
+          stdout,
+          equals([
+            'SemiStructured{str: "ab", extras: ${{"cd": 1, "d": "e"}}}',
+            {"str": "ab", "cd": 1, "d": "e"}.toString(),
           ]));
     });
 

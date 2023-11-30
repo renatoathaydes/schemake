@@ -141,6 +141,35 @@ class HasMaps {
 }
 ''';
 
+const _generatedSemiStructuredClass = r'''
+import 'package:collection/collection.dart';
+
+class SemiStructured {
+  final String? str;
+  final Map<String, Object?> extras;
+  const SemiStructured({
+    this.str,
+    this.extras = const {},
+  });
+  @override
+  String toString() =>
+    'SemiStructured{'
+    'str: "$str", '
+    'extras: $extras'
+    '}';
+  @override
+  bool operator ==(Object other) =>
+    identical(this, other) ||
+    other is SemiStructured &&
+    runtimeType == other.runtimeType &&
+    str == other.str &&
+    const MapEquality<String, Object?>().equals(extras, other.extras);
+  @override
+  int get hashCode =>
+    str.hashCode ^ const MapEquality<String, Object?>().hash(extras);
+}
+''';
+
 const _personSchema = Objects('Person', {
   'name': Property<String>(Strings()),
   'age': Property<int?>(Nullable(Ints())),
@@ -183,6 +212,13 @@ const _schemaWithMaps = Objects('HasMaps', {
           valueType: Strings(), description: 'map with string values.'),
       description: 'Property with Map of Strings.'),
 });
+
+const _semiStructuredObjects = Objects(
+    'SemiStructured',
+    {
+      'str': Property(Nullable(Strings())),
+    },
+    unknownPropertiesStrategy: UnknownPropertiesStrategy.keep);
 
 void main() {
   group('Schemake Dart class gen', () {
@@ -264,6 +300,12 @@ void main() {
     test('can write Maps', () {
       expect(generateDartClasses([_schemaWithMaps]).toString(),
           equals(_generatedClassWithMaps));
+    });
+
+    test('can generate semi-structured Dart class toString, == and hashCode',
+        () {
+      expect(generateDartClasses([_semiStructuredObjects]).toString(),
+          equals(_generatedSemiStructuredClass));
     });
   });
 }

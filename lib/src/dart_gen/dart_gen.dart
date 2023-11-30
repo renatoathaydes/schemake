@@ -50,16 +50,18 @@ final class DartGeneratorOptions {
     DartEqualsAndHashCodeMethodGenerator(),
   ];
 
-  static String _finalField(Property<Object?> _) => 'final ';
+  static String _finalField(String name, Property<Object?> _) => 'final ';
 
   static String _const() => 'const ';
 
   final String? insertBeforeClass;
   final String Function(String propertyName) fieldName;
   final String Function(String className) className;
-  final String Function(Property<Object?> property)? insertBeforeField;
+  final String Function(String name, Property<Object?> property)?
+      insertBeforeField;
   final String Function()? insertBeforeConstructor;
-  final String Function(Property<Object?> property)? insertBeforeConstructorArg;
+  final String Function(String name, Property<Object?> property)?
+      insertBeforeConstructorArg;
   final List<DartMethodGenerator> methodGenerators;
   final bool encodeNulls;
 
@@ -194,11 +196,17 @@ extension on StringBuffer {
     objects.properties.forEach((key, value) {
       writeComments(value.description, '  ');
       write('  ');
-      options.insertBeforeField?.vmap((get) => write(get(value)));
+      options.insertBeforeField?.vmap((get) => write(get(key, value)));
       writeType(value.type, extras, options);
       write(' ${options.fieldName(key)}');
       writeln(';');
     });
+    if (objects.unknownPropertiesStrategy == UnknownPropertiesStrategy.keep) {
+      write('  ');
+      options.insertBeforeField?.vmap(
+          (get) => write(get('extras', const Property(Objects('Map', {})))));
+      writeln('Map<String, Object?> extras;');
+    }
   }
 
   void writeConstructor(Objects objects, DartGeneratorOptions options) {
@@ -206,7 +214,7 @@ extension on StringBuffer {
     options.insertBeforeConstructor?.vmap((get) => write(get()));
     writeln('${options.className(objects.name)}({');
     objects.properties.forEach((key, value) {
-      options.insertBeforeConstructorArg?.vmap((get) => get(value));
+      options.insertBeforeConstructorArg?.vmap((get) => get(key, value));
       write((value.defaultValue != null || value.type is Nullable)
           ? '    '
           : '    required ');
@@ -224,6 +232,9 @@ extension on StringBuffer {
       });
       writeln(',');
     });
+    if (objects.unknownPropertiesStrategy == UnknownPropertiesStrategy.keep) {
+      writeln('    this.extras = const {},');
+    }
     writeln('  });');
   }
 
@@ -268,7 +279,9 @@ extension on StringBuffer {
         '  String toString() =>\n'
         '    ');
     writeln(quote('${options.className(objects.name)}{'));
-    final lastIndex = objects.properties.length - 1;
+    final hasExtras =
+        objects.unknownPropertiesStrategy == UnknownPropertiesStrategy.keep;
+    final lastIndex = objects.properties.length - (hasExtras ? 0 : 1);
     var index = 0;
     objects.properties.forEach((key, value) {
       write('    ');
@@ -277,6 +290,9 @@ extension on StringBuffer {
       writeln(quote(
           '$fieldName: ${wrapValue(fieldName)}${index++ == lastIndex ? '' : ', '}'));
     });
+    if (hasExtras) {
+      writeln(r"    'extras: $extras'");
+    }
     write('    ');
     write(quote('}'));
     writeln(';');
@@ -288,55 +304,74 @@ extension on StringBuffer {
         '    identical(this, other) ||');
     write('    other is ${options.className(objects.name)} &&\n'
         '    runtimeType == other.runtimeType');
+    final hasExtras =
+        objects.unknownPropertiesStrategy == UnknownPropertiesStrategy.keep;
     GeneratorExtras? extras;
+    if (hasExtras) {
+      extras = const GeneratorExtras({'package:collection/collection.dart'});
+    }
     if (objects.properties.isNotEmpty) {
       writeln(' &&');
-      write(objects.properties.entries.map((entry) {
-        final fieldName = options.fieldName(entry.key);
-        final type = entry.value.type;
-        final listItemType = type.listItemsTypeOrNull;
-        if (listItemType != null) {
-          extras =
-              const GeneratorExtras({'package:collection/collection.dart'});
-          return '    const ListEquality<$listItemType>()'
-              '.equals($fieldName, other.$fieldName)';
-        }
-        final mapValueType = type.mapValueTypeOrNull;
-        if (mapValueType != null) {
-          extras =
-              const GeneratorExtras({'package:collection/collection.dart'});
-          return '    const MapEquality<String, $mapValueType>()'
-              '.equals($fieldName, other.$fieldName)';
-        }
-        return '    $fieldName == other.$fieldName';
-      }).join(' &&\n'));
+      write(objects.properties.entries
+          .map((entry) {
+            final fieldName = options.fieldName(entry.key);
+            final type = entry.value.type;
+            final listItemType = type.listItemsTypeOrNull;
+            if (listItemType != null) {
+              extras =
+                  const GeneratorExtras({'package:collection/collection.dart'});
+              return '    const ListEquality<$listItemType>()'
+                  '.equals($fieldName, other.$fieldName)';
+            }
+            final mapValueType = type.mapValueTypeOrNull;
+            if (mapValueType != null) {
+              extras =
+                  const GeneratorExtras({'package:collection/collection.dart'});
+              return '    const MapEquality<String, $mapValueType>()'
+                  '.equals($fieldName, other.$fieldName)';
+            }
+            return '    $fieldName == other.$fieldName';
+          })
+          .followedBy(hasExtras
+              ? {
+                  '    const MapEquality<String, Object?>().equals(extras, other.extras)'
+                }
+              : {})
+          .join(' &&\n'));
     }
     writeln(';');
     return extras;
   }
 
   void writeHashCode(Objects objects, DartGeneratorOptions options) {
+    final hasExtras =
+        objects.unknownPropertiesStrategy == UnknownPropertiesStrategy.keep;
     writeln('  @override\n'
         '  int get hashCode =>');
-    if (objects.properties.isEmpty) {
+    if (objects.properties.isEmpty && !hasExtras) {
       write('    runtimeType.hashCode');
     } else {
       write('    ');
-      write(objects.properties.entries.map((entry) {
-        final fieldName = options.fieldName(entry.key);
-        final type = entry.value.type;
-        final listItemType = type.listItemsTypeOrNull;
-        if (listItemType != null) {
-          return 'const ListEquality<$listItemType>()'
-              '.hash($fieldName)';
-        }
-        final mapValueType = type.mapValueTypeOrNull;
-        if (mapValueType != null) {
-          return 'const MapEquality<String, $mapValueType>()'
-              '.hash($fieldName)';
-        }
-        return '$fieldName.hashCode';
-      }).join(' ^ '));
+      write(objects.properties.entries
+          .map((entry) {
+            final fieldName = options.fieldName(entry.key);
+            final type = entry.value.type;
+            final listItemType = type.listItemsTypeOrNull;
+            if (listItemType != null) {
+              return 'const ListEquality<$listItemType>()'
+                  '.hash($fieldName)';
+            }
+            final mapValueType = type.mapValueTypeOrNull;
+            if (mapValueType != null) {
+              return 'const MapEquality<String, $mapValueType>()'
+                  '.hash($fieldName)';
+            }
+            return '$fieldName.hashCode';
+          })
+          .followedBy(hasExtras
+              ? {'const MapEquality<String, Object?>().hash(extras)'}
+              : {})
+          .join(' ^ '));
     }
     writeln(';');
   }
