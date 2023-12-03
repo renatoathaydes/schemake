@@ -35,9 +35,13 @@ extension ObjectsExtension on ObjectsBase<Object?> {
 typedef _TypeOf<T> = T;
 
 extension SchemakeTypeExtension on SchemaType<Object?> {
-  Type? get listItemsTypeOrNull {
+  Object? get listItemsTypeOrNull {
     final self = this;
     if (self is Arrays<Object?, Object?>) {
+      final type = self.itemsType;
+      if (type is Objects && !type.isSimpleMap) {
+        return type.name;
+      }
       return (self.itemsType as SchemaType<Object?>).dartType();
     }
     return null;
@@ -52,5 +56,13 @@ extension SchemakeTypeExtension on SchemaType<Object?> {
       return _TypeOf<Object?>;
     }
     return null;
+  }
+}
+
+extension ListExtension<T> on List<T> {
+  List<T> drain() {
+    final copy = [...this];
+    clear();
+    return copy;
   }
 }

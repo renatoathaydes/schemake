@@ -9,9 +9,11 @@ import '_utils.dart';
 
 class GeneratorExtras {
   final Set<String> imports;
-  final void Function(StringBuffer) topLevelWriter;
+  final Set<String> types;
+  final void Function(StringBuffer) writeTypes;
 
-  const GeneratorExtras(this.imports, [this.topLevelWriter = _noOpWriter]);
+  const GeneratorExtras(this.imports,
+      [this.types = const {}, this.writeTypes = _noOpWriter]);
 
   static void _noOpWriter(StringBuffer _) {}
 }
@@ -54,7 +56,9 @@ final class DartGeneratorOptions {
 
   static String _const() => 'const ';
 
-  final String? insertBeforeClass;
+  static String _newline(String _) => '\n';
+
+  final String Function(String name) insertBeforeClass;
   final String Function(String propertyName) fieldName;
   final String Function(String className) className;
   final String Function(String name, Property<Object?> property)?
@@ -66,7 +70,7 @@ final class DartGeneratorOptions {
   final bool encodeNulls;
 
   const DartGeneratorOptions({
-    this.insertBeforeClass,
+    this.insertBeforeClass = _newline,
     this.fieldName = toCamelCase,
     this.className = toPascalCase,
     this.insertBeforeField = _finalField,
@@ -106,11 +110,7 @@ StringBuffer generateDartClasses(List<Objects> schemaTypes,
     writer.writeObjects(type, generatorExtras, options);
   }
   if (generatorExtras.isNotEmpty) {
-    final withExtras = StringBuffer();
-    // prepend the extras to the result
-    withExtras.writeExtras(generatorExtras);
-    withExtras.write(writer);
-    return withExtras;
+    return writer.withExtras(generatorExtras);
   }
   return writer;
 }
@@ -121,8 +121,8 @@ extension on StringBuffer {
     // in case of a simple Map, there's no extra type to write
     if (objects.isSimpleMap) return this;
     if (objects is Objects) {
-      extras.add(GeneratorExtras(
-          const {}, (writer) => writer.writeObjects(objects, extras, options)));
+      extras.add(GeneratorExtras(const {}, {options.className(objects.name)},
+          (writer) => writer.writeObjects(objects, extras, options)));
     } else {
       throw UnsupportedError('The only subtypes of ObjectsBase allowed to be '
           'used for code generation are Objects and Maps. '
@@ -168,7 +168,7 @@ extension on StringBuffer {
   void writeObjects(Objects objects, List<GeneratorExtras> extras,
       DartGeneratorOptions options) {
     writeComments(objects.description);
-    write(options.insertBeforeClass ?? '\n');
+    write(options.insertBeforeClass(objects.name));
     writeln('class ${options.className(objects.name)} {');
     writeFields(objects, extras, options);
     writeConstructor(objects, options);
@@ -376,13 +376,34 @@ extension on StringBuffer {
     writeln(';');
   }
 
-  void writeExtras(Iterable<GeneratorExtras> extras) {
-    for (final imp in extras.expand((e) => e.imports).toSet()) {
-      writeln('import ${quote(imp)};');
+  StringBuffer withExtras(List<GeneratorExtras> extras) {
+    // write everything extra to this buffer, but keep imports separately
+    final result = StringBuffer();
+    final imports = writeExtras(extras);
+    for (final imp in imports) {
+      result.writeln('import ${quote(imp)};');
     }
-    for (final extra in extras) {
-      extra.topLevelWriter(this);
+    result.write(this);
+    return result;
+  }
+
+  Iterable<String> writeExtras(List<GeneratorExtras> extras) {
+    final imports = <String>{};
+    final typesWritten = <String>{};
+    // as extras items run, they may add more items to extras itself,
+    // so we make a copy of it and then run items that were added later.
+    while (extras.isNotEmpty) {
+      final remaining = extras.drain();
+      for (final extra in remaining) {
+        imports.addAll(extra.imports);
+        var shouldWrite = false;
+        for (final type in extra.types) {
+          shouldWrite |= typesWritten.add(type);
+        }
+        if (shouldWrite) extra.writeTypes(this);
+      }
     }
+    return imports;
   }
 
   void writeStringLiteral(String value) {

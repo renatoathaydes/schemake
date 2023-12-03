@@ -20,15 +20,18 @@ class DartEnumGeneratorOptions
 
   @override
   GeneratorExtras? getDartTypeGenerator(EnumValidator validator) {
+    final typeName = dartTypeName ?? validator.name;
+    final converterName = _converterName(validator);
     return GeneratorExtras(
-        const {'dart:convert', 'package:schemake/schemake.dart'}, (writer) {
-      _generateEnum(writer, validator);
-      _generateConverter(writer, validator);
+        const {'dart:convert', 'package:schemake/schemake.dart'},
+        {typeName, converterName}, (writer) {
+      _generateEnum(writer, typeName, validator);
+      _generateConverter(writer, typeName, converterName, validator);
     });
   }
 
-  void _generateEnum(StringBuffer buffer, EnumValidator validator) {
-    final typeName = dartTypeName ?? validator.name;
+  void _generateEnum(
+      StringBuffer buffer, String typeName, EnumValidator validator) {
     buffer.writeln('enum $typeName {');
     for (var name in validator.values) {
       buffer.writeln('  ${dartVariantName(name)},');
@@ -54,10 +57,8 @@ class DartEnumGeneratorOptions
     return '_${typeName}Converter';
   }
 
-  void _generateConverter(StringBuffer buffer, EnumValidator validator) {
-    final typeName = dartTypeName ?? validator.name;
-    final converterName = _converterName(validator);
-
+  void _generateConverter(StringBuffer buffer, String typeName,
+      String converterName, EnumValidator validator) {
     buffer.writeln('class $converterName '
         'extends Converter<Object?, $typeName> {\n'
         '  const $converterName();\n'
@@ -85,7 +86,7 @@ class DartIntRangeGeneratorOptions
   @override
   String selfCreateString(IntRangeValidator validator) {
     final typeName = validator.runtimeType;
-    return "Validatable(${schemaTypeString(const Ints())}, "
+    return "Validatable(${schemaTypeString(const Ints(), const DartGeneratorOptions())}, "
         "$typeName(${validator.min}, ${validator.max}))";
   }
 }

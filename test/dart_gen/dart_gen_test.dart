@@ -3,7 +3,6 @@ import 'package:schemake/schemake.dart';
 import 'package:test/test.dart';
 
 const _generatedPersonClass = r'''
-
 class Person {
   final String name;
   final int? age;
@@ -96,6 +95,33 @@ class Nested {
 }
 ''';
 
+const _generatedNestedListClass = r'''
+class NestedList {
+  final List<Person> inners;
+  final Person inner1;
+  const NestedList({
+    required this.inners,
+    required this.inner1,
+  });
+  @override
+  String toString() =>
+    'NestedList{'
+    'inners: $inners, '
+    'inner1: $inner1'
+    '}';
+  @override
+  bool operator ==(Object other) =>
+    identical(this, other) ||
+    other is NestedList &&
+    runtimeType == other.runtimeType &&
+    const ListEquality<Person>().equals(inners, other.inners) &&
+    inner1 == other.inner1;
+  @override
+  int get hashCode =>
+    const ListEquality<Person>().hash(inners) ^ inner1.hashCode;
+}
+''';
+
 const _generatedWithMetadata = '''
 /// My metadata.
 /// This should appear in the class.
@@ -183,6 +209,11 @@ const _nestedObjectSchema = Objects('Nested', {
   'inner': Property(_personSchema),
 });
 
+const _nestedListObjectsSchema = Objects('NestedList', {
+  'inners': Property(Arrays<Map<String, Object?>, Objects>(_personSchema)),
+  'inner1': Property(_personSchema),
+});
+
 const _validatableObjectSchema = Objects('Validated', {
   'some':
       Property(Validatable(Strings(), EnumValidator('Foo', {'foo', 'bar'}))),
@@ -224,7 +255,7 @@ void main() {
   group('Schemake Dart class gen', () {
     test('can write simple Dart class', () {
       expect(generateDartClasses([_personSchema]).toString(),
-          equals(_generatedPersonClass));
+          equals('\n$_generatedPersonClass'));
     });
 
     test('can write Dart class with array', () {
@@ -259,10 +290,20 @@ void main() {
               .toString(),
           equals('import \'dart:convert\';\n'
               'import \'package:schemake/schemake.dart\';\n'
-              '$_generatedPersonClass'
-              '$_generatedEnumClass\n'
+              '\n'
               '$_generatedNestedClass\n'
-              '$_generatedValidatedClass'));
+              '$_generatedValidatedClass\n'
+              '$_generatedPersonClass'
+              '$_generatedEnumClass'));
+    });
+
+    test('can write Dart class with nested Objects in List', () {
+      expect(
+          generateDartClasses([_nestedListObjectsSchema]).toString(),
+          equals('import \'package:collection/collection.dart\';\n'
+              '\n'
+              '$_generatedNestedListClass\n'
+              '$_generatedPersonClass'));
     });
 
     test(
@@ -291,9 +332,9 @@ void main() {
     test('can generate description and default value', () {
       expect(
           generateDartClasses([_schemaWithMetadata],
-                  options: DartGeneratorOptions(
-                      methodGenerators: [], insertBeforeClass: 'final '))
-              .toString(),
+              options: DartGeneratorOptions(
+                  methodGenerators: [],
+                  insertBeforeClass: (_) => 'final ')).toString(),
           equals(_generatedWithMetadata));
     });
 

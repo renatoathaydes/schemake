@@ -42,6 +42,11 @@ const _schemaWithMaps = Objects('HasMaps', {
       unknownPropertiesStrategy: UnknownPropertiesStrategy.keep)),
 });
 
+const _nestedListObjectsSchema = Objects('NestedList', {
+  'inners': Property(Arrays<Map<String, Object?>, Objects>(_someSchema)),
+  'inner1': Property(_someSchema),
+});
+
 const _semiStructuredObjects = Objects(
     'SemiStructured',
     {
@@ -50,7 +55,6 @@ const _semiStructuredObjects = Objects(
     unknownPropertiesStrategy: UnknownPropertiesStrategy.keep);
 
 const _someSchemaToJsonGeneration = r'''
-
 class SomeSchema {
   final String mandatory;
   final double? optional;
@@ -68,9 +72,26 @@ class SomeSchema {
 }
 ''';
 
-const _someSchemaFromJsonGeneration = r'''
-import 'dart:convert';
-import 'package:schemake/schemake.dart';
+const _someSchemaClassFromJsonGeneration = r'''
+class SomeSchema {
+  final String mandatory;
+  final double? optional;
+  final List<int> list;
+  const SomeSchema({
+    required this.mandatory,
+    this.optional,
+    required this.list,
+  });
+  static SomeSchema fromJson(Object? value) =>
+    const _SomeSchemaJsonReviver().convert(switch(value) {
+      String() => jsonDecode(value),
+      List<int>() => jsonDecode(utf8.decode(value)),
+      _ => value,
+    });
+}
+''';
+
+const _someSchemaJsonReviverGeneration = r'''
 class _SomeSchemaJsonReviver extends ObjectsBase<SomeSchema> {
   const _SomeSchemaJsonReviver(): super("SomeSchema",
     unknownPropertiesStrategy: UnknownPropertiesStrategy.forbid,
@@ -109,18 +130,18 @@ class _SomeSchemaJsonReviver extends ObjectsBase<SomeSchema> {
   @override
   String toString() => 'SomeSchema';
 }
+''';
 
-class SomeSchema {
-  final String mandatory;
-  final double? optional;
-  final List<int> list;
-  const SomeSchema({
-    required this.mandatory,
-    this.optional,
-    required this.list,
+const _nestedListObjectsClassFromJsonGeneration = r'''
+class NestedList {
+  final List<SomeSchema> inners;
+  final SomeSchema inner1;
+  const NestedList({
+    required this.inners,
+    required this.inner1,
   });
-  static SomeSchema fromJson(Object? value) =>
-    const _SomeSchemaJsonReviver().convert(switch(value) {
+  static NestedList fromJson(Object? value) =>
+    const _NestedListJsonReviver().convert(switch(value) {
       String() => jsonDecode(value),
       List<int>() => jsonDecode(utf8.decode(value)),
       _ => value,
@@ -128,9 +149,83 @@ class SomeSchema {
 }
 ''';
 
+const _nestedListObjectsClassToJsonGeneration = r'''
+class NestedList {
+  final List<SomeSchema> inners;
+  final SomeSchema inner1;
+  const NestedList({
+    required this.inners,
+    required this.inner1,
+  });
+  Map<String, Object?> toJson() => {
+    'inners': inners,
+    'inner1': inner1,
+  };
+}
+''';
+
+const _nestedListObjectsReviverFromJsonGeneration = r'''
+class _NestedListJsonReviver extends ObjectsBase<NestedList> {
+  const _NestedListJsonReviver(): super("NestedList",
+    unknownPropertiesStrategy: UnknownPropertiesStrategy.forbid,
+    location: const []);
+
+  @override
+  NestedList convert(Object? value) {
+    if (value is! Map) throw TypeException(NestedList, value);
+    final keys = value.keys.map((key) {
+      if (key is! String) {
+        throw TypeException(String, key, "object key is not a String");
+      }
+      return key;
+    }).toSet();
+    checkRequiredProperties(keys);
+    return NestedList(
+      inners: convertProperty(const Arrays<SomeSchema, _SomeSchemaJsonReviver>(_SomeSchemaJsonReviver()), 'inners', value),
+      inner1: convertProperty(const _SomeSchemaJsonReviver(), 'inner1', value),
+    );
+  }
+
+  @override
+  Converter<Object?, Object?>? getPropertyConverter(String property) {
+    switch(property) {
+      case 'inners': return const Arrays<SomeSchema, _SomeSchemaJsonReviver>(_SomeSchemaJsonReviver());
+      case 'inner1': return const _SomeSchemaJsonReviver();
+      default: return null;
+    }
+  }
+  @override
+  Iterable<String> getRequiredProperties() {
+    return const {'inners', 'inner1'};
+  }
+  @override
+  String toString() => 'NestedList';
+}
+''';
+
 const _schemaWithMapsToAndFromJsonGeneration = r'''
 import 'dart:convert';
 import 'package:schemake/schemake.dart';
+
+class HasMaps {
+  /// Property with Map of Strings.
+  final Map<String, String> maps;
+  final Map<String, Object?> objectsMap;
+  const HasMaps({
+    required this.maps,
+    required this.objectsMap,
+  });
+  static HasMaps fromJson(Object? value) =>
+    const _HasMapsJsonReviver().convert(switch(value) {
+      String() => jsonDecode(value),
+      List<int>() => jsonDecode(utf8.decode(value)),
+      _ => value,
+    });
+  Map<String, Object?> toJson() => {
+    'maps': maps,
+    'objectsMap': objectsMap,
+  };
+}
 class _HasMapsJsonReviver extends ObjectsBase<HasMaps> {
   const _HasMapsJsonReviver(): super("HasMaps",
     unknownPropertiesStrategy: UnknownPropertiesStrategy.forbid,
@@ -167,31 +262,30 @@ class _HasMapsJsonReviver extends ObjectsBase<HasMaps> {
   @override
   String toString() => 'HasMaps';
 }
-
-class HasMaps {
-  /// Property with Map of Strings.
-  final Map<String, String> maps;
-  final Map<String, Object?> objectsMap;
-  const HasMaps({
-    required this.maps,
-    required this.objectsMap,
-  });
-  static HasMaps fromJson(Object? value) =>
-    const _HasMapsJsonReviver().convert(switch(value) {
-      String() => jsonDecode(value),
-      List<int>() => jsonDecode(utf8.decode(value)),
-      _ => value,
-    });
-  Map<String, Object?> toJson() => {
-    'maps': maps,
-    'objectsMap': objectsMap,
-  };
-}
 ''';
 
 const _schemaSemiStructuredObjects = r'''
 import 'dart:convert';
 import 'package:schemake/schemake.dart';
+
+class SemiStructured {
+  final String? str;
+  final Map<String, Object?> extras;
+  const SemiStructured({
+    this.str,
+    this.extras = const {},
+  });
+  static SemiStructured fromJson(Object? value) =>
+    const _SemiStructuredJsonReviver().convert(switch(value) {
+      String() => jsonDecode(value),
+      List<int>() => jsonDecode(utf8.decode(value)),
+      _ => value,
+    });
+  Map<String, Object?> toJson() => {
+    if (str != null) 'str': str,
+    ...extras,
+  };
+}
 class _SemiStructuredJsonReviver extends ObjectsBase<SemiStructured> {
   const _SemiStructuredJsonReviver(): super("SemiStructured",
     unknownPropertiesStrategy: UnknownPropertiesStrategy.keep,
@@ -241,97 +335,91 @@ class _SemiStructuredJsonReviver extends ObjectsBase<SemiStructured> {
     return result;
   }
 }
-
-class SemiStructured {
-  final String? str;
-  final Map<String, Object?> extras;
-  const SemiStructured({
-    this.str,
-    this.extras = const {},
-  });
-  static SemiStructured fromJson(Object? value) =>
-    const _SemiStructuredJsonReviver().convert(switch(value) {
-      String() => jsonDecode(value),
-      List<int>() => jsonDecode(utf8.decode(value)),
-      _ => value,
-    });
-  Map<String, Object?> toJson() => {
-    if (str != null) 'str': str,
-    ...extras,
-  };
-}
 ''';
+
+const _options = DartGeneratorOptions();
 
 void main() {
   group('schemaTypeString', () {
     test('strings', () {
-      expect(schemaTypeString(Strings()), equals('Strings()'));
+      expect(schemaTypeString(Strings(), _options), equals('Strings()'));
     });
 
     test('ints', () {
-      expect(schemaTypeString(Ints()), equals('Ints()'));
+      expect(schemaTypeString(Ints(), _options), equals('Ints()'));
     });
 
     test('bools', () {
-      expect(schemaTypeString(Bools()), equals('Bools()'));
+      expect(schemaTypeString(Bools(), _options), equals('Bools()'));
     });
 
     test('floats', () {
-      expect(schemaTypeString(Floats()), equals('Floats()'));
+      expect(schemaTypeString(Floats(), _options), equals('Floats()'));
     });
 
     test('enums', () {
       expect(
           schemaTypeString(
-              Validatable(Strings(), EnumValidator('MyEnum', {'abc', 'def'}))),
+              Validatable(Strings(), EnumValidator('MyEnum', {'abc', 'def'})),
+              _options),
           equals("_MyEnumConverter()"));
     });
 
     test('int ranges', () {
-      expect(schemaTypeString(Validatable(Ints(), IntRangeValidator(2, 3))),
+      expect(
+          schemaTypeString(
+              Validatable(Ints(), IntRangeValidator(2, 3)), _options),
           equals('Validatable(Ints(), IntRangeValidator(2, 3))'));
     });
 
     test('non-blank strings', () {
       expect(
-          schemaTypeString(Validatable(Strings(), NonBlankStringValidator())),
+          schemaTypeString(
+              Validatable(Strings(), NonBlankStringValidator()), _options),
           equals('Validatable(Strings(), NonBlankStringValidator())'));
     });
 
     test('custom objects', () {
       // the auto-generated name is assumed
-      expect(schemaTypeString(_TestObject()), equals('_TestObject()'));
+      expect(schemaTypeString(_TestObject(), _options),
+          equals('__TestingJsonReviver()'));
     });
 
     test('arrays', () {
-      expect(schemaTypeString(Arrays<double, Floats>(Floats())),
+      expect(schemaTypeString(Arrays<double, Floats>(Floats()), _options),
           equals('Arrays<double, Floats>(Floats())'));
 
-      expect(schemaTypeString(Arrays<String, Strings>(Strings())),
+      expect(schemaTypeString(Arrays<String, Strings>(Strings()), _options),
           equals('Arrays<String, Strings>(Strings())'));
     });
 
     test('nested arrays', () {
       expect(
-          schemaTypeString(Arrays<List<double>, Arrays<double, Floats>>(
-              Arrays<double, Floats>(Floats()))),
+          schemaTypeString(
+              Arrays<List<double>, Arrays<double, Floats>>(
+                  Arrays<double, Floats>(Floats())),
+              _options),
           equals('Arrays<List<double>, Arrays<double, Floats>>('
               'Arrays<double, Floats>(Floats()))'));
     });
 
     test('arrays of custom objects', () {
-      expect(schemaTypeString(Arrays<_Testing, _TestObject>(_TestObject())),
-          equals('Arrays<_Testing, _TestObject>(_TestObject())'));
+      expect(
+          schemaTypeString(
+              Arrays<_Testing, _TestObject>(_TestObject()), _options),
+          equals('Arrays<_Testing, _TestObject>(__TestingJsonReviver())'));
     });
 
     test('nullable', () {
-      expect(schemaTypeString(Nullable<int, Ints>(Ints())),
+      expect(schemaTypeString(Nullable<int, Ints>(Ints()), _options),
           equals('Nullable<int, Ints>(Ints())'));
     });
 
     test('nullable custom object', () {
-      expect(schemaTypeString(Nullable<_Testing, _TestObject>(_TestObject())),
-          equals('Nullable<_Testing, _TestObject>(_TestObject())'));
+      expect(
+          schemaTypeString(
+              Nullable<_Testing, _TestObject>(_TestObject()), _options),
+          equals('Nullable<_Testing, _TestObject>(__TestingJsonReviver())'));
     });
   });
 
@@ -341,7 +429,7 @@ void main() {
           options: DartGeneratorOptions(
             methodGenerators: [const DartToJsonMethodGenerator()],
           ));
-      expect(result.toString(), equals(_someSchemaToJsonGeneration));
+      expect('$result', equals('\n$_someSchemaToJsonGeneration'));
     });
 
     test('fromJson', () {
@@ -349,7 +437,38 @@ void main() {
           options: DartGeneratorOptions(
             methodGenerators: [const DartFromJsonMethodGenerator()],
           ));
-      expect(result.toString(), equals(_someSchemaFromJsonGeneration));
+      expect(
+          result.toString(),
+          equals("import 'dart:convert';\n"
+              "import 'package:schemake/schemake.dart';\n\n"
+              '$_someSchemaClassFromJsonGeneration'
+              '$_someSchemaJsonReviverGeneration'));
+    });
+
+    test('fromJson (nested object with List)', () {
+      final result = generateDartClasses([_nestedListObjectsSchema],
+          options: DartGeneratorOptions(
+            methodGenerators: [const DartFromJsonMethodGenerator()],
+          ));
+      expect(
+          result.toString(),
+          equals("import 'dart:convert';\n"
+              "import 'package:schemake/schemake.dart';\n\n"
+              '$_nestedListObjectsClassFromJsonGeneration\n'
+              '$_someSchemaClassFromJsonGeneration'
+              '$_nestedListObjectsReviverFromJsonGeneration'
+              '$_someSchemaJsonReviverGeneration'));
+    });
+
+    test('toJson (nested object with List)', () {
+      final result = generateDartClasses([_nestedListObjectsSchema],
+          options: DartGeneratorOptions(
+            methodGenerators: [const DartToJsonMethodGenerator()],
+          ));
+      expect(
+          result.toString(),
+          equals('\n$_nestedListObjectsClassToJsonGeneration\n'
+              '$_someSchemaToJsonGeneration'));
     });
 
     test('both toJson and fromJson for Map objects', () {
