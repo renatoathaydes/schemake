@@ -54,6 +54,11 @@ const _semiStructuredObjects = Objects(
     },
     unknownPropertiesStrategy: UnknownPropertiesStrategy.keep);
 
+const _lispCaseType = Objects('lisp-object', {
+  'some-prop': Property(Bools()),
+  'many-props': Property(Arrays<int, Ints>(Ints())),
+});
+
 const _someSchemaToJsonGeneration = r'''
 class SomeSchema {
   final String mandatory;
@@ -588,6 +593,41 @@ void main() {
           equals([
             'SemiStructured{str: "ab", extras: ${{"cd": 1, "d": "e"}}}',
             {"str": "ab", "cd": 1, "d": "e"}.toString(),
+          ]));
+    });
+
+    test('toJson and fromJson and toString and == work for lisp-case objects',
+        () async {
+      final (stdout, stderr) = await generateAndRunDartClass(
+          _lispCaseType,
+          '''
+          void main() {
+            final data = LispObject.fromJson('{"some-prop":false,"many-props":[4,3]}');
+            print(data);
+            print(data.toJson());
+            print(data == LispObject(someProp: false, manyProps: [4, 3]));
+            print(data == LispObject(someProp: true, manyProps: [4, 3]));
+            print(data == LispObject(someProp: false, manyProps: [4]));
+          }''',
+          DartGeneratorOptions(
+            methodGenerators: [
+              ...DartGeneratorOptions.defaultMethodGenerators,
+              const DartFromJsonMethodGenerator(),
+              const DartToJsonMethodGenerator(),
+            ],
+          ));
+      expect(stderr, isEmpty);
+      expect(
+          stdout,
+          equals([
+            'LispObject{someProp: false, manyProps: ${[4, 3]}}',
+            {
+              "some-prop": false,
+              "many-props": [4, 3]
+            }.toString(),
+            'true',
+            'false',
+            'false',
           ]));
     });
 

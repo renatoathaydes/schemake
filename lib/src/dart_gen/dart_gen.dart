@@ -149,7 +149,7 @@ extension on StringBuffer {
         addExtrasIfOwnType(generatorExtras, schemaType, options).write(
             typeWrapper(schemaType.isSimpleMap
                 ? schemaType.dartType().toString()
-                : className)),
+                : options.className(className))),
     };
   }
 

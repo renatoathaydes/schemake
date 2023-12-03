@@ -22,7 +22,7 @@ class DartFromJsonMethodGenerator with DartMethodGenerator {
   @override
   GeneratorExtras generateMethod(
       StringBuffer buffer, Objects objects, DartGeneratorOptions options) {
-    final reviverName = _reviverName(objects.name);
+    final reviverName = _reviverName(options.className(objects.name));
     buffer.writeFromJson(objects, reviverName, options);
     return GeneratorExtras(
         const {'dart:convert', 'package:schemake/schemake.dart'},
@@ -40,7 +40,7 @@ extension on StringBuffer {
       if (!options.encodeNulls && value.type is Nullable<dynamic, dynamic>) {
         write('if ($fieldName != null) ');
       }
-      writeln("'$fieldName': $fieldName,");
+      writeln("'$key': $fieldName,");
     });
     if (objects.unknownPropertiesStrategy == UnknownPropertiesStrategy.keep) {
       writeln("    ...extras,");
@@ -93,7 +93,7 @@ extension on StringBuffer {
       final fieldName = options.fieldName(key);
       write("  $indent$fieldName: convertProperty(const ");
       write(schemaTypeString(value.type, options));
-      writeln(', ${quote(fieldName)}, value),');
+      writeln(', ${quote(key)}, value),');
     });
     if (objects.unknownPropertiesStrategy == UnknownPropertiesStrategy.keep) {
       writeln('  ${indent}extras: _unknownPropertiesMap(value),');
@@ -106,8 +106,7 @@ extension on StringBuffer {
         '  Converter<Object?, Object?>? getPropertyConverter(String property) {\n'
         '    switch(property) {');
     objects.properties.forEach((key, value) {
-      final fieldName = options.fieldName(key);
-      write('      case ${quote(fieldName)}: return const ');
+      write('      case ${quote(key)}: return const ');
       write(schemaTypeString(value.type, options));
       writeln(';');
     });
@@ -173,7 +172,7 @@ String schemaTypeString(
       _schemaTypeStringWrapper('Arrays', items, options),
     ObjectsBase<dynamic>() when type.mapValueTypeOrNull != null =>
       _schemaTypeMaps(type, options),
-    Objects() => '${_reviverName(type.name)}()',
+    Objects(name: var name) => '${_reviverName(options.className(name))}()',
     ObjectsBase<Object?>() => '${_reviverName(type.dartType().toString())}()',
     Nullable<dynamic, NonNull>(type: var inner) =>
       _schemaTypeStringWrapper('Nullable', inner, options),
@@ -190,7 +189,7 @@ String _schemaTypeBasic(
   return switch (type) {
     Arrays<dynamic, SchemaType>(itemsType: var items) =>
       _schemaTypeBasicWrapper('Arrays', items, options),
-    Objects(name: var name) => _reviverName(name),
+    Objects(name: var name) => _reviverName(options.className(name)),
     ObjectsBase<Object?>() => type.runtimeType.toString(),
     Ints() => 'Ints',
     Floats() => 'Floats',
