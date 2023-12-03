@@ -170,7 +170,7 @@ String schemaTypeString(
   return switch (type) {
     Arrays<dynamic, SchemaType>(itemsType: var items) =>
       _schemaTypeStringWrapper('Arrays', items, options),
-    ObjectsBase<dynamic>() when type.mapValueTypeOrNull != null =>
+    ObjectsBase<dynamic>() when type.mapValueTypeOrNull(options) != null =>
       _schemaTypeMaps(type, options),
     Objects(name: var name) => '${_reviverName(options.className(name))}()',
     ObjectsBase<Object?>() => '${_reviverName(type.dartType().toString())}()',

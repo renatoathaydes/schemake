@@ -34,22 +34,38 @@ extension ObjectsExtension on ObjectsBase<Object?> {
 typedef _TypeOf<T> = T;
 
 extension SchemakeTypeExtension on SchemaType<Object?> {
-  Object? get listItemsTypeOrNull {
+  String dartTypeString(DartGeneratorOptions options) {
     final self = this;
-    if (self is Arrays<Object?, Object?>) {
-      final type = self.itemsType;
-      if (type is Objects && !type.isSimpleMap) {
-        return type.name;
-      }
-      return (self.itemsType as SchemaType<Object?>).dartType();
+    return switch (self) {
+      Nullable<Object?, NonNull>(type: var t) =>
+        '${t.dartTypeString(options)}?',
+      Ints() => 'int',
+      Floats() => 'double',
+      Strings() => 'String',
+      Bools() => 'bool',
+      Arrays<Object?, SchemaType>(itemsType: var t) =>
+        'List<${t.dartTypeString(options)}>',
+      Maps(valueType: var t) => 'Map<String, ${t.dartTypeString(options)}>',
+      Objects() when (self.isSimpleMap) => self.dartType().toString(),
+      Objects() => options.className(self.name),
+      ObjectsBase<Object?>() => self.dartType().toString(),
+      Validatable<Object?>(validator: var v) =>
+        self.dartGenOption?.dartTypeFor(v) ?? self.type.dartTypeString(options),
+    };
+  }
+
+  Object? listItemsTypeOrNull(DartGeneratorOptions options) {
+    final self = this;
+    if (self is Arrays<Object?, SchemaType<Object?>>) {
+      return self.itemsType.dartTypeString(options);
     }
     return null;
   }
 
-  Type? get mapValueTypeOrNull {
+  Object? mapValueTypeOrNull(DartGeneratorOptions options) {
     final self = this;
-    if (self is Maps<Object?, Object?>) {
-      return (self.valueType as NonNull<Object?>).dartType();
+    if (self is Maps<Object?, NonNull<Object?>>) {
+      return self.valueType.dartTypeString(options);
     }
     if (self is Objects && self.isSimpleMap) {
       return _TypeOf<Object?>;

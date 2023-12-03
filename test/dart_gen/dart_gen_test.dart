@@ -147,23 +147,48 @@ import 'package:collection/collection.dart';
 class HasMaps {
   /// Property with Map of Strings.
   final Map<String, String> maps;
+  final Map<String, InMaps> objects;
   const HasMaps({
     required this.maps,
+    required this.objects,
   });
   @override
   String toString() =>
     'HasMaps{'
-    'maps: $maps'
+    'maps: $maps, '
+    'objects: $objects'
     '}';
   @override
   bool operator ==(Object other) =>
     identical(this, other) ||
     other is HasMaps &&
     runtimeType == other.runtimeType &&
-    const MapEquality<String, String>().equals(maps, other.maps);
+    const MapEquality<String, String>().equals(maps, other.maps) &&
+    const MapEquality<String, InMaps>().equals(objects, other.objects);
   @override
   int get hashCode =>
-    const MapEquality<String, String>().hash(maps);
+    const MapEquality<String, String>().hash(maps) ^ const MapEquality<String, InMaps>().hash(objects);
+}
+
+class InMaps {
+  final String foo;
+  const InMaps({
+    required this.foo,
+  });
+  @override
+  String toString() =>
+    'InMaps{'
+    'foo: "$foo"'
+    '}';
+  @override
+  bool operator ==(Object other) =>
+    identical(this, other) ||
+    other is InMaps &&
+    runtimeType == other.runtimeType &&
+    foo == other.foo;
+  @override
+  int get hashCode =>
+    foo.hashCode;
 }
 ''';
 
@@ -242,6 +267,10 @@ const _schemaWithMaps = Objects('HasMaps', {
       Maps<String, Strings>('MapToStrings',
           valueType: Strings(), description: 'map with string values.'),
       description: 'Property with Map of Strings.'),
+  'objects': Property(Maps<Map<String, Object?>, Objects>('Map',
+      valueType: Objects('InMaps', {
+        'foo': Property(Strings()),
+      })))
 });
 
 const _semiStructuredObjects = Objects(

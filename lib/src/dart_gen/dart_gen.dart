@@ -118,6 +118,10 @@ StringBuffer generateDartClasses(List<Objects> schemaTypes,
 extension on StringBuffer {
   StringBuffer addExtrasIfOwnType(List<GeneratorExtras> extras,
       ObjectsBase<dynamic> objects, DartGeneratorOptions options) {
+    if (objects is Maps) {
+      _addExtrasInType(objects.valueType, extras, options);
+      return this;
+    }
     // in case of a simple Map, there's no extra type to write
     if (objects.isSimpleMap) return this;
     if (objects is Objects) {
@@ -145,11 +149,8 @@ extension on StringBuffer {
       Bools() => write(typeWrapper('bool')),
       Arrays<dynamic, SchemaType>(itemsType: var type) =>
         writeType(type, generatorExtras, options, array),
-      ObjectsBase(name: var className) =>
-        addExtrasIfOwnType(generatorExtras, schemaType, options).write(
-            typeWrapper(schemaType.isSimpleMap
-                ? schemaType.dartType().toString()
-                : options.className(className))),
+      ObjectsBase() => addExtrasIfOwnType(generatorExtras, schemaType, options)
+          .write(typeWrapper(schemaType.dartTypeString(options))),
     };
   }
 
@@ -316,14 +317,14 @@ extension on StringBuffer {
           .map((entry) {
             final fieldName = options.fieldName(entry.key);
             final type = entry.value.type;
-            final listItemType = type.listItemsTypeOrNull;
+            final listItemType = type.listItemsTypeOrNull(options);
             if (listItemType != null) {
               extras =
                   const GeneratorExtras({'package:collection/collection.dart'});
               return '    const ListEquality<$listItemType>()'
                   '.equals($fieldName, other.$fieldName)';
             }
-            final mapValueType = type.mapValueTypeOrNull;
+            final mapValueType = type.mapValueTypeOrNull(options);
             if (mapValueType != null) {
               extras =
                   const GeneratorExtras({'package:collection/collection.dart'});
@@ -356,12 +357,12 @@ extension on StringBuffer {
           .map((entry) {
             final fieldName = options.fieldName(entry.key);
             final type = entry.value.type;
-            final listItemType = type.listItemsTypeOrNull;
+            final listItemType = type.listItemsTypeOrNull(options);
             if (listItemType != null) {
               return 'const ListEquality<$listItemType>()'
                   '.hash($fieldName)';
             }
-            final mapValueType = type.mapValueTypeOrNull;
+            final mapValueType = type.mapValueTypeOrNull(options);
             if (mapValueType != null) {
               return 'const MapEquality<String, $mapValueType>()'
                   '.hash($fieldName)';
@@ -408,6 +409,37 @@ extension on StringBuffer {
 
   void writeStringLiteral(String value) {
     write(quote(value.replaceAll("'", "\\'")));
+  }
+}
+
+void _addExtrasInType(SchemaType<Object?> type, List<GeneratorExtras> extras,
+    DartGeneratorOptions options) {
+  return switch (type) {
+    Nullable<Object?, NonNull>(type: var t) =>
+      _addExtrasInType(t, extras, options),
+    Ints() || Floats() || Strings() || Bools() => null,
+    Arrays<Object?, SchemaType>(itemsType: var t) =>
+      _addExtrasInType(t, extras, options),
+    Maps(valueType: var t) => _addExtrasInType(t, extras, options),
+    Objects() when (type.isSimpleMap) => null,
+    Objects() => extras.add(GeneratorExtras(
+        const {},
+        {options.className(type.name)},
+        (w) => w.writeObjects(type, extras, options))),
+    ObjectsBase<Object?>() => null,
+    Validatable<Object?>() => _addExtrasInValidator(type, extras, options),
+  };
+}
+
+void _addExtrasInValidator(Validatable<Object?> type,
+    List<GeneratorExtras> extras, DartGeneratorOptions options) {
+  final dartGen = type.dartGenOption;
+  if (dartGen == null) {
+    return _addExtrasInType(type.type, extras, options);
+  }
+  final generator = dartGen.getDartTypeGenerator(type.validator);
+  if (generator != null) {
+    extras.add(generator);
   }
 }
 
