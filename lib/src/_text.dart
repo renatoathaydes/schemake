@@ -2,6 +2,8 @@ import 'package:dart_casing/dart_casing.dart' show Casing;
 
 String identityString(String s) => s;
 
+String emptyString(String s) => '';
+
 String quote(String s) => "'$s'";
 
 String dollar(String s) => "\$$s";

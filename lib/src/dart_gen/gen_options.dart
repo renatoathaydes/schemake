@@ -9,9 +9,11 @@ class DartEnumGeneratorOptions
     implements DartValidatorGenerationOptions<EnumValidator> {
   final String Function(String validatorName) dartTypeName;
   final String Function(String) dartVariantName;
+  final String Function(String) insertBeforeEnumVariant;
 
   const DartEnumGeneratorOptions(
-      {this.dartTypeName = toPascalCase, this.dartVariantName = toCamelCase});
+      {this.dartTypeName = toPascalCase, this.dartVariantName = toCamelCase,
+        this.insertBeforeEnumVariant = emptyString});
 
   @override
   String dartTypeFor(EnumValidator validator) {
@@ -30,11 +32,12 @@ class DartEnumGeneratorOptions
     });
   }
 
-  void _generateEnum(
-      StringBuffer buffer, String typeName, EnumValidator validator) {
+  void _generateEnum(StringBuffer buffer, String typeName,
+      EnumValidator validator) {
     buffer.writeln('enum $typeName {');
     for (var name in validator.values) {
-      buffer.writeln('  ${dartVariantName(name)},');
+      buffer.writeln(
+          '  ${insertBeforeEnumVariant(name)}${dartVariantName(name)},');
     }
     buffer.writeln('  ;\n'
         '  static $typeName from(String s) => switch(s) {');
@@ -86,7 +89,8 @@ class DartIntRangeGeneratorOptions
   @override
   String selfCreateString(IntRangeValidator validator) {
     final typeName = validator.runtimeType;
-    return "Validatable(${schemaTypeString(const Ints(), const DartGeneratorOptions())}, "
+    return "Validatable(${schemaTypeString(
+        const Ints(), const DartGeneratorOptions())}, "
         "$typeName(${validator.min}, ${validator.max}))";
   }
 }
