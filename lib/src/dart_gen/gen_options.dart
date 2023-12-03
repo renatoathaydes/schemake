@@ -7,20 +7,20 @@ import 'json.dart';
 
 class DartEnumGeneratorOptions
     implements DartValidatorGenerationOptions<EnumValidator> {
-  final String? dartTypeName;
+  final String Function(String validatorName) dartTypeName;
   final String Function(String) dartVariantName;
 
   const DartEnumGeneratorOptions(
-      {this.dartTypeName, this.dartVariantName = identityString});
+      {this.dartTypeName = toPascalCase, this.dartVariantName = toCamelCase});
 
   @override
   String dartTypeFor(EnumValidator validator) {
-    return dartTypeName ?? validator.name;
+    return dartTypeName(validator.name);
   }
 
   @override
   GeneratorExtras? getDartTypeGenerator(EnumValidator validator) {
-    final typeName = dartTypeName ?? validator.name;
+    final typeName = dartTypeFor(validator);
     final converterName = _converterName(validator);
     return GeneratorExtras(
         const {'dart:convert', 'package:schemake/schemake.dart'},
@@ -53,7 +53,7 @@ class DartEnumGeneratorOptions
   }
 
   String _converterName(EnumValidator validator) {
-    final typeName = dartTypeName ?? validator.name;
+    final typeName = dartTypeName(validator.name);
     return '_${typeName}Converter';
   }
 

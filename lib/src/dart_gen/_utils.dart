@@ -12,8 +12,7 @@ extension ValidatableDartGenerationExtension<T> on Validatable<T> {
 
     // use built-in options if possible
     final result = switch (validator) {
-      EnumValidator(name: var name) =>
-        DartEnumGeneratorOptions(dartTypeName: name),
+      EnumValidator() => const DartEnumGeneratorOptions(),
       IntRangeValidator() => const DartIntRangeGeneratorOptions(),
       NonBlankStringValidator() => const DartNonBlankStringGeneratorOptions(),
       _ => null,
