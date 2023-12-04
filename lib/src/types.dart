@@ -268,6 +268,23 @@ abstract class ObjectsBase<T> extends NonNull<T> {
     }
   }
 
+  /// Convert a property to its expected value or returns a default value
+  /// in case the property is not present.
+  ///
+  /// This method takes care of calling the [Converter] with the appropriate
+  /// value from the given map, and error handling.
+  V convertPropertyOrDefault<V>(Converter<Object?, V> converter, String name,
+      Map<Object?, Object?> map, V defaultValue) {
+    if (!map.containsKey(name)) return defaultValue;
+    try {
+      return converter.convert(map[name]);
+    } on PropertyException catch (e) {
+      throw e.prependPath(name);
+    } on ToPropertyException catch (e) {
+      throw e.toPropertyException(name, this);
+    }
+  }
+
   /// Check whether all required properties have been provided, raising a
   /// [MissingPropertyException] if not.
   void checkRequiredProperties(Iterable<String> providedProperties) {

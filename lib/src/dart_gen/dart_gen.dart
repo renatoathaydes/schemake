@@ -6,6 +6,7 @@ import '../property.dart';
 import '../types.dart';
 import '../validator.dart';
 import '_utils.dart';
+import '_value_writer.dart';
 
 class GeneratorExtras {
   final Set<String> imports;
@@ -216,9 +217,7 @@ extension on StringBuffer {
     writeln('${options.className(objects.name)}({');
     objects.properties.forEach((key, value) {
       options.insertBeforeConstructorArg?.vmap((get) => get(key, value));
-      write((value.defaultValue != null || value.type is Nullable)
-          ? '    '
-          : '    required ');
+      write(value.isRequired ? '    required ' : '    ');
       write('this.');
       write(options.fieldName(key));
       value.defaultValue?.vmap((def) {
@@ -237,42 +236,6 @@ extension on StringBuffer {
       writeln('    this.extras = const {},');
     }
     writeln('  });');
-  }
-
-  void writeValue(final Object? value, {bool consted = false}) {
-    final _ = switch (value) {
-      null => write('null'),
-      int() || bool() || double() => write(value.toString()),
-      String() => writeStringLiteral(value),
-      List<Object?>() => writeListValue(value, consted: consted),
-      Map<String, Object?>() => writeMapValue(value, consted: consted),
-      _ => throw UnsupportedError(
-          'Cannot write default value of type ${value.runtimeType}'),
-    };
-  }
-
-  void writeMapValue(Map<String, Object?> map, {bool consted = false}) {
-    if (consted) write('const ');
-    write('{');
-    final lastIndex = map.length - 1;
-    for (final (i, entry) in map.entries.indexed) {
-      writeStringLiteral(entry.key);
-      write(': ');
-      writeValue(entry.value);
-      if (i != lastIndex) write(', ');
-    }
-    write('}');
-  }
-
-  void writeListValue(List<Object?> value, {bool consted = false}) {
-    if (consted) write('const ');
-    write('[');
-    final lastIndex = value.length - 1;
-    for (var i = 0; i <= lastIndex; i++) {
-      writeValue(value[i]);
-      if (i != lastIndex) write(', ');
-    }
-    write(']');
   }
 
   void writeToString(Objects objects, DartGeneratorOptions options) {
@@ -405,10 +368,6 @@ extension on StringBuffer {
       }
     }
     return imports;
-  }
-
-  void writeStringLiteral(String value) {
-    write(quote(value.replaceAll("'", "\\'")));
   }
 }
 

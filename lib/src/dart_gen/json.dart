@@ -3,6 +3,7 @@ import 'package:schemake/src/dart_gen/_utils.dart';
 
 import '../_text.dart';
 import '../types.dart';
+import '_value_writer.dart';
 import 'dart_gen.dart';
 
 class DartToJsonMethodGenerator with DartMethodGenerator {
@@ -91,9 +92,17 @@ extension on StringBuffer {
     writeln('${indent}return ${options.className(objects.name)}(');
     objects.properties.forEach((key, value) {
       final fieldName = options.fieldName(key);
-      write("  $indent$fieldName: convertProperty(const ");
-      write(schemaTypeString(value.type, options));
-      writeln(', ${quote(key)}, value),');
+      if (value.defaultValue == null) {
+        write("  $indent$fieldName: convertProperty(const ");
+        write(schemaTypeString(value.type, options));
+        writeln(', ${quote(key)}, value),');
+      } else {
+        write("  $indent$fieldName: convertPropertyOrDefault(const ");
+        write(schemaTypeString(value.type, options));
+        write(', ${quote(key)}, value, ');
+        writeValue(value.defaultValue, consted: true);
+        writeln('),');
+      }
     });
     if (objects.unknownPropertiesStrategy == UnknownPropertiesStrategy.keep) {
       writeln('  ${indent}extras: _unknownPropertiesMap(value),');
@@ -118,7 +127,7 @@ extension on StringBuffer {
   void writeGetRequiredProperties(
       Objects objects, DartGeneratorOptions options) {
     final mandatoryKeys = objects.properties.entries
-        .where((e) => e.value.type is NonNull)
+        .where((e) => e.value.isRequired)
         .map((e) => quote(e.key));
     write('  @override\n'
         '  Iterable<String> getRequiredProperties() {\n'

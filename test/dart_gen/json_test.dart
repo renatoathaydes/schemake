@@ -33,6 +33,14 @@ const _someSchema = Objects('SomeSchema', {
   'list': Property(Arrays<int, Ints>(Ints())),
 });
 
+const _schemaWithDefaultValues = Objects('WithDefaults', {
+  'a': Property(Strings(), defaultValue: 'foo'),
+  'b': Property(Nullable(Floats()), defaultValue: 3.1415),
+  'c': Property(Arrays<int, Ints>(Ints()), defaultValue: [1, 2]),
+  'nullableWithDefault': Property(Nullable(Ints()), defaultValue: 2),
+  'mandatory': Property(Ints()),
+});
+
 const _schemaWithMaps = Objects('HasMaps', {
   'maps': Property(
       Maps<String, Strings>('MapToStrings',
@@ -205,6 +213,74 @@ class _NestedListJsonReviver extends ObjectsBase<NestedList> {
   }
   @override
   String toString() => 'NestedList';
+}
+''';
+
+const _schemaWithDefaultsFromJsonGeneration = r'''
+import 'dart:convert';
+import 'package:schemake/schemake.dart';
+
+class WithDefaults {
+  final String a;
+  final double? b;
+  final List<int> c;
+  final int? nullableWithDefault;
+  final int mandatory;
+  const WithDefaults({
+    this.a = 'foo',
+    this.b = 3.1415,
+    this.c = const [1, 2],
+    this.nullableWithDefault = 2,
+    required this.mandatory,
+  });
+  static WithDefaults fromJson(Object? value) =>
+    const _WithDefaultsJsonReviver().convert(switch(value) {
+      String() => jsonDecode(value),
+      List<int>() => jsonDecode(utf8.decode(value)),
+      _ => value,
+    });
+}
+class _WithDefaultsJsonReviver extends ObjectsBase<WithDefaults> {
+  const _WithDefaultsJsonReviver(): super("WithDefaults",
+    unknownPropertiesStrategy: UnknownPropertiesStrategy.forbid,
+    location: const []);
+
+  @override
+  WithDefaults convert(Object? value) {
+    if (value is! Map) throw TypeException(WithDefaults, value);
+    final keys = value.keys.map((key) {
+      if (key is! String) {
+        throw TypeException(String, key, "object key is not a String");
+      }
+      return key;
+    }).toSet();
+    checkRequiredProperties(keys);
+    return WithDefaults(
+      a: convertPropertyOrDefault(const Strings(), 'a', value, 'foo'),
+      b: convertPropertyOrDefault(const Nullable<double, Floats>(Floats()), 'b', value, 3.1415),
+      c: convertPropertyOrDefault(const Arrays<int, Ints>(Ints()), 'c', value, const [1, 2]),
+      nullableWithDefault: convertPropertyOrDefault(const Nullable<int, Ints>(Ints()), 'nullableWithDefault', value, 2),
+      mandatory: convertProperty(const Ints(), 'mandatory', value),
+    );
+  }
+
+  @override
+  Converter<Object?, Object?>? getPropertyConverter(String property) {
+    switch(property) {
+      case 'a': return const Strings();
+      case 'b': return const Nullable<double, Floats>(Floats());
+      case 'c': return const Arrays<int, Ints>(Ints());
+      case 'nullableWithDefault': return const Nullable<int, Ints>(Ints());
+      case 'mandatory': return const Ints();
+      default: return null;
+    }
+  }
+  @override
+  Iterable<String> getRequiredProperties() {
+    return const {'mandatory'};
+  }
+  @override
+  String toString() => 'WithDefaults';
 }
 ''';
 
@@ -487,6 +563,16 @@ void main() {
       expect(result.toString(), equals(_schemaWithMapsToAndFromJsonGeneration));
     });
 
+    test('fromJson for objects with defaults', () {
+      final result = generateDartClasses([_schemaWithDefaultValues],
+          options: DartGeneratorOptions(
+            methodGenerators: [
+              const DartFromJsonMethodGenerator(),
+            ],
+          ));
+      expect(result.toString(), equals(_schemaWithDefaultsFromJsonGeneration));
+    });
+
     test('both toJson and fromJson for semi-structured objects', () {
       final result = generateDartClasses([_semiStructuredObjects],
           options: DartGeneratorOptions(
@@ -539,6 +625,30 @@ void main() {
           ]));
       expect(stderr, isEmpty);
       expect(stdout, equals(['Counter{count: 42}', 'Counter{count: null}']));
+    });
+
+    test('fromJson and toString work with default values', () async {
+      final (stdout, stderr) = await generateAndRunDartClass(
+          _schemaWithDefaultValues,
+          '''
+      void main() {
+        print(WithDefaults.fromJson({'mandatory': 42}));
+        print(WithDefaults.fromJson({'mandatory': 0, 'nullableWithDefault': null, 
+          'a': 'bar', 'b': 20, 'c': []}));
+      }''',
+          const DartGeneratorOptions(methodGenerators: [
+            DartFromJsonMethodGenerator(),
+            DartToStringMethodGenerator(),
+          ]));
+      expect(stderr, isEmpty);
+      expect(
+          stdout,
+          equals([
+            'WithDefaults{a: "foo", b: 3.1415, c: [1, 2], '
+                'nullableWithDefault: 2, mandatory: 42}',
+            'WithDefaults{a: "bar", b: 20.0, c: [], '
+                'nullableWithDefault: null, mandatory: 0}'
+          ]));
     });
 
     test('toJson and fromJson and toString work for Maps', () async {
