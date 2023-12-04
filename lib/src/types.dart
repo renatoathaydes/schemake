@@ -59,12 +59,19 @@ final class Ints extends NonNull<int> with _ConvertNonNullByCasting<int> {
 }
 
 /// The Schemake type matching a Dart [double].
-final class Floats extends NonNull<double>
-    with _ConvertNonNullByCasting<double> {
+final class Floats extends NonNull<double> {
   const Floats();
 
   @override
   String toString() => 'schemake.Floats';
+
+  @override
+  double convert(Object? input) {
+    if (input is num) {
+      return input.toDouble();
+    }
+    throw TypeException(double, input);
+  }
 }
 
 /// The Schemake type matching a Dart [String].
