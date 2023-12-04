@@ -4,6 +4,10 @@ import 'errors.dart';
 
 typedef ValidationResult = List<String>;
 
+/// A validator for values of type [T].
+///
+/// [Validator]s may be used to impose restrictions on Schemake types by
+/// wrapping them into a [Validatable] type.
 abstract class Validator<T> {
   const Validator();
 
