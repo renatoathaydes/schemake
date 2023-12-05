@@ -38,6 +38,8 @@ const _schemaWithDefaultValues = Objects('WithDefaults', {
   'b': Property(Nullable(Floats()), defaultValue: 3.1415),
   'c': Property(Arrays<int, Ints>(Ints()), defaultValue: [1, 2]),
   'nullableWithDefault': Property(Nullable(Ints()), defaultValue: 2),
+  'enum1': Property(Enums(EnumValidator('EnumValue', {'abc', 'def'})),
+      defaultValue: 'def'),
   'mandatory': Property(Ints()),
 });
 
@@ -225,12 +227,14 @@ class WithDefaults {
   final double? b;
   final List<int> c;
   final int? nullableWithDefault;
+  final EnumValue enum1;
   final int mandatory;
   const WithDefaults({
     this.a = 'foo',
     this.b = 3.1415,
     this.c = const [1, 2],
     this.nullableWithDefault = 2,
+    this.enum1 = EnumValue.def,
     required this.mandatory,
   });
   static WithDefaults fromJson(Object? value) =>
@@ -239,6 +243,23 @@ class WithDefaults {
       List<int>() => jsonDecode(utf8.decode(value)),
       _ => value,
     });
+}
+enum EnumValue {
+  abc,
+  def,
+  ;
+  static EnumValue from(String s) => switch(s) {
+    'abc' => abc,
+    'def' => def,
+    _ => throw ValidationException(['value not allowed for EnumValue: "$s" - should be one of {abc, def}']),
+  };
+}
+class _EnumValueConverter extends Converter<Object?, EnumValue> {
+  const _EnumValueConverter();
+  @override
+  EnumValue convert(Object? input) {
+    return EnumValue.from(const Strings().convert(input));
+  }
 }
 class _WithDefaultsJsonReviver extends ObjectsBase<WithDefaults> {
   const _WithDefaultsJsonReviver(): super("WithDefaults",
@@ -260,6 +281,7 @@ class _WithDefaultsJsonReviver extends ObjectsBase<WithDefaults> {
       b: convertPropertyOrDefault(const Nullable<double, Floats>(Floats()), 'b', value, 3.1415),
       c: convertPropertyOrDefault(const Arrays<int, Ints>(Ints()), 'c', value, const [1, 2]),
       nullableWithDefault: convertPropertyOrDefault(const Nullable<int, Ints>(Ints()), 'nullableWithDefault', value, 2),
+      enum1: convertPropertyOrDefault(const _EnumValueConverter(), 'enum1', value, EnumValue.def),
       mandatory: convertProperty(const Ints(), 'mandatory', value),
     );
   }
@@ -271,6 +293,7 @@ class _WithDefaultsJsonReviver extends ObjectsBase<WithDefaults> {
       case 'b': return const Nullable<double, Floats>(Floats());
       case 'c': return const Arrays<int, Ints>(Ints());
       case 'nullableWithDefault': return const Nullable<int, Ints>(Ints());
+      case 'enum1': return const _EnumValueConverter();
       case 'mandatory': return const Ints();
       default: return null;
     }
@@ -633,8 +656,8 @@ void main() {
           '''
       void main() {
         print(WithDefaults.fromJson({'mandatory': 42}));
-        print(WithDefaults.fromJson({'mandatory': 0, 'nullableWithDefault': null, 
-          'a': 'bar', 'b': 20, 'c': []}));
+        print(WithDefaults.fromJson({'mandatory': 0, 'nullableWithDefault': null,
+          'enum1': 'abc', 'a': 'bar', 'b': 20, 'c': []}));
       }''',
           const DartGeneratorOptions(methodGenerators: [
             DartFromJsonMethodGenerator(),
@@ -645,9 +668,9 @@ void main() {
           stdout,
           equals([
             'WithDefaults{a: "foo", b: 3.1415, c: [1, 2], '
-                'nullableWithDefault: 2, mandatory: 42}',
+                'nullableWithDefault: 2, enum1: EnumValue.def, mandatory: 42}',
             'WithDefaults{a: "bar", b: 20.0, c: [], '
-                'nullableWithDefault: null, mandatory: 0}'
+                'nullableWithDefault: null, enum1: EnumValue.abc, mandatory: 0}'
           ]));
     });
 

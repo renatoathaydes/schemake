@@ -100,7 +100,7 @@ extension on StringBuffer {
         write("  $indent$fieldName: convertPropertyOrDefault(const ");
         write(schemaTypeString(value.type, options));
         write(', ${quote(key)}, value, ');
-        writeValue(value.defaultValue, consted: true);
+        writeValue(value.type, value.defaultValue, consted: true);
         writeln('),');
       }
     });

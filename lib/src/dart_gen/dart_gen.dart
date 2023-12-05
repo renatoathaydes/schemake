@@ -228,7 +228,7 @@ extension on StringBuffer {
               'unless the type is Objects with empty properties, or Maps.');
         }
         write(' = ');
-        writeValue(def, consted: true);
+        writeValue(value.type, def, consted: true);
       });
       writeln(',');
     });
