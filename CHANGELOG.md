@@ -2,6 +2,7 @@
 
 - support default value for `Enums` in Dart code generation.
 - removed `location` field from `ObjectBase` and its subtypes as it was not used.
+- allow `Maps` value type to be `Nullable`.
 
 ## 0.2.0 (04-Dec-2023)
 
