@@ -64,7 +64,7 @@ extension SchemakeTypeExtension on SchemaType<Object?> {
 
   Object? mapValueTypeOrNull(DartGeneratorOptions options) {
     final self = this;
-    if (self is Maps<Object?, NonNull<Object?>>) {
+    if (self is Maps<Object?, SchemaType<Object?>>) {
       return self.valueType.dartTypeString(options);
     }
     if (self is Objects && self.isSimpleMap) {

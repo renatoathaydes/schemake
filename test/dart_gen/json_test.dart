@@ -48,6 +48,8 @@ const _schemaWithMaps = Objects('HasMaps', {
       Maps<String, Strings>('MapToStrings',
           valueType: Strings(), description: 'map with string values.'),
       description: 'Property with Map of Strings.'),
+  'ints': Property(
+      Maps<int?, Nullable<int?, Ints>>('Map', valueType: Nullable(Ints()))),
   'objectsMap': Property(Objects('SimpleMap', {},
       unknownPropertiesStrategy: UnknownPropertiesStrategy.keep)),
 });
@@ -311,9 +313,11 @@ import 'package:schemake/schemake.dart';
 class HasMaps {
   /// Property with Map of Strings.
   final Map<String, String> maps;
+  final Map<String, int?> ints;
   final Map<String, Object?> objectsMap;
   const HasMaps({
     required this.maps,
+    required this.ints,
     required this.objectsMap,
   });
   static HasMaps fromJson(Object? value) =>
@@ -324,6 +328,7 @@ class HasMaps {
     });
   Map<String, Object?> toJson() => {
     'maps': maps,
+    'ints': ints,
     'objectsMap': objectsMap,
   };
 }
@@ -343,6 +348,7 @@ class _HasMapsJsonReviver extends ObjectsBase<HasMaps> {
     checkRequiredProperties(keys);
     return HasMaps(
       maps: convertProperty(const Maps('MapToStrings', valueType: Strings()), 'maps', value),
+      ints: convertProperty(const Maps('Map', valueType: Nullable<int, Ints>(Ints())), 'ints', value),
       objectsMap: convertProperty(const Objects('SimpleMap', {}, unknownPropertiesStrategy: UnknownPropertiesStrategy.keep), 'objectsMap', value),
     );
   }
@@ -351,13 +357,14 @@ class _HasMapsJsonReviver extends ObjectsBase<HasMaps> {
   Converter<Object?, Object?>? getPropertyConverter(String property) {
     switch(property) {
       case 'maps': return const Maps('MapToStrings', valueType: Strings());
+      case 'ints': return const Maps('Map', valueType: Nullable<int, Ints>(Ints()));
       case 'objectsMap': return const Objects('SimpleMap', {}, unknownPropertiesStrategy: UnknownPropertiesStrategy.keep);
       default: return null;
     }
   }
   @override
   Iterable<String> getRequiredProperties() {
-    return const {'maps', 'objectsMap'};
+    return const {'maps', 'ints', 'objectsMap'};
   }
   @override
   String toString() => 'HasMaps';
@@ -676,6 +683,7 @@ void main() {
           void main() {
             final maps = HasMaps(
                 maps: {'foo': 'bar'},
+                ints: {'n': 1, 'm': null},
                 objectsMap: {'one': 1});
             final jsonMaps = jsonEncode(maps);
             print(jsonMaps);
@@ -693,8 +701,9 @@ void main() {
           stdout,
           equals([
             '{"maps":{"foo":"bar"},'
+                '"ints":{"n":1,"m":null},'
                 '"objectsMap":{"one":1}}',
-            'HasMaps{maps: {foo: bar}, objectsMap: {one: 1}}'
+            'HasMaps{maps: {foo: bar}, ints: {n: 1, m: null}, objectsMap: {one: 1}}'
           ]));
     });
 
