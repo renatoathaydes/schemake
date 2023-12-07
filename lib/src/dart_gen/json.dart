@@ -65,8 +65,7 @@ extension on StringBuffer {
     final name = options.className(objects.name);
     writeln('class $reviverName extends ObjectsBase<$name> {\n'
         '  const $reviverName(): super("$name",\n'
-        '    unknownPropertiesStrategy: ${objects.unknownPropertiesStrategy},\n'
-        '    location: const [${objects.location.map(quote).join(', ')}]);\n'
+        '    unknownPropertiesStrategy: ${objects.unknownPropertiesStrategy});\n'
         '\n'
         '  @override\n'
         '  $name convert(Object? value) {\n'

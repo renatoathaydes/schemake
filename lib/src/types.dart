@@ -137,7 +137,6 @@ class Objects extends ObjectsBase<Map<String, Object?>> {
     super.name,
     this.properties, {
     super.unknownPropertiesStrategy = UnknownPropertiesStrategy.forbid,
-    super.location = const [],
     super.description = '',
   });
 
@@ -162,19 +161,15 @@ class Objects extends ObjectsBase<Map<String, Object?>> {
   @override
   String toString() => 'schemake.Objects{name: $name, '
       'unknownPropertiesStrategy: $unknownPropertiesStrategy, '
-      'location: $location, '
       'description: $description, '
       'properties: $properties}';
 }
 
 /// A Schemake type matching a Dart [Map] from [String] to some known type [V].
-class Maps<V, T extends NonNull<V>> extends ObjectsBase<Map<String, V>> {
+class Maps<V, T extends SchemaType<V>> extends ObjectsBase<Map<String, V>> {
   final T valueType;
 
-  const Maps(super.name,
-      {required this.valueType,
-      super.location = const [],
-      super.description = ''})
+  const Maps(super.name, {required this.valueType, super.description = ''})
       : super(unknownPropertiesStrategy: UnknownPropertiesStrategy.keep);
 
   @override
@@ -210,13 +205,11 @@ class Maps<V, T extends NonNull<V>> extends ObjectsBase<Map<String, V>> {
 abstract class ObjectsBase<T> extends NonNull<T> {
   final String name;
   final UnknownPropertiesStrategy unknownPropertiesStrategy;
-  final List<String> location;
   final String description;
 
   const ObjectsBase(
     this.name, {
     this.unknownPropertiesStrategy = UnknownPropertiesStrategy.forbid,
-    this.location = const [],
     this.description = '',
   });
 
@@ -241,7 +234,7 @@ abstract class ObjectsBase<T> extends NonNull<T> {
             case UnknownPropertiesStrategy.keep:
               result[name] = entry.value;
             case UnknownPropertiesStrategy.forbid:
-              throw UnknownPropertyException([...location, name], this);
+              throw UnknownPropertyException([name], this);
           }
         } else {
           result[name] = convertProperty(converter, name, input);
@@ -291,8 +284,7 @@ abstract class ObjectsBase<T> extends NonNull<T> {
     final missingProperties =
         getRequiredProperties().where(providedProperties.contains.not$);
     if (missingProperties.isNotEmpty) {
-      throw MissingPropertyException(
-          location, this, missingProperties.toList());
+      throw MissingPropertyException([], this, missingProperties.toList());
     }
   }
 }

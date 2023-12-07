@@ -109,8 +109,7 @@ class SomeSchema {
 const _someSchemaJsonReviverGeneration = r'''
 class _SomeSchemaJsonReviver extends ObjectsBase<SomeSchema> {
   const _SomeSchemaJsonReviver(): super("SomeSchema",
-    unknownPropertiesStrategy: UnknownPropertiesStrategy.forbid,
-    location: const []);
+    unknownPropertiesStrategy: UnknownPropertiesStrategy.forbid);
 
   @override
   SomeSchema convert(Object? value) {
@@ -182,8 +181,7 @@ class NestedList {
 const _nestedListObjectsReviverFromJsonGeneration = r'''
 class _NestedListJsonReviver extends ObjectsBase<NestedList> {
   const _NestedListJsonReviver(): super("NestedList",
-    unknownPropertiesStrategy: UnknownPropertiesStrategy.forbid,
-    location: const []);
+    unknownPropertiesStrategy: UnknownPropertiesStrategy.forbid);
 
   @override
   NestedList convert(Object? value) {
@@ -263,8 +261,7 @@ class _EnumValueConverter extends Converter<Object?, EnumValue> {
 }
 class _WithDefaultsJsonReviver extends ObjectsBase<WithDefaults> {
   const _WithDefaultsJsonReviver(): super("WithDefaults",
-    unknownPropertiesStrategy: UnknownPropertiesStrategy.forbid,
-    location: const []);
+    unknownPropertiesStrategy: UnknownPropertiesStrategy.forbid);
 
   @override
   WithDefaults convert(Object? value) {
@@ -332,8 +329,7 @@ class HasMaps {
 }
 class _HasMapsJsonReviver extends ObjectsBase<HasMaps> {
   const _HasMapsJsonReviver(): super("HasMaps",
-    unknownPropertiesStrategy: UnknownPropertiesStrategy.forbid,
-    location: const []);
+    unknownPropertiesStrategy: UnknownPropertiesStrategy.forbid);
 
   @override
   HasMaps convert(Object? value) {
@@ -392,8 +388,7 @@ class SemiStructured {
 }
 class _SemiStructuredJsonReviver extends ObjectsBase<SemiStructured> {
   const _SemiStructuredJsonReviver(): super("SemiStructured",
-    unknownPropertiesStrategy: UnknownPropertiesStrategy.keep,
-    location: const []);
+    unknownPropertiesStrategy: UnknownPropertiesStrategy.keep);
 
   @override
   SemiStructured convert(Object? value) {
