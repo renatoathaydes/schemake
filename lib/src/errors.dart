@@ -13,9 +13,9 @@ mixin ToPropertyException on SchemakeException {
 class TypeException implements SchemakeException, ToPropertyException {
   final Type targetType;
   final Object? actualValue;
-  final String? message;
+  final String? _message;
 
-  const TypeException(this.targetType, this.actualValue, [this.message]);
+  const TypeException(this.targetType, this.actualValue, [this._message]);
 
   @override
   PropertyTypeException toPropertyException(
@@ -24,11 +24,15 @@ class TypeException implements SchemakeException, ToPropertyException {
         targetType, actualValue, [property], objectType);
   }
 
+  String get message {
+    final suffix = _message == null ? '' : ' ($_message)';
+    return 'cannot cast $actualValue '
+        '(type ${actualValue.runtimeType}) to $targetType$suffix';
+  }
+
   @override
   String toString() {
-    final suffix = message == null ? '' : ' ($message)';
-    return 'TypeException{cannot cast $actualValue '
-        '(type ${actualValue.runtimeType}) to $targetType}$suffix';
+    return 'TypeException{$message}';
   }
 }
 
