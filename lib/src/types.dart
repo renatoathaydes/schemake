@@ -169,8 +169,10 @@ class Objects extends ObjectsBase<Map<String, Object?>> {
 class Maps<V, T extends SchemaType<V>> extends ObjectsBase<Map<String, V>> {
   final T valueType;
 
-  const Maps(super.name, {required this.valueType, super.description = ''})
-      : super(unknownPropertiesStrategy: UnknownPropertiesStrategy.keep);
+  const Maps(super.name,
+      {required this.valueType,
+      super.description = '',
+      super.unknownPropertiesStrategy = UnknownPropertiesStrategy.keep});
 
   @override
   Map<String, V> convert(Object? input) {

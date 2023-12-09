@@ -43,21 +43,27 @@ const _schemaWithDefaultValues = Objects('WithDefaults', {
   'mandatory': Property(Ints()),
 });
 
-const _schemaWithMaps = Objects('HasMaps', {
-  'maps': Property(
-      Maps<String, Strings>('MapToStrings',
-          valueType: Strings(), description: 'map with string values.'),
-      description: 'Property with Map of Strings.'),
-  'ints': Property(
-      Maps<int?, Nullable<int?, Ints>>('Map', valueType: Nullable(Ints()))),
-  'objectsMap': Property(Objects('SimpleMap', {},
-      unknownPropertiesStrategy: UnknownPropertiesStrategy.keep)),
-});
+const _schemaWithMaps = Objects(
+    'HasMaps',
+    {
+      'maps': Property(
+          Maps<String, Strings>('MapToStrings',
+              valueType: Strings(), description: 'map with string values.'),
+          description: 'Property with Map of Strings.'),
+      'ints': Property(
+          Maps<int?, Nullable<int?, Ints>>('Map', valueType: Nullable(Ints()))),
+      'objectsMap': Property(Objects('SimpleMap', {},
+          unknownPropertiesStrategy: UnknownPropertiesStrategy.keep)),
+    },
+    unknownPropertiesStrategy: UnknownPropertiesStrategy.ignore);
 
-const _nestedListObjectsSchema = Objects('NestedList', {
-  'inners': Property(Arrays<Map<String, Object?>, Objects>(_someSchema)),
-  'inner1': Property(_someSchema),
-});
+const _nestedListObjectsSchema = Objects(
+    'NestedList',
+    {
+      'inners': Property(Arrays<Map<String, Object?>, Objects>(_someSchema)),
+      'inner1': Property(_someSchema),
+    },
+    unknownPropertiesStrategy: UnknownPropertiesStrategy.ignore);
 
 const _semiStructuredObjects = Objects(
     'SemiStructured',
@@ -123,6 +129,11 @@ class _SomeSchemaJsonReviver extends ObjectsBase<SomeSchema> {
       return key;
     }).toSet();
     checkRequiredProperties(keys);
+    const knownProperties = {'mandatory', 'optional', 'list'};
+    final unknownKey = keys.where((k) => !knownProperties.contains(k)).firstOrNull;
+    if (unknownKey != null) {
+      throw UnknownPropertyException([unknownKey], SomeSchema);
+    }
     return SomeSchema(
       mandatory: convertProperty(const Strings(), 'mandatory', value),
       optional: convertProperty(const Nullable<double, Floats>(Floats()), 'optional', value),
@@ -183,7 +194,7 @@ class NestedList {
 const _nestedListObjectsReviverFromJsonGeneration = r'''
 class _NestedListJsonReviver extends ObjectsBase<NestedList> {
   const _NestedListJsonReviver(): super("NestedList",
-    unknownPropertiesStrategy: UnknownPropertiesStrategy.forbid);
+    unknownPropertiesStrategy: UnknownPropertiesStrategy.ignore);
 
   @override
   NestedList convert(Object? value) {
@@ -275,6 +286,11 @@ class _WithDefaultsJsonReviver extends ObjectsBase<WithDefaults> {
       return key;
     }).toSet();
     checkRequiredProperties(keys);
+    const knownProperties = {'a', 'b', 'c', 'nullableWithDefault', 'enum1', 'mandatory'};
+    final unknownKey = keys.where((k) => !knownProperties.contains(k)).firstOrNull;
+    if (unknownKey != null) {
+      throw UnknownPropertyException([unknownKey], WithDefaults);
+    }
     return WithDefaults(
       a: convertPropertyOrDefault(const Strings(), 'a', value, 'foo'),
       b: convertPropertyOrDefault(const Nullable<double, Floats>(Floats()), 'b', value, 3.1415),
@@ -334,7 +350,7 @@ class HasMaps {
 }
 class _HasMapsJsonReviver extends ObjectsBase<HasMaps> {
   const _HasMapsJsonReviver(): super("HasMaps",
-    unknownPropertiesStrategy: UnknownPropertiesStrategy.forbid);
+    unknownPropertiesStrategy: UnknownPropertiesStrategy.ignore);
 
   @override
   HasMaps convert(Object? value) {

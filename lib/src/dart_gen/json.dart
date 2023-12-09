@@ -77,6 +77,7 @@ extension on StringBuffer {
         '      return key;\n'
         '    }).toSet();\n'
         '    checkRequiredProperties(keys);');
+    writeForbiddenKeysCheck(objects, name, indent: '    ');
     writeConstructorCall(objects, options, indent: '    ');
     writeln('  }');
     writePropertyConverter(objects, options);
@@ -160,6 +161,22 @@ extension on StringBuffer {
   void writeToString(Objects objects, DartGeneratorOptions options) {
     writeln('  @override\n'
         "  String toString() => '${options.className(objects.name)}';");
+  }
+
+  void writeForbiddenKeysCheck(Objects objects, String name,
+      {required String indent}) {
+    if (objects.unknownPropertiesStrategy != UnknownPropertiesStrategy.forbid) {
+      return;
+    }
+    final keys = objects.properties.keys.map(quote);
+    write('${indent}const knownProperties = {');
+    write(keys.join(', '));
+    writeln('};');
+    writeln('${indent}final unknownKey = '
+        'keys.where((k) => !knownProperties.contains(k)).firstOrNull;');
+    writeln('${indent}if (unknownKey != null) {');
+    writeln('$indent  throw UnknownPropertyException([unknownKey], $name);');
+    writeln('$indent}');
   }
 }
 
