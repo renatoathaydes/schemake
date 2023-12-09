@@ -1,3 +1,9 @@
+## 0.4.0 (09-Dec-2023)
+
+- allow `unknownPropertyStrategy` to be chosen for `Objects`.
+- actually enforce `unknownPropertyStrategy` in Dart-generated `fromJson` method.
+- improved `message` property of `TypeException`.
+
 ## 0.3.0 (07-Dec-2023)
 
 - support default value for `Enums` in Dart code generation.
