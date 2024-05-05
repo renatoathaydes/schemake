@@ -214,6 +214,9 @@ const person = Objects('Person', {
 });
 ```
 
+Another built-in validator is `IntRangeValidator` (for ranges of ints, e.g.
+only allow values from 1 to 10: `IntRangeValidator(1, 10)`).
+
 #### enums
 
 A special case of `Strings` where the allowed values are all known at compile-time can be modelled as a
