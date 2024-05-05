@@ -1,3 +1,7 @@
+## 0.4.1 (05-May-2024)
+
+- fixed Dart generation of nullable/validatable field with default value.
+
 ## 0.4.0 (09-Dec-2023)
 
 - allow `unknownPropertyStrategy` to be chosen for `Objects`.

@@ -52,23 +52,27 @@ class _FooConverter extends Converter<Object?, Foo> {
 const _generatedValidatedClass = r'''
 class Validated {
   final Foo some;
+  final int? more;
   const Validated({
     required this.some,
+    this.more = 4,
   });
   @override
   String toString() =>
     'Validated{'
-    'some: $some'
+    'some: $some, '
+    'more: $more'
     '}';
   @override
   bool operator ==(Object other) =>
     identical(this, other) ||
     other is Validated &&
     runtimeType == other.runtimeType &&
-    some == other.some;
+    some == other.some &&
+    more == other.more;
   @override
   int get hashCode =>
-    some.hashCode;
+    some.hashCode ^ more.hashCode;
 }
 ''';
 
@@ -242,6 +246,8 @@ const _nestedListObjectsSchema = Objects('NestedList', {
 const _validatableObjectSchema = Objects('Validated', {
   'some':
       Property(Validatable(Strings(), EnumValidator('Foo', {'foo', 'bar'}))),
+  'more': Property(Nullable(Validatable(Ints(), IntRangeValidator(1, 5))),
+      defaultValue: 4)
 });
 
 const _schemaWithMetadata = Objects(

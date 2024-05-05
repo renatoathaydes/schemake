@@ -19,6 +19,7 @@ extension DartValueWriter on StringBuffer {
       Maps(valueType: var t) =>
         writeMapValue(t, type.convert(value), consted: consted),
       Objects() => writeAnyMapValue(type.convert(value), consted: consted),
+      Validatable(type: var vtype) => writeValue(vtype, value),
       _ => throw UnsupportedError(
           'Cannot write default value of type ${value.runtimeType}'),
     };

@@ -220,6 +220,7 @@ String _schemaTypeBasic(
     Floats() => 'Floats',
     Strings() => 'Strings',
     Bools() => 'Bools',
+    Validatable(type: var vtype) => _schemaTypeBasic(vtype, options),
     _ => throw UnsupportedError('Schema type $type '
         'is not supported for code generation in this position'),
   };

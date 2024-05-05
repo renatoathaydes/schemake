@@ -143,7 +143,7 @@ extension on StringBuffer {
       Nullable<dynamic, NonNull>(type: var type) =>
         writeType(type, generatorExtras, options, nullable),
       Validatable() =>
-        writeValidatableType(schemaType, generatorExtras, options),
+        writeValidatableType(schemaType, generatorExtras, options, typeWrapper),
       Ints() => write(typeWrapper('int')),
       Floats() => write(typeWrapper('double')),
       Strings() => write(typeWrapper('String')),
@@ -156,13 +156,14 @@ extension on StringBuffer {
   }
 
   void writeValidatableType(Validatable<dynamic> schemaType,
-      List<GeneratorExtras> generatorExtras, DartGeneratorOptions options) {
+      List<GeneratorExtras> generatorExtras, DartGeneratorOptions options,
+      [String Function(String) typeWrapper = identityString]) {
     final validator = schemaType.validator;
     final generator = schemaType.dartGenOption;
     if (generator == null) {
-      writeType(schemaType.type, generatorExtras, options);
+      writeType(schemaType.type, generatorExtras, options, typeWrapper);
     } else {
-      write(generator.dartTypeFor(validator));
+      write(typeWrapper(generator.dartTypeFor(validator)));
       generator.getDartTypeGenerator(validator)?.vmap(generatorExtras.add);
     }
   }
