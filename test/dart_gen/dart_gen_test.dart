@@ -53,15 +53,18 @@ const _generatedValidatedClass = r'''
 class Validated {
   final Foo some;
   final int? more;
+  final double other;
   const Validated({
     required this.some,
     this.more = 4,
+    this.other = 0.4,
   });
   @override
   String toString() =>
     'Validated{'
     'some: $some, '
-    'more: $more'
+    'more: $more, '
+    'other: $other'
     '}';
   @override
   bool operator ==(Object other) =>
@@ -69,10 +72,11 @@ class Validated {
     other is Validated &&
     runtimeType == other.runtimeType &&
     some == other.some &&
-    more == other.more;
+    more == other.more &&
+    other == other.other;
   @override
   int get hashCode =>
-    some.hashCode ^ more.hashCode;
+    some.hashCode ^ more.hashCode ^ other.hashCode;
 }
 ''';
 
@@ -247,7 +251,9 @@ const _validatableObjectSchema = Objects('Validated', {
   'some':
       Property(Validatable(Strings(), EnumValidator('Foo', {'foo', 'bar'}))),
   'more': Property(Nullable(Validatable(Ints(), IntRangeValidator(1, 5))),
-      defaultValue: 4)
+      defaultValue: 4),
+  'other': Property(Validatable(Floats(), FloatRangeValidator(0.0, 1.0)),
+      defaultValue: 0.4)
 });
 
 const _schemaWithMetadata = Objects(

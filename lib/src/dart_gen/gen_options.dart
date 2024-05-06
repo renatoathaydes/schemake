@@ -95,6 +95,27 @@ class DartIntRangeGeneratorOptions
   }
 }
 
+class DartFloatRangeGeneratorOptions
+    implements DartValidatorGenerationOptions<FloatRangeValidator> {
+  const DartFloatRangeGeneratorOptions();
+
+  @override
+  String dartTypeFor(FloatRangeValidator validator) => 'double';
+
+  @override
+  GeneratorExtras? getDartTypeGenerator(FloatRangeValidator validator) {
+    // nothing to do: a plain int is used
+    return null;
+  }
+
+  @override
+  String selfCreateString(FloatRangeValidator validator) {
+    final typeName = validator.runtimeType;
+    return "Validatable(${schemaTypeString(const Floats(), const DartGeneratorOptions())}, "
+        "$typeName(${validator.min}, ${validator.max}))";
+  }
+}
+
 class DartNonBlankStringGeneratorOptions
     implements DartValidatorGenerationOptions<NonBlankStringValidator> {
   const DartNonBlankStringGeneratorOptions();

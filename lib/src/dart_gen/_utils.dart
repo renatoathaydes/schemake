@@ -14,6 +14,7 @@ extension ValidatableDartGenerationExtension<T> on Validatable<T> {
     final result = switch (validator) {
       EnumValidator() => const DartEnumGeneratorOptions(),
       IntRangeValidator() => const DartIntRangeGeneratorOptions(),
+      FloatRangeValidator() => const DartFloatRangeGeneratorOptions(),
       NonBlankStringValidator() => const DartNonBlankStringGeneratorOptions(),
       _ => null,
     };

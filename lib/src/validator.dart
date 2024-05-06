@@ -50,6 +50,39 @@ class IntRangeValidator extends Validator<int> {
   }
 }
 
+class FloatRangeValidator extends Validator<double> {
+  final double min;
+  final double max;
+  @override
+  final List<ValidatorGenerationOptions> generatorOptions;
+
+  const FloatRangeValidator(
+    this.min,
+    this.max, {
+    this.generatorOptions = const [],
+  });
+
+  const FloatRangeValidator.maxExclusive(double min, double max)
+      : this(min, max - 1);
+
+  @override
+  void validate(double value) {
+    bool tooLow = value < min, tooHigh = value > max;
+    if (tooLow || tooHigh) {
+      final errors = [
+        if (tooLow) '$value < $min',
+        if (tooHigh) '$value > $max',
+      ];
+      throw ValidationException(errors);
+    }
+  }
+
+  @override
+  String toString() {
+    return 'FloatRangeValidator{min: $min, max: $max}';
+  }
+}
+
 class EnumValidator extends Validator<String> {
   final String name;
   final Set<String> values;
