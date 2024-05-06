@@ -1,3 +1,7 @@
+## 0.5.0 (06-May-2024)
+
+- added `FloatRangeValidator`.
+
 ## 0.4.1 (05-May-2024)
 
 - fixed Dart generation of nullable/validatable field with default value.

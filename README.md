@@ -214,8 +214,12 @@ const person = Objects('Person', {
 });
 ```
 
-Another built-in validator is `IntRangeValidator` (for ranges of ints, e.g.
-only allow values from 1 to 10: `IntRangeValidator(1, 10)`).
+Other built-in validators are `IntRangeValidator` and `FloatRangeValidator`.
+For example, to only accept integers in the range from 1 to 10:
+
+```dart
+const range = Property<int>(Validatable(Ints(), IntRangeValidator(1, 10)));
+```
 
 #### enums
 
