@@ -285,6 +285,17 @@ class Person {
   @override
   int get hashCode =>
       name.hashCode ^ age.hashCode;
+  
+  Person copyWith({
+    String? name = null,
+    int? age = null,
+    bool unsetAge = false,
+  }) {
+    return Person(
+      name: name ?? this.name,
+      age: unsetAge ? null : age ?? this.age,
+    );
+  }
 }
 ```
 
