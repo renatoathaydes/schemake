@@ -1,12 +1,14 @@
-import 'package:collection/collection.dart';
 import 'package:conveniently/conveniently.dart';
 
 import '../_text.dart';
 import '../property.dart';
 import '../types.dart';
 import '../validator.dart';
+import '_copyWith.dart';
 import '_utils.dart';
 import '_value_writer.dart';
+
+export '_copyWith.dart' show DartCopyWithMethodGenerator;
 
 class GeneratorExtras {
   final Set<String> imports;
@@ -51,6 +53,7 @@ final class DartGeneratorOptions {
   static const defaultMethodGenerators = [
     DartToStringMethodGenerator(),
     DartEqualsAndHashCodeMethodGenerator(),
+    DartCopyWithMethodGenerator(),
   ];
 
   static String _finalField(String name, Property<Object?> _) => 'final ';
@@ -177,7 +180,7 @@ extension on StringBuffer {
     writeConstructor(objects, options);
     options.methodGenerators
         .map((gen) => gen.generateMethod(this, objects, options))
-        .whereNotNull()
+        .nonNulls
         .forEach(extras.add);
     writeln('}');
   }

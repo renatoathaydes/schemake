@@ -1,3 +1,7 @@
+## 0.6.0 (24-Nov-2024)
+
+- added `DartCopyWithMethodGenerator` (generates `copyWith` method).
+
 ## 0.5.0 (06-May-2024)
 
 - added `FloatRangeValidator`.

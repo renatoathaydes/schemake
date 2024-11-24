@@ -26,6 +26,16 @@ class Person {
   @override
   int get hashCode =>
     name.hashCode ^ age.hashCode;
+  Person copyWith({
+    String? name = null,
+    int? age = null,
+    bool unsetAge = false,
+  }) {
+    return Person(
+      name: name ?? this.name,
+      age: unsetAge ? null : age ?? this.age,
+    );
+  }
 }
 ''';
 
@@ -77,6 +87,18 @@ class Validated {
   @override
   int get hashCode =>
     some.hashCode ^ more.hashCode ^ other.hashCode;
+  Validated copyWith({
+    Foo? some = null,
+    int? more = null,
+    double? other = null,
+    bool unsetMore = false,
+  }) {
+    return Validated(
+      some: some ?? this.some,
+      more: unsetMore ? null : more ?? this.more,
+      other: other ?? this.other,
+    );
+  }
 }
 ''';
 
@@ -100,6 +122,13 @@ class Nested {
   @override
   int get hashCode =>
     inner.hashCode;
+  Nested copyWith({
+    Person? inner = null,
+  }) {
+    return Nested(
+      inner: inner ?? this.inner.copyWith(),
+    );
+  }
 }
 ''';
 
@@ -127,6 +156,15 @@ class NestedList {
   @override
   int get hashCode =>
     const ListEquality<Person>().hash(inners) ^ inner1.hashCode;
+  NestedList copyWith({
+    List<Person>? inners = null,
+    Person? inner1 = null,
+  }) {
+    return NestedList(
+      inners: inners ?? [...this.inners],
+      inner1: inner1 ?? this.inner1.copyWith(),
+    );
+  }
 }
 ''';
 
@@ -176,6 +214,15 @@ class HasMaps {
   @override
   int get hashCode =>
     const MapEquality<String, String>().hash(maps) ^ const MapEquality<String, InMaps>().hash(objects);
+  HasMaps copyWith({
+    Map<String, String>? maps = null,
+    Map<String, InMaps>? objects = null,
+  }) {
+    return HasMaps(
+      maps: maps ?? {...this.maps},
+      objects: objects ?? {...this.objects},
+    );
+  }
 }
 
 class InMaps {
@@ -197,6 +244,13 @@ class InMaps {
   @override
   int get hashCode =>
     foo.hashCode;
+  InMaps copyWith({
+    String? foo = null,
+  }) {
+    return InMaps(
+      foo: foo ?? this.foo,
+    );
+  }
 }
 ''';
 
@@ -226,6 +280,16 @@ class SemiStructured {
   @override
   int get hashCode =>
     str.hashCode ^ const MapEquality<String, Object?>().hash(extras);
+  SemiStructured copyWith({
+    String? str = null,
+    Map<String, Object?>? extras = null,
+    bool unsetStr = false,
+  }) {
+    return SemiStructured(
+      str: unsetStr ? null : str ?? this.str,
+      extras: extras ?? {...this.extras},
+    );
+  }
 }
 ''';
 
@@ -322,6 +386,13 @@ void main() {
               '  @override\n'
               '  int get hashCode =>\n'
               "    const ListEquality<String>().hash(items);\n"
+              '  StringItems copyWith({\n'
+              '    List<String>? items = null,\n'
+              '  }) {\n'
+              '    return StringItems(\n'
+              '      items: items ?? [...this.items],\n'
+              '    );\n'
+              '  }\n'
               '}\n'));
     });
 
