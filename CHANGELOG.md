@@ -1,3 +1,7 @@
+## 0.6.1 (25-Nov-2024)
+
+- fixed handling of `Nullable` and `Validatable` types in Dart generation code.
+
 ## 0.6.0 (24-Nov-2024)
 
 - added `DartCopyWithMethodGenerator` (generates `copyWith` method).
