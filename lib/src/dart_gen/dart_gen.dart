@@ -4,11 +4,11 @@ import '../_text.dart';
 import '../property.dart';
 import '../types.dart';
 import '../validator.dart';
-import '_copyWith.dart';
+import '_copy_with.dart';
 import '_utils.dart';
 import '_value_writer.dart';
 
-export '_copyWith.dart' show DartCopyWithMethodGenerator;
+export '_copy_with.dart' show DartCopyWithMethodGenerator;
 
 class GeneratorExtras {
   final Set<String> imports;

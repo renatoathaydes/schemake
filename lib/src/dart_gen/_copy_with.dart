@@ -1,12 +1,5 @@
 import '../_text.dart';
-import '../types.dart'
-    show
-        Objects,
-        ObjectsBase,
-        Maps,
-        Arrays,
-        Nullable,
-        UnknownPropertiesStrategy;
+import '../types.dart';
 import '_utils.dart';
 import 'dart_gen.dart';
 
@@ -72,18 +65,22 @@ extension on StringBuffer {
     writeln('    return ${options.className(objects.name)}(');
     objects.properties.forEach((key, value) {
       final fName = options.fieldName(key);
+      var type = value.type;
+      var isNullable = type is Nullable;
+      type = type.unwrap();
       write('      $fName: ');
-      if (value.type is Nullable) {
+      if (isNullable) {
         write('unset${toPascalCase(fName)} ? null : ');
       }
       write('$fName ?? ');
-      if (copyWithOptions.copyLists && value.type is Arrays) {
-        writeln('[...this.$fName],');
-      } else if (copyWithOptions.copyMaps && value.type is ObjectsBase) {
-        if (value.type is Maps) {
-          writeln('{...this.$fName},');
+      final copyPrefix = isNullable ? 'this.$fName == null ? null : ' : '';
+      if (copyWithOptions.copyLists && type is Arrays) {
+        writeln('$copyPrefix[...this.$fName],');
+      } else if (copyWithOptions.copyMaps && type is ObjectsBase) {
+        if (type.isSimpleMap) {
+          writeln('$copyPrefix{...this.$fName},');
         } else {
-          writeln('this.$fName.copyWith(),');
+          writeln('this.$fName${isNullable ? '?' : ''}.copyWith(),');
         }
       } else {
         writeln('this.$fName,');

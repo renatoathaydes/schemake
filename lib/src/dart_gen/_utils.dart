@@ -55,8 +55,17 @@ extension SchemakeTypeExtension on SchemaType<Object?> {
     };
   }
 
+  /// Unwraps the type from [Nullable] and [Validatable] types.
+  NonNull<Object?> unwrap() {
+    return switch (this) {
+      Nullable<dynamic, NonNull>(type: var t) => t,
+      Validatable<Object?>(type: var t) => t,
+      _ => this as NonNull<Object?>,
+    };
+  }
+
   Object? listItemsTypeOrNull(DartGeneratorOptions options) {
-    final self = this;
+    final self = unwrap();
     if (self is Arrays<Object?, SchemaType<Object?>>) {
       return self.itemsType.dartTypeString(options);
     }
@@ -64,7 +73,7 @@ extension SchemakeTypeExtension on SchemaType<Object?> {
   }
 
   Object? mapValueTypeOrNull(DartGeneratorOptions options) {
-    final self = this;
+    final self = unwrap();
     if (self is Maps<Object?, SchemaType<Object?>>) {
       return self.valueType.dartTypeString(options);
     }

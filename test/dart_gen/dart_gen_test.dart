@@ -254,6 +254,47 @@ class InMaps {
 }
 ''';
 
+const _generatedClassWithNullableMaps = r'''
+import 'package:collection/collection.dart';
+
+class NullableMaps {
+  /// Property with Map of Strings.
+  final Map<String, String>? map;
+  final Map<String, Object?>? objectMap;
+  const NullableMaps({
+    this.map,
+    this.objectMap,
+  });
+  @override
+  String toString() =>
+    'NullableMaps{'
+    'map: $map, '
+    'objectMap: $objectMap'
+    '}';
+  @override
+  bool operator ==(Object other) =>
+    identical(this, other) ||
+    other is NullableMaps &&
+    runtimeType == other.runtimeType &&
+    const MapEquality<String, String>().equals(map, other.map) &&
+    const MapEquality<String, Object?>().equals(objectMap, other.objectMap);
+  @override
+  int get hashCode =>
+    const MapEquality<String, String>().hash(map) ^ const MapEquality<String, Object?>().hash(objectMap);
+  NullableMaps copyWith({
+    Map<String, String>? map = null,
+    Map<String, Object?>? objectMap = null,
+    bool unsetMap = false,
+    bool unsetObjectMap = false,
+  }) {
+    return NullableMaps(
+      map: unsetMap ? null : map ?? this.map == null ? null : {...this.map},
+      objectMap: unsetObjectMap ? null : objectMap ?? this.objectMap == null ? null : {...this.objectMap},
+    );
+  }
+}
+''';
+
 const _generatedSemiStructuredClass = r'''
 import 'package:collection/collection.dart';
 
@@ -347,6 +388,14 @@ const _schemaWithMaps = Objects('HasMaps', {
       valueType: Objects('InMaps', {
         'foo': Property(Strings()),
       })))
+});
+
+const _schemaWithNullableMaps = Objects('NullableMaps', {
+  'map': Property(
+      Nullable(Maps<String, Strings>('MapToStrings', valueType: Strings())),
+      description: 'Property with Map of Strings.'),
+  'objectMap': Property(Nullable(Objects('Map', {},
+      unknownPropertiesStrategy: UnknownPropertiesStrategy.keep)))
 });
 
 const _semiStructuredObjects = Objects(
@@ -453,6 +502,11 @@ void main() {
     test('can write Maps', () {
       expect(generateDartClasses([_schemaWithMaps]).toString(),
           equals(_generatedClassWithMaps));
+    });
+
+    test('can write Nullable Maps', () {
+      expect(generateDartClasses([_schemaWithNullableMaps]).toString(),
+          equals(_generatedClassWithNullableMaps));
     });
 
     test('can generate semi-structured Dart class toString, == and hashCode',
