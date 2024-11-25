@@ -2,7 +2,7 @@ name: schemake
 description: >
   Schemake (schema make) is a package for describing schemas from a declarative specification.
   Specifications can then be used for validating data, generating code or other schemas like JSON Schema and more.
-version: 0.6.0
+version: 0.6.1
 repository: https://github.com/renatoathaydes/schemake
 
 environment:
