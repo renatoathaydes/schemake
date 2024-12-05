@@ -2,7 +2,7 @@ import '../_text.dart';
 import '../_utils.dart';
 import '../types.dart';
 import '_utils.dart';
-import 'dart_gen.dart';
+import 'java_gen.dart';
 
 class CopyWithOptions {
   /// Whether to copy Lists when no explicit value has been given.
@@ -14,15 +14,15 @@ class CopyWithOptions {
   const CopyWithOptions({this.copyLists = true, this.copyMaps = true});
 }
 
-class DartCopyWithMethodGenerator with DartMethodGenerator {
+class JavaCopyWithMethodGenerator with JavaMethodGenerator {
   final CopyWithOptions copyWithOptions;
 
-  const DartCopyWithMethodGenerator(
+  const JavaCopyWithMethodGenerator(
       {this.copyWithOptions = const CopyWithOptions()});
 
   @override
   GeneratorExtras? generateMethod(
-      StringBuffer buffer, Objects objects, DartGeneratorOptions options) {
+      StringBuffer buffer, Objects objects, JavaGeneratorOptions options) {
     // format the generated code to avoid making the 'analyse' task to run
     buffer.writeCopyWith(objects, options, copyWithOptions);
     return null;
@@ -30,7 +30,7 @@ class DartCopyWithMethodGenerator with DartMethodGenerator {
 }
 
 extension on StringBuffer {
-  void writeCopyWith(Objects objects, DartGeneratorOptions options,
+  void writeCopyWith(Objects objects, JavaGeneratorOptions options,
       CopyWithOptions copyWithOptions) {
     writeln('  ${options.className(objects.name)} copyWith({');
     _writeParameters(objects, options);
@@ -39,10 +39,10 @@ extension on StringBuffer {
     writeln('  }');
   }
 
-  void _writeParameters(Objects objects, DartGeneratorOptions options) {
+  void _writeParameters(Objects objects, JavaGeneratorOptions options) {
     objects.properties.forEach((key, value) {
       write('    ');
-      write(value.type.dartTypeString(options));
+      write(value.type.javaTypeString(options));
       if (value.type is! Nullable) {
         write('?');
       }
@@ -61,7 +61,7 @@ extension on StringBuffer {
     });
   }
 
-  void _writeImplementation(Objects objects, DartGeneratorOptions options,
+  void _writeImplementation(Objects objects, JavaGeneratorOptions options,
       CopyWithOptions copyWithOptions) {
     writeln('    return ${options.className(objects.name)}(');
     objects.properties.forEach((key, value) {

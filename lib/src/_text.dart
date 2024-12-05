@@ -6,6 +6,8 @@ String emptyString(String s) => '';
 
 String quote(String s) => "'$s'";
 
+String dquote(String s) => '"$s"';
+
 String dollar(String s) => "\$$s";
 
 String quoteAndDollar(String s) => '"\$$s"';

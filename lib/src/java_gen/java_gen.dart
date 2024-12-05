@@ -9,7 +9,7 @@ import '_copy_with.dart';
 import '_utils.dart';
 import '_value_writer.dart';
 
-export '_copy_with.dart' show DartCopyWithMethodGenerator;
+export '_copy_with.dart' show JavaCopyWithMethodGenerator;
 
 class GeneratorExtras {
   final Set<String> imports;
@@ -22,44 +22,45 @@ class GeneratorExtras {
   static void _noOpWriter(StringBuffer _) {}
 }
 
-mixin DartMethodGenerator {
+mixin JavaMethodGenerator {
   GeneratorExtras? generateMethod(
-      StringBuffer buffer, Objects objects, DartGeneratorOptions options);
+      StringBuffer buffer, Objects objects, JavaGeneratorOptions options);
 }
 
-class DartToStringMethodGenerator with DartMethodGenerator {
-  const DartToStringMethodGenerator();
+class JavaToStringMethodGenerator with JavaMethodGenerator {
+  const JavaToStringMethodGenerator();
 
   @override
   GeneratorExtras? generateMethod(
-      StringBuffer buffer, Objects objects, DartGeneratorOptions options) {
+      StringBuffer buffer, Objects objects, JavaGeneratorOptions options) {
     buffer.writeToString(objects, options);
     return null;
   }
 }
 
-class DartEqualsAndHashCodeMethodGenerator with DartMethodGenerator {
-  const DartEqualsAndHashCodeMethodGenerator();
+class JavaEqualsAndHashCodeMethodGenerator with JavaMethodGenerator {
+  const JavaEqualsAndHashCodeMethodGenerator();
 
   @override
   GeneratorExtras? generateMethod(
-      StringBuffer buffer, Objects objects, DartGeneratorOptions options) {
+      StringBuffer buffer, Objects objects, JavaGeneratorOptions options) {
     final extras = buffer.writeEquals(objects, options);
     buffer.writeHashCode(objects, options);
     return extras;
   }
 }
 
-final class DartGeneratorOptions {
+final class JavaGeneratorOptions {
   static const defaultMethodGenerators = [
-    DartToStringMethodGenerator(),
-    DartEqualsAndHashCodeMethodGenerator(),
-    DartCopyWithMethodGenerator(),
+    JavaToStringMethodGenerator(),
+    JavaEqualsAndHashCodeMethodGenerator(),
+    JavaCopyWithMethodGenerator(),
   ];
 
-  static String _finalField(String name, Property<Object?> _) => 'final ';
+  static String _finalField(String name, Property<Object?> _) =>
+      'public final ';
 
-  static String _const() => 'const ';
+  static String _const() => 'public ';
 
   static String _newline(String _) => '\n';
 
@@ -71,10 +72,10 @@ final class DartGeneratorOptions {
   final String Function()? insertBeforeConstructor;
   final String Function(String name, Property<Object?> property)?
       insertBeforeConstructorArg;
-  final List<DartMethodGenerator> methodGenerators;
+  final List<JavaMethodGenerator> methodGenerators;
   final bool encodeNulls;
 
-  const DartGeneratorOptions({
+  const JavaGeneratorOptions({
     this.insertBeforeClass = _newline,
     this.fieldName = toCamelCase,
     this.className = toPascalCase,
@@ -86,29 +87,29 @@ final class DartGeneratorOptions {
   });
 }
 
-abstract class DartValidatorGenerationOptions<V extends Validator<dynamic>>
+abstract class JavaValidatorGenerationOptions<V extends Validator<dynamic>>
     implements ValidatorGenerationOptions {
-  /// Returns Dart code that re-creates the Validatable instance
+  /// Returns Java code that re-creates the Validatable instance
   /// or the equivalent [Converter] instance that can be used to convert
   /// properties of the type the validator validates.
   String selfCreateString(V validator);
 
-  /// The Dart type name for the given validator type.
-  String dartTypeFor(V validator);
+  /// The Java type name for the given validator type.
+  String javaTypeFor(V validator);
 
-  /// Return a Dart type generator for the validator type if necessary.
+  /// Return a Java type generator for the validator type if necessary.
   ///
-  /// The type should have the name given by [dartTypeFor] for any given
+  /// The type should have the name given by [JavaTypeFor] for any given
   /// [Validator].
-  GeneratorExtras? getDartTypeGenerator(V validator);
+  GeneratorExtras? getJavaTypeGenerator(V validator);
 }
 
-/// Generates Dart code for the given schema types.
+/// Generates Java code for the given schema types.
 ///
 /// The generated code is written to the buffer provided in the argument,
 /// or a new one is created if not provided, and then returned.
-StringBuffer generateDartClasses(List<Objects> schemaTypes,
-    {DartGeneratorOptions options = const DartGeneratorOptions()}) {
+StringBuffer generateJavaClasses(List<Objects> schemaTypes,
+    {JavaGeneratorOptions options = const JavaGeneratorOptions()}) {
   final writer = StringBuffer();
   final generatorExtras = <GeneratorExtras>[];
   for (final type in schemaTypes) {
@@ -122,7 +123,7 @@ StringBuffer generateDartClasses(List<Objects> schemaTypes,
 
 extension on StringBuffer {
   StringBuffer addExtrasIfOwnType(List<GeneratorExtras> extras,
-      ObjectsBase<dynamic> objects, DartGeneratorOptions options) {
+      ObjectsBase<dynamic> objects, JavaGeneratorOptions options) {
     if (objects is Maps) {
       _addExtrasInType(objects.valueType, extras, options);
       return this;
@@ -135,13 +136,13 @@ extension on StringBuffer {
     } else {
       throw UnsupportedError('The only subtypes of ObjectsBase allowed to be '
           'used for code generation are Objects and Maps. '
-          'Cannot generate Dart code for $objects');
+          'Cannot generate Java code for $objects');
     }
     return this;
   }
 
   void writeType(SchemaType<dynamic> schemaType,
-      List<GeneratorExtras> generatorExtras, DartGeneratorOptions options,
+      List<GeneratorExtras> generatorExtras, JavaGeneratorOptions options,
       [String Function(String) typeWrapper = identityString]) {
     final _ = switch (schemaType) {
       Nullable<dynamic, NonNull>(type: var type) =>
@@ -155,28 +156,28 @@ extension on StringBuffer {
       Arrays<dynamic, SchemaType>(itemsType: var type) =>
         writeType(type, generatorExtras, options, array),
       ObjectsBase() => addExtrasIfOwnType(generatorExtras, schemaType, options)
-          .write(typeWrapper(schemaType.dartTypeString(options))),
+          .write(typeWrapper(schemaType.javaTypeString(options))),
     };
   }
 
   void writeValidatableType(Validatable<dynamic> schemaType,
-      List<GeneratorExtras> generatorExtras, DartGeneratorOptions options,
+      List<GeneratorExtras> generatorExtras, JavaGeneratorOptions options,
       [String Function(String) typeWrapper = identityString]) {
     final validator = schemaType.validator;
-    final generator = schemaType.dartGenOption;
+    final generator = schemaType.javaGenOption;
     if (generator == null) {
       writeType(schemaType.type, generatorExtras, options, typeWrapper);
     } else {
-      write(typeWrapper(generator.dartTypeFor(validator)));
-      generator.getDartTypeGenerator(validator)?.vmap(generatorExtras.add);
+      write(typeWrapper(generator.javaTypeFor(validator)));
+      generator.getJavaTypeGenerator(validator)?.vmap(generatorExtras.add);
     }
   }
 
   void writeObjects(Objects objects, List<GeneratorExtras> extras,
-      DartGeneratorOptions options) {
+      JavaGeneratorOptions options) {
     writeComments(objects.description);
     write(options.insertBeforeClass(objects.name));
-    writeln('class ${options.className(objects.name)} {');
+    writeln('public class ${options.className(objects.name)} {');
     writeFields(objects, extras, options);
     writeConstructor(objects, options);
     options.methodGenerators
@@ -188,18 +189,20 @@ extension on StringBuffer {
 
   void writeComments(String comments, [String indent = '']) {
     if (comments.isEmpty) return;
+    writeln('$indent/**');
     for (final line in comments.split("\n")) {
       if (line.isEmpty) {
-        writeln('$indent///');
+        writeln('$indent ** <p>');
       } else {
-        write('$indent/// ');
+        write('$indent ** ');
         writeln(line);
       }
     }
+    writeln('$indent **/');
   }
 
   void writeFields(Objects objects, List<GeneratorExtras> extras,
-      DartGeneratorOptions options) {
+      JavaGeneratorOptions options) {
     objects.properties.forEach((key, value) {
       writeComments(value.description, '  ');
       write('  ');
@@ -212,11 +215,11 @@ extension on StringBuffer {
       write('  ');
       options.insertBeforeField?.vmap(
           (get) => write(get('extras', const Property(Objects('Map', {})))));
-      writeln('Map<String, Object?> extras;');
+      writeln('Map<String, Object> extras;');
     }
   }
 
-  void writeConstructor(Objects objects, DartGeneratorOptions options) {
+  void writeConstructor(Objects objects, JavaGeneratorOptions options) {
     write('  ');
     options.insertBeforeConstructor?.vmap((get) => write(get()));
     writeln('${options.className(objects.name)}({');
@@ -233,7 +236,7 @@ extension on StringBuffer {
               'unless the type is Objects with empty properties, or Maps.');
         }
         write(' = ');
-        writeValue(value.type, def, consted: true);
+        writeValue(value.type, def);
       });
       writeln(',');
     });
@@ -243,7 +246,7 @@ extension on StringBuffer {
     writeln('  });');
   }
 
-  void writeToString(Objects objects, DartGeneratorOptions options) {
+  void writeToString(Objects objects, JavaGeneratorOptions options) {
     write('  @override\n'
         '  String toString() =>\n'
         '    ');
@@ -267,7 +270,7 @@ extension on StringBuffer {
     writeln(';');
   }
 
-  GeneratorExtras? writeEquals(Objects objects, DartGeneratorOptions options) {
+  GeneratorExtras? writeEquals(Objects objects, JavaGeneratorOptions options) {
     writeln('  @override\n'
         '  bool operator ==(Object other) =>\n'
         '    identical(this, other) ||');
@@ -277,7 +280,7 @@ extension on StringBuffer {
         objects.unknownPropertiesStrategy == UnknownPropertiesStrategy.keep;
     GeneratorExtras? extras;
     if (hasExtras) {
-      extras = const GeneratorExtras({'package:collection/collection.dart'});
+      extras = const GeneratorExtras({'package:collection/collection.Java'});
     }
     if (objects.properties.isNotEmpty) {
       writeln(' &&');
@@ -287,59 +290,38 @@ extension on StringBuffer {
             final type = entry.value.type;
             final listItemType = type.listItemsTypeOrNull(options);
             if (listItemType != null) {
-              extras =
-                  const GeneratorExtras({'package:collection/collection.dart'});
-              return '    const ListEquality<$listItemType>()'
-                  '.equals($fieldName, other.$fieldName)';
+              extras = const GeneratorExtras({'java.util.List'});
             }
             final mapValueType = type.mapValueTypeOrNull(options);
             if (mapValueType != null) {
-              extras =
-                  const GeneratorExtras({'package:collection/collection.dart'});
-              return '    const MapEquality<String, $mapValueType>()'
-                  '.equals($fieldName, other.$fieldName)';
+              extras = const GeneratorExtras({'java.util.Map'});
             }
-            return '    $fieldName == other.$fieldName';
+            return '    $fieldName.equals(other.$fieldName)';
           })
-          .followedBy(hasExtras
-              ? {
-                  '    const MapEquality<String, Object?>().equals(extras, other.extras)'
-                }
-              : {})
+          .followedBy(hasExtras ? {'    extras.equals(other.extras)'} : {})
           .join(' &&\n'));
     }
     writeln(';');
     return extras;
   }
 
-  void writeHashCode(Objects objects, DartGeneratorOptions options) {
+  void writeHashCode(Objects objects, JavaGeneratorOptions options) {
     final hasExtras =
         objects.unknownPropertiesStrategy == UnknownPropertiesStrategy.keep;
-    writeln('  @override\n'
-        '  int get hashCode =>');
+    writeln('  @Override\n'
+        '  public int hashCode() {\n');
     if (objects.properties.isEmpty && !hasExtras) {
-      write('    runtimeType.hashCode');
+      write('    return getClass().hashCode();');
     } else {
       write('    ');
       write(objects.properties.entries
           .map((entry) {
             final fieldName = options.fieldName(entry.key);
             final type = entry.value.type;
-            final listItemType = type.listItemsTypeOrNull(options);
-            if (listItemType != null) {
-              return 'const ListEquality<$listItemType>()'
-                  '.hash($fieldName)';
-            }
-            final mapValueType = type.mapValueTypeOrNull(options);
-            if (mapValueType != null) {
-              return 'const MapEquality<String, $mapValueType>()'
-                  '.hash($fieldName)';
-            }
-            return '$fieldName.hashCode';
+            // TODO if primitive, use Objects.hashCode();
+            return '$fieldName.hashCode()';
           })
-          .followedBy(hasExtras
-              ? {'const MapEquality<String, Object?>().hash(extras)'}
-              : {})
+          .followedBy(hasExtras ? {'extras.hashCode()'} : {})
           .join(' ^ '));
     }
     writeln(';');
@@ -377,7 +359,7 @@ extension on StringBuffer {
 }
 
 void _addExtrasInType(SchemaType<Object?> type, List<GeneratorExtras> extras,
-    DartGeneratorOptions options) {
+    JavaGeneratorOptions options) {
   return switch (type) {
     Nullable<Object?, NonNull>(type: var t) =>
       _addExtrasInType(t, extras, options),
@@ -396,12 +378,12 @@ void _addExtrasInType(SchemaType<Object?> type, List<GeneratorExtras> extras,
 }
 
 void _addExtrasInValidator(Validatable<Object?> type,
-    List<GeneratorExtras> extras, DartGeneratorOptions options) {
-  final dartGen = type.dartGenOption;
-  if (dartGen == null) {
+    List<GeneratorExtras> extras, JavaGeneratorOptions options) {
+  final javaGen = type.javaGenOption;
+  if (javaGen == null) {
     return _addExtrasInType(type.type, extras, options);
   }
-  final generator = dartGen.getDartTypeGenerator(type.validator);
+  final generator = javaGen.getJavaTypeGenerator(type.validator);
   if (generator != null) {
     extras.add(generator);
   }

@@ -1,48 +1,48 @@
-import 'package:schemake/dart_gen.dart';
-
 import '../_utils.dart';
 import '../types.dart';
 import '../validator.dart';
+import 'gen_options.dart';
+import 'java_gen.dart';
 
-extension ValidatableDartGenerationExtension<T> on Validatable<T> {
-  DartValidatorGenerationOptions<Validator<T>>? get dartGenOption {
+extension ValidatableJavaGenerationExtension<T> on Validatable<T> {
+  JavaValidatorGenerationOptions<Validator<T>>? get javaGenOption {
     final configuredOptions = validator.generatorOptions
-        .whereType<DartValidatorGenerationOptions<Validator<T>>>()
+        .whereType<JavaValidatorGenerationOptions<Validator<T>>>()
         .firstOrNull;
     if (configuredOptions != null) return configuredOptions;
 
     // use built-in options if possible
     final result = switch (validator) {
-      EnumValidator() => const DartEnumGeneratorOptions(),
-      IntRangeValidator() => const DartIntRangeGeneratorOptions(),
-      FloatRangeValidator() => const DartFloatRangeGeneratorOptions(),
-      NonBlankStringValidator() => const DartNonBlankStringGeneratorOptions(),
+      EnumValidator() => const JavaEnumGeneratorOptions(),
+      IntRangeValidator() => const JavaIntRangeGeneratorOptions(),
+      FloatRangeValidator() => const JavaFloatRangeGeneratorOptions(),
+      NonBlankStringValidator() => const JavaNonBlankStringGeneratorOptions(),
       _ => null,
     };
-    return result as DartValidatorGenerationOptions<Validator<T>>?;
+    return result as JavaValidatorGenerationOptions<Validator<T>>?;
   }
 }
 
 typedef _TypeOf<T> = T;
 
 extension SchemakeTypeExtension on SchemaType<Object?> {
-  String dartTypeString(DartGeneratorOptions options) {
+  String javaTypeString(JavaGeneratorOptions options) {
     final self = this;
     return switch (self) {
       Nullable<Object?, NonNull>(type: var t) =>
-        '${t.dartTypeString(options)}?',
+        '${t.javaTypeString(options)}?',
       Ints() => 'int',
       Floats() => 'double',
       Strings() => 'String',
-      Bools() => 'bool',
+      Bools() => 'boolean',
       Arrays<Object?, SchemaType>(itemsType: var t) =>
-        'List<${t.dartTypeString(options)}>',
-      Maps(valueType: var t) => 'Map<String, ${t.dartTypeString(options)}>',
+        'List<${t.javaTypeString(options)}>',
+      Maps(valueType: var t) => 'Map<String, ${t.javaTypeString(options)}>',
       Objects() when (self.isSimpleMap) => self.dartType().toString(),
       Objects() => options.className(self.name),
       ObjectsBase<Object?>() => self.dartType().toString(),
       Validatable<Object?>(validator: var v) =>
-        self.dartGenOption?.dartTypeFor(v) ?? self.type.dartTypeString(options),
+        self.javaGenOption?.javaTypeFor(v) ?? self.type.javaTypeString(options),
     };
   }
 
@@ -55,18 +55,18 @@ extension SchemakeTypeExtension on SchemaType<Object?> {
     };
   }
 
-  Object? listItemsTypeOrNull(DartGeneratorOptions options) {
+  Object? listItemsTypeOrNull(JavaGeneratorOptions options) {
     final self = unwrap();
     if (self is Arrays<Object?, SchemaType<Object?>>) {
-      return self.itemsType.dartTypeString(options);
+      return self.itemsType.javaTypeString(options);
     }
     return null;
   }
 
-  Object? mapValueTypeOrNull(DartGeneratorOptions options) {
+  Object? mapValueTypeOrNull(JavaGeneratorOptions options) {
     final self = unwrap();
     if (self is Maps<Object?, SchemaType<Object?>>) {
-      return self.valueType.dartTypeString(options);
+      return self.valueType.javaTypeString(options);
     }
     if (self is Objects && self.isSimpleMap) {
       return _TypeOf<Object?>;

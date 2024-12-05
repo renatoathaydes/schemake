@@ -5,99 +5,90 @@ import '../types.dart';
 import '_utils.dart';
 import 'gen_options.dart';
 
-extension DartValueWriter on StringBuffer {
-  void writeValue(SchemaType<Object?> type, Object? value,
-      {bool consted = false}) {
+extension JavaValueWriter on StringBuffer {
+  void writeValue(SchemaType<Object?> type, Object? value) {
     if (value == null) return write('null');
     final _ = switch (type) {
       Ints() || Bools() || Floats() => write(value.toString()),
       Enums() => writeEnumValue(type, type.convert(value)),
       Strings() => writeStringLiteral(type.convert(value)),
-      Nullable(type: var t) => writeValue(t, value, consted: consted),
-      Arrays(itemsType: var t) =>
-        writeListValue(t, type.convert(value), consted: consted),
-      Maps(valueType: var t) =>
-        writeMapValue(t, type.convert(value), consted: consted),
-      Objects() => writeAnyMapValue(type.convert(value), consted: consted),
+      Nullable(type: var t) => writeValue(t, value),
+      Arrays(itemsType: var t) => writeListValue(t, type.convert(value)),
+      Maps(valueType: var t) => writeMapValue(t, type.convert(value)),
+      Objects() => writeAnyMapValue(type.convert(value)),
       Validatable(type: var vtype) => writeValue(vtype, value),
       _ => throw UnsupportedError(
           'Cannot write default value of type ${value.runtimeType}'),
     };
   }
 
-  void writeAnyValue(Object? value, {bool consted = false}) {
+  void writeAnyValue(Object? value) {
     final _ = switch (value) {
       null => write('null'),
       int() || bool() || double() => write(value.toString()),
       String() => writeStringLiteral(value),
-      List<Object?>() => writeAnyListValue(value, consted: consted),
-      Map<String, Object?>() => writeAnyMapValue(value, consted: consted),
+      List<Object?>() => writeAnyListValue(value),
+      Map<String, Object?>() => writeAnyMapValue(value),
       _ => throw UnsupportedError(
           'Cannot write default value of type ${value.runtimeType}'),
     };
   }
 
-  void writeMapValue(SchemaType<Object?> type, Map<String, Object?> map,
-      {bool consted = false}) {
-    if (consted) write('const ');
-    write('{');
+  void writeMapValue(SchemaType<Object?> type, Map<String, Object?> map) {
+    write('Map.of(');
     final lastIndex = map.length - 1;
     for (final (i, entry) in map.entries.indexed) {
       writeStringLiteral(entry.key);
-      write(': ');
+      write(', ');
       writeValue(type, entry.value);
       if (i != lastIndex) write(', ');
     }
-    write('}');
+    write(')');
   }
 
-  void writeAnyMapValue(Map<String, Object?> map, {bool consted = false}) {
-    if (consted) write('const ');
-    write('{');
+  void writeAnyMapValue(Map<String, Object?> map) {
+    write('Map.of(');
     final lastIndex = map.length - 1;
     for (final (i, entry) in map.entries.indexed) {
       writeStringLiteral(entry.key);
-      write(': ');
+      write(', ');
       final value = entry.value;
-      write(value is String ? quote(value) : value);
+      write(value is String ? dquote(value) : value);
       if (i != lastIndex) write(', ');
     }
-    write('}');
+    write(')');
   }
 
-  void writeListValue(SchemaType<Object?> type, List<Object?> value,
-      {bool consted = false}) {
-    if (consted) write('const ');
-    write('[');
+  void writeListValue(SchemaType<Object?> type, List<Object?> value) {
+    write('List.of(');
     final lastIndex = value.length - 1;
     for (var i = 0; i <= lastIndex; i++) {
       writeValue(type, value[i]);
       if (i != lastIndex) write(', ');
     }
-    write(']');
+    write(')');
   }
 
-  void writeAnyListValue(List<Object?> value, {required bool consted}) {
-    if (consted) write('const ');
-    write('[');
+  void writeAnyListValue(List<Object?> value) {
+    write('List.of(');
     final lastIndex = value.length - 1;
     for (var i = 0; i <= lastIndex; i++) {
       writeAnyValue(value[i]);
       if (i != lastIndex) write(', ');
     }
-    write(']');
+    write(')');
   }
 
   void writeStringLiteral(String value) {
-    write(quote(value.replaceAll("'", "\\'")));
+    write(dquote(value.replaceAll('"', '\\"')));
   }
 
   void writeEnumValue(Enums type, String value) {
-    final genOption = type.dartGenOption
+    final genOption = type.javaGenOption
         .orThrow(() => StateError('cannot write default value for $type: '
-            'no DartValidatorGenerationOptions provided.'));
-    final typeName = genOption.dartTypeFor(type.validator);
-    final variant = (genOption is DartEnumGeneratorOptions)
+            'no JavaValidatorGenerationOptions provided.'));
+    final typeName = genOption.javaTypeFor(type.validator);
+    final variant = (genOption is JavaEnumGeneratorOptions)
         ? genOption.dartVariantName(value)
         : value;
     write('$typeName.$variant');

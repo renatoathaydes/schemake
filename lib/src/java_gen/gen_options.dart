@@ -1,28 +1,28 @@
 import '../_text.dart';
 import '../types.dart';
 import '../validator.dart';
-import 'dart_gen.dart';
+import 'java_gen.dart';
 import 'json.dart';
 
-class DartEnumGeneratorOptions
-    implements DartValidatorGenerationOptions<EnumValidator> {
+class JavaEnumGeneratorOptions
+    implements JavaValidatorGenerationOptions<EnumValidator> {
   final String Function(String validatorName) dartTypeName;
   final String Function(String) dartVariantName;
   final String Function(String) insertBeforeEnumVariant;
 
-  const DartEnumGeneratorOptions(
+  const JavaEnumGeneratorOptions(
       {this.dartTypeName = toPascalCase,
       this.dartVariantName = toCamelCase,
       this.insertBeforeEnumVariant = emptyString});
 
   @override
-  String dartTypeFor(EnumValidator validator) {
+  String javaTypeFor(EnumValidator validator) {
     return dartTypeName(validator.name);
   }
 
   @override
-  GeneratorExtras? getDartTypeGenerator(EnumValidator validator) {
-    final typeName = dartTypeFor(validator);
+  GeneratorExtras? getJavaTypeGenerator(EnumValidator validator) {
+    final typeName = javaTypeFor(validator);
     final converterName = _converterName(validator);
     return GeneratorExtras(
         const {'dart:convert', 'package:schemake/schemake.dart'},
@@ -73,15 +73,15 @@ class DartEnumGeneratorOptions
   }
 }
 
-class DartIntRangeGeneratorOptions
-    implements DartValidatorGenerationOptions<IntRangeValidator> {
-  const DartIntRangeGeneratorOptions();
+class JavaIntRangeGeneratorOptions
+    implements JavaValidatorGenerationOptions<IntRangeValidator> {
+  const JavaIntRangeGeneratorOptions();
 
   @override
-  String dartTypeFor(IntRangeValidator validator) => 'int';
+  String javaTypeFor(IntRangeValidator validator) => 'int';
 
   @override
-  GeneratorExtras? getDartTypeGenerator(IntRangeValidator validator) {
+  GeneratorExtras? getJavaTypeGenerator(IntRangeValidator validator) {
     // nothing to do: a plain int is used
     return null;
   }
@@ -89,20 +89,20 @@ class DartIntRangeGeneratorOptions
   @override
   String selfCreateString(IntRangeValidator validator) {
     final typeName = validator.runtimeType;
-    return "Validatable(${schemaTypeString(const Ints(), const DartGeneratorOptions())}, "
+    return "Validatable(${schemaTypeString(const Ints(), const JavaGeneratorOptions())}, "
         "$typeName(${validator.min}, ${validator.max}))";
   }
 }
 
-class DartFloatRangeGeneratorOptions
-    implements DartValidatorGenerationOptions<FloatRangeValidator> {
-  const DartFloatRangeGeneratorOptions();
+class JavaFloatRangeGeneratorOptions
+    implements JavaValidatorGenerationOptions<FloatRangeValidator> {
+  const JavaFloatRangeGeneratorOptions();
 
   @override
-  String dartTypeFor(FloatRangeValidator validator) => 'double';
+  String javaTypeFor(FloatRangeValidator validator) => 'double';
 
   @override
-  GeneratorExtras? getDartTypeGenerator(FloatRangeValidator validator) {
+  GeneratorExtras? getJavaTypeGenerator(FloatRangeValidator validator) {
     // nothing to do: a plain int is used
     return null;
   }
@@ -110,20 +110,20 @@ class DartFloatRangeGeneratorOptions
   @override
   String selfCreateString(FloatRangeValidator validator) {
     final typeName = validator.runtimeType;
-    return "Validatable(${schemaTypeString(const Floats(), const DartGeneratorOptions())}, "
+    return "Validatable(${schemaTypeString(const Floats(), const JavaGeneratorOptions())}, "
         "$typeName(${validator.min}, ${validator.max}))";
   }
 }
 
-class DartNonBlankStringGeneratorOptions
-    implements DartValidatorGenerationOptions<NonBlankStringValidator> {
-  const DartNonBlankStringGeneratorOptions();
+class JavaNonBlankStringGeneratorOptions
+    implements JavaValidatorGenerationOptions<NonBlankStringValidator> {
+  const JavaNonBlankStringGeneratorOptions();
 
   @override
-  String dartTypeFor(NonBlankStringValidator validator) => 'String';
+  String javaTypeFor(NonBlankStringValidator validator) => 'String';
 
   @override
-  GeneratorExtras? getDartTypeGenerator(NonBlankStringValidator validator) {
+  GeneratorExtras? getJavaTypeGenerator(NonBlankStringValidator validator) {
     // nothing to do: a plain String is used
     return null;
   }
