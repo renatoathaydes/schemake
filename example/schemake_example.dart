@@ -9,6 +9,7 @@ import 'package:yaml/yaml.dart';
 const personSchema = Objects('Person', {
   'name': Property(Strings()),
   'age': Property(Nullable(Ints())),
+  'job': Property(Nullable(Strings())),
   'friends': Property(Arrays<String, Strings>(Strings()))
 });
 
@@ -24,6 +25,7 @@ void main() {
   Map<String, Object?> joe = personSchema.convert(yaml);
   print('// Full name: ${joe['name']}');
   print('// Age:       ${joe['age']}');
+  print('// Job:       ${joe['job'] ?? "unknown"}');
   // you get a List<String>, not a YamlList!
   final friends = joe['friends'] as List<String>;
   print('// Friends:   ${friends.join(', ')}');
@@ -52,7 +54,7 @@ void main() {
   // that file!
   print(r'''
 void main() {
-  final person = Person(name: 'Joe Doe', age: 42, friends: ['Mary']);
+  final person = Person(name: 'Joe Doe', age: 42, job: "Developer", friends: ['Mary']);
   print(jsonEncode(person));
   final otherPerson = Person.fromJson(
     '{"name": "Mary Jane", "friends": ["Joe"]}');

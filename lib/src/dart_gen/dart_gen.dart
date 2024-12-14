@@ -255,8 +255,13 @@ extension on StringBuffer {
       write('    ');
       final fieldName = options.fieldName(key);
       final wrapValue = value.type.isStringOrNull() ? quoteAndDollar : dollar;
-      writeln(quote(
-          '$fieldName: ${wrapValue(fieldName)}${index++ == lastIndex ? '' : ', '}'));
+      final suffix = index++ == lastIndex ? '' : ', ';
+      if (value.type.isNullableString()) {
+        writeln(quote(
+            '$fieldName: \${$fieldName == null ? "null" : \'${wrapValue(fieldName)}\'}$suffix'));
+      } else {
+        writeln(quote('$fieldName: ${wrapValue(fieldName)}$suffix'));
+      }
     });
     if (hasExtras) {
       writeln(r"    'extras: $extras'");
@@ -407,9 +412,13 @@ void _addExtrasInValidator(Validatable<Object?> type,
 }
 
 extension on SchemaType<dynamic> {
+  bool isNullableString() {
+    final self = this;
+    return self is Nullable<Object?, Object?> && self.type is Strings;
+  }
+
   bool isStringOrNull() {
     final self = this;
-    return self is Strings ||
-        (self is Nullable<Object?, Object?> && self.type is Strings);
+    return self is Strings || isNullableString();
   }
 }

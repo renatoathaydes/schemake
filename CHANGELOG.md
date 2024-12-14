@@ -1,3 +1,7 @@
+## 0.6.2 (14-Dec-2024)
+
+- fixed Dart `toString` generation for `Nullable(Strings())` which was quoting even null values.
+
 ## 0.6.1 (25-Nov-2024)
 
 - fixed handling of `Nullable` and `Validatable` types in Dart generation code.

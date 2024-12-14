@@ -308,7 +308,7 @@ class SemiStructured {
   @override
   String toString() =>
     'SemiStructured{'
-    'str: "$str", '
+    'str: ${str == null ? "null" : '"$str"'}, '
     'extras: $extras'
     '}';
   @override
