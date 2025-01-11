@@ -1,3 +1,7 @@
+## 0.6.3 (11-Jan-2025)
+
+- fixed Dart 'toJson' for objects containing enum types.
+
 ## 0.6.2 (14-Dec-2024)
 
 - fixed Dart `toString` generation for `Nullable(Strings())` which was quoting even null values.
