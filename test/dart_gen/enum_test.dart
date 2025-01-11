@@ -17,6 +17,9 @@ class MyObject {
 enum MyEnum {
   foo,
   ;
+  String get name => switch(this) {
+    foo => 'foo',
+  };
   static MyEnum from(String s) => switch(s) {
     'foo' => foo,
     _ => throw ValidationException(['value not allowed for MyEnum: "$s" - should be one of {foo}']),
@@ -45,6 +48,10 @@ enum LispCaseEnum {
   someProp,
   otherThing,
   ;
+  String get string => switch(this) {
+    someProp => 'some-prop',
+    otherThing => 'other-thing',
+  };
   static LispCaseEnum from(String s) => switch(s) {
     'some-prop' => someProp,
     'other-thing' => otherThing,
@@ -76,8 +83,12 @@ void main() {
       expect(
           generateDartClasses([
             Objects('MyObject', {
-              'prop': Property(Enums(EnumValidator(
-                  'lisp-case-enum', {'some-prop', 'other-thing'})))
+              'prop': Property(Enums(EnumValidator('lisp-case-enum', {
+                'some-prop',
+                'other-thing'
+              }, generatorOptions: [
+                DartEnumGeneratorOptions(nameProperty: 'string')
+              ])))
             })
           ], options: DartGeneratorOptions(methodGenerators: const []))
               .toString(),
@@ -103,8 +114,8 @@ void main() {
       expect(
           stdout,
           equals([
-            {'prop': 'Bar.bar'}.toString(),
-            {'prop': 'Bar.zort'}.toString(),
+            {'prop': 'bar'}.toString(),
+            {'prop': 'zort'}.toString(),
           ]));
     });
 

@@ -44,6 +44,10 @@ enum Foo {
   foo,
   bar,
   ;
+  String get name => switch(this) {
+    foo => 'foo',
+    bar => 'bar',
+  };
   static Foo from(String s) => switch(s) {
     'foo' => foo,
     'bar' => bar,

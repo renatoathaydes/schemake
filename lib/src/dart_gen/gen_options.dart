@@ -10,11 +10,13 @@ class DartEnumGeneratorOptions
   final String Function(String validatorName) dartTypeName;
   final String Function(String) dartVariantName;
   final String Function(String) insertBeforeEnumVariant;
+  final String nameProperty;
 
   const DartEnumGeneratorOptions(
       {this.dartTypeName = toPascalCase,
       this.dartVariantName = toCamelCase,
-      this.insertBeforeEnumVariant = emptyString});
+      this.insertBeforeEnumVariant = emptyString,
+      this.nameProperty = 'name'});
 
   @override
   String dartTypeFor(EnumValidator validator) {
@@ -41,6 +43,11 @@ class DartEnumGeneratorOptions
           '  ${insertBeforeEnumVariant(name)}${dartVariantName(name)},');
     }
     buffer.writeln('  ;\n'
+        '  String get $nameProperty => switch(this) {');
+    for (var name in validator.values) {
+      buffer.writeln("    ${dartVariantName(name)} => '$name',");
+    }
+    buffer.writeln('  };\n'
         '  static $typeName from(String s) => switch(s) {');
     for (var name in validator.values) {
       buffer.writeln("    '$name' => ${dartVariantName(name)},");

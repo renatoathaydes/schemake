@@ -1,8 +1,8 @@
 import 'package:conveniently/conveniently.dart';
-import 'package:schemake/src/dart_gen/_utils.dart';
 
 import '../_text.dart';
 import '../types.dart';
+import '_utils.dart';
 import '_value_writer.dart';
 import 'dart_gen.dart';
 
@@ -38,10 +38,17 @@ extension on StringBuffer {
     objects.properties.forEach((key, value) {
       write('    ');
       final fieldName = options.fieldName(key);
-      if (!options.encodeNulls && value.type is Nullable<dynamic, dynamic>) {
+      final type = value.type;
+      final isNullable = type is Nullable<dynamic, dynamic>;
+      if (!options.encodeNulls && isNullable) {
         write('if ($fieldName != null) ');
       }
-      writeln("'$key': $fieldName,");
+      write("'$key': $fieldName");
+      final enumOptions = type.enumOptions();
+      if (enumOptions != null) {
+        write('.${enumOptions.nameProperty}');
+      }
+      writeln(',');
     });
     if (objects.unknownPropertiesStrategy == UnknownPropertiesStrategy.keep) {
       writeln("    ...extras,");

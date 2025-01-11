@@ -33,13 +33,18 @@ const _someSchema = Objects('SomeSchema', {
   'list': Property(Arrays<int, Ints>(Ints())),
 });
 
+const enumAbcDef = Enums(EnumValidator('EnumValue', {'abc', 'def'}));
+
+const simpleObjectWithEnum = Objects('WithEnum', {
+  'myEnum': Property(enumAbcDef),
+});
+
 const _schemaWithDefaultValues = Objects('WithDefaults', {
   'a': Property(Strings(), defaultValue: 'foo'),
   'b': Property(Nullable(Floats()), defaultValue: 3.1415),
   'c': Property(Arrays<int, Ints>(Ints()), defaultValue: [1, 2]),
   'nullableWithDefault': Property(Nullable(Ints()), defaultValue: 2),
-  'enum1': Property(Enums(EnumValidator('EnumValue', {'abc', 'def'})),
-      defaultValue: 'def'),
+  'enum1': Property(enumAbcDef, defaultValue: 'def'),
   'mandatory': Property(Ints()),
 });
 
@@ -176,6 +181,42 @@ class NestedList {
 }
 ''';
 
+const _simpleObjectWithEnumJsonGeneration = r'''
+import 'dart:convert';
+import 'package:schemake/schemake.dart';
+
+class WithEnum {
+  final EnumValue myEnum;
+  const WithEnum({
+    required this.myEnum,
+  });
+  Map<String, Object?> toJson() => {
+    'myEnum': myEnum.name,
+  };
+}
+enum EnumValue {
+  abc,
+  def,
+  ;
+  String get name => switch(this) {
+    abc => 'abc',
+    def => 'def',
+  };
+  static EnumValue from(String s) => switch(s) {
+    'abc' => abc,
+    'def' => def,
+    _ => throw ValidationException(['value not allowed for EnumValue: "$s" - should be one of {abc, def}']),
+  };
+}
+class _EnumValueConverter extends Converter<Object?, EnumValue> {
+  const _EnumValueConverter();
+  @override
+  EnumValue convert(Object? input) {
+    return EnumValue.from(const Strings().convert(input));
+  }
+}
+''';
+
 const _nestedListObjectsClassToJsonGeneration = r'''
 class NestedList {
   final List<SomeSchema> inners;
@@ -259,6 +300,10 @@ enum EnumValue {
   abc,
   def,
   ;
+  String get name => switch(this) {
+    abc => 'abc',
+    def => 'def',
+  };
   static EnumValue from(String s) => switch(s) {
     'abc' => abc,
     'def' => def,
@@ -591,6 +636,14 @@ void main() {
           result.toString(),
           equals('\n$_nestedListObjectsClassToJsonGeneration\n'
               '$_someSchemaToJsonGeneration'));
+    });
+
+    test('toJson (enum)', () {
+      final result = generateDartClasses([simpleObjectWithEnum],
+          options: DartGeneratorOptions(
+            methodGenerators: [const DartToJsonMethodGenerator()],
+          ));
+      expect(result.toString(), equals(_simpleObjectWithEnumJsonGeneration));
     });
 
     test('both toJson and fromJson for Map objects', () {

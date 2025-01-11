@@ -1,3 +1,4 @@
+import 'package:conveniently/conveniently.dart';
 import 'package:schemake/dart_gen.dart';
 
 import '../types.dart';
@@ -61,6 +62,18 @@ extension SchemakeTypeExtension on SchemaType<Object?> {
       Nullable<dynamic, NonNull>(type: var t) => t,
       Validatable<Object?>(type: var t) => t,
       _ => this as NonNull<Object?>,
+    };
+  }
+
+  /// Unwrap if necessary, then return this type's generator options
+  /// if it is a [Validatable] that represents an enum.
+  DartEnumGeneratorOptions? enumOptions() {
+    final self = this;
+    return switch (self) {
+      Nullable<dynamic, NonNull>(type: var t) => t.enumOptions(),
+      Validatable<Object?>() => self.dartGenOption
+          .vmap((opt) => opt is DartEnumGeneratorOptions? ? opt : null),
+      _ => null,
     };
   }
 
