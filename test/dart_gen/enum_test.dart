@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:schemake/dart_gen.dart';
 import 'package:schemake/schemake.dart';
 import 'package:test/test.dart';
@@ -98,25 +100,23 @@ void main() {
 
   group('Enums runner', () {
     test('toJson works', () async {
+      final json1 = jsonEncode({'prop': 'bar'});
+      final json2 = jsonEncode({'prop': 'zort'});
       final (stdout, stderr) = await generateAndRunDartClass(
           Objects('Foo', {
             'prop': Property(Enums(EnumValidator('Bar', {'bar', 'zort'}))),
           }),
           '''
       void main() {
-        print(Foo(prop: Bar.bar).toJson());
-        print(Foo(prop: Bar.zort).toJson());
+        print(jsonEncode(Foo(prop: Bar.bar)));
+        print(jsonEncode(Foo(prop: Bar.zort)));
       }''',
           DartGeneratorOptions(methodGenerators: [
-            DartToJsonMethodGenerator(),
+            DelegateMethodGenerator(DartToJsonMethodGenerator(),
+                extraImports: {'dart:convert'}),
           ]));
       expect(stderr, isEmpty);
-      expect(
-          stdout,
-          equals([
-            {'prop': 'bar'}.toString(),
-            {'prop': 'zort'}.toString(),
-          ]));
+      expect(stdout, equals([json1, json2]));
     });
 
     test('fromJson works', () async {
@@ -164,4 +164,24 @@ void main() {
       expect(stdout, isEmpty);
     });
   });
+}
+
+class DelegateMethodGenerator with DartMethodGenerator {
+  final DartMethodGenerator delegate;
+  final Set<String> extraImports;
+
+  const DelegateMethodGenerator(this.delegate, {required this.extraImports});
+
+  @override
+  GeneratorExtras? generateMethod(
+      StringBuffer buffer, Objects objects, DartGeneratorOptions options) {
+    final result = delegate.generateMethod(buffer, objects, options);
+    if (result == null) {
+      return GeneratorExtras(extraImports);
+    }
+    return GeneratorExtras(
+        Set.unmodifiable(result.imports.followedBy(extraImports)),
+        result.types,
+        result.writeTypes);
+  }
 }
