@@ -66,10 +66,13 @@ class _FooConverter extends Converter<Object?, Foo> {
 const _generatedValidatedClass = r'''
 class Validated {
   final Foo some;
+  /// Array of non-empty strings.
+  final List<String> nonEmpty;
   final int? more;
   final double other;
   const Validated({
     required this.some,
+    this.nonEmpty = const [],
     this.more = 4,
     this.other = 0.4,
   });
@@ -77,6 +80,7 @@ class Validated {
   String toString() =>
     'Validated{'
     'some: $some, '
+    'nonEmpty: $nonEmpty, '
     'more: $more, '
     'other: $other'
     '}';
@@ -86,19 +90,22 @@ class Validated {
     other is Validated &&
     runtimeType == other.runtimeType &&
     some == other.some &&
+    const ListEquality<String>().equals(nonEmpty, other.nonEmpty) &&
     more == other.more &&
     other == other.other;
   @override
   int get hashCode =>
-    some.hashCode ^ more.hashCode ^ other.hashCode;
+    some.hashCode ^ const ListEquality<String>().hash(nonEmpty) ^ more.hashCode ^ other.hashCode;
   Validated copyWith({
     Foo? some = null,
+    List<String>? nonEmpty = null,
     int? more = null,
     double? other = null,
     bool unsetMore = false,
   }) {
     return Validated(
       some: some ?? this.some,
+      nonEmpty: nonEmpty ?? [...this.nonEmpty],
       more: unsetMore ? null : more ?? this.more,
       other: other ?? this.other,
     );
@@ -359,6 +366,11 @@ const _nestedListObjectsSchema = Objects('NestedList', {
 const _validatableObjectSchema = Objects('Validated', {
   'some':
       Property(Validatable(Strings(), EnumValidator('Foo', {'foo', 'bar'}))),
+  'nonEmpty': Property(
+      Arrays<String, Validatable<String>>(
+          Validatable(Strings(), NonBlankStringValidator())),
+      defaultValue: [],
+      description: 'Array of non-empty strings.'),
   'more': Property(Nullable(Validatable(Ints(), IntRangeValidator(1, 5))),
       defaultValue: 4),
   'other': Property(Validatable(Floats(), FloatRangeValidator(0.0, 1.0)),
@@ -455,6 +467,7 @@ void main() {
               .toString(),
           equals('import \'dart:convert\';\n'
               'import \'package:schemake/schemake.dart\';\n'
+              'import \'package:collection/collection.dart\';\n'
               '\n'
               '$_generatedNestedClass\n'
               '$_generatedValidatedClass\n'

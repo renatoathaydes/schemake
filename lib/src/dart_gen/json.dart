@@ -220,14 +220,16 @@ String _schemaTypeBasic(
     SchemaType<Object?> type, DartGeneratorOptions options) {
   return switch (type) {
     Arrays<dynamic, SchemaType>(itemsType: var items) =>
-      _schemaTypeBasicWrapper('Arrays', items, options),
+      _schemaTypeBasicWrapper('Arrays', items, options, withSchemaType: true),
     Objects(name: var name) => _reviverName(options.className(name)),
     ObjectsBase<Object?>() => type.runtimeType.toString(),
     Ints() => 'Ints',
     Floats() => 'Floats',
     Strings() => 'Strings',
     Bools() => 'Bools',
-    Validatable(type: var vtype) => _schemaTypeBasic(vtype, options),
+    Validatable(type: var vtype) => _schemaTypeBasicWrapper(
+        'Validatable', vtype, options,
+        withSchemaType: false),
     _ => throw UnsupportedError('Schema type $type '
         'is not supported for code generation in this position'),
   };
@@ -243,11 +245,14 @@ String _schemaTypeStringWrapper(
 }
 
 String _schemaTypeBasicWrapper(
-    String kind, SchemaType<Object?> items, DartGeneratorOptions options) {
-  final typeParameter = (items is Objects && !items.isSimpleMap)
-      ? options.className(items.name)
-      : items.dartType();
-  return "$kind<$typeParameter, ${_schemaTypeBasic(items, options)}>";
+    String kind, SchemaType<Object?> paramType, DartGeneratorOptions options,
+    {bool withSchemaType = false}) {
+  final typeParameter = (paramType is Objects && !paramType.isSimpleMap)
+      ? options.className(paramType.name)
+      : paramType.dartType();
+  final schemaType =
+      withSchemaType ? ', ${_schemaTypeBasic(paramType, options)}' : '';
+  return "$kind<$typeParameter$schemaType>";
 }
 
 String _schemaTypeValidatable(Validatable<Object?> validatable) {

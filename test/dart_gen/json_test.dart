@@ -44,6 +44,10 @@ const _schemaWithDefaultValues = Objects('WithDefaults', {
   'b': Property(Nullable(Floats()), defaultValue: 3.1415),
   'c': Property(Arrays<int, Ints>(Ints()), defaultValue: [1, 2]),
   'nullableWithDefault': Property(Nullable(Ints()), defaultValue: 2),
+  'nonBlankArrayWithDefault': Property(
+      Arrays<String, Validatable<String>>(
+          Validatable(Strings(), NonBlankStringValidator())),
+      defaultValue: ['foo']),
   'enum1': Property(enumAbcDef, defaultValue: 'def'),
   'mandatory': Property(Ints()),
 });
@@ -279,6 +283,7 @@ class WithDefaults {
   final double? b;
   final List<int> c;
   final int? nullableWithDefault;
+  final List<String> nonBlankArrayWithDefault;
   final EnumValue enum1;
   final int mandatory;
   const WithDefaults({
@@ -286,6 +291,7 @@ class WithDefaults {
     this.b = 3.1415,
     this.c = const [1, 2],
     this.nullableWithDefault = 2,
+    this.nonBlankArrayWithDefault = const ['foo'],
     this.enum1 = EnumValue.def,
     required this.mandatory,
   });
@@ -331,7 +337,7 @@ class _WithDefaultsJsonReviver extends ObjectsBase<WithDefaults> {
       return key;
     }).toSet();
     checkRequiredProperties(keys);
-    const knownProperties = {'a', 'b', 'c', 'nullableWithDefault', 'enum1', 'mandatory'};
+    const knownProperties = {'a', 'b', 'c', 'nullableWithDefault', 'nonBlankArrayWithDefault', 'enum1', 'mandatory'};
     final unknownKey = keys.where((k) => !knownProperties.contains(k)).firstOrNull;
     if (unknownKey != null) {
       throw UnknownPropertyException([unknownKey], WithDefaults);
@@ -341,6 +347,7 @@ class _WithDefaultsJsonReviver extends ObjectsBase<WithDefaults> {
       b: convertPropertyOrDefault(const Nullable<double, Floats>(Floats()), 'b', value, 3.1415),
       c: convertPropertyOrDefault(const Arrays<int, Ints>(Ints()), 'c', value, const [1, 2]),
       nullableWithDefault: convertPropertyOrDefault(const Nullable<int, Ints>(Ints()), 'nullableWithDefault', value, 2),
+      nonBlankArrayWithDefault: convertPropertyOrDefault(const Arrays<String, Validatable<String>>(Validatable(Strings(), NonBlankStringValidator())), 'nonBlankArrayWithDefault', value, const ['foo']),
       enum1: convertPropertyOrDefault(const _EnumValueConverter(), 'enum1', value, EnumValue.def),
       mandatory: convertProperty(const Ints(), 'mandatory', value),
     );
@@ -353,6 +360,7 @@ class _WithDefaultsJsonReviver extends ObjectsBase<WithDefaults> {
       case 'b': return const Nullable<double, Floats>(Floats());
       case 'c': return const Arrays<int, Ints>(Ints());
       case 'nullableWithDefault': return const Nullable<int, Ints>(Ints());
+      case 'nonBlankArrayWithDefault': return const Arrays<String, Validatable<String>>(Validatable(Strings(), NonBlankStringValidator()));
       case 'enum1': return const _EnumValueConverter();
       case 'mandatory': return const Ints();
       default: return null;
@@ -558,6 +566,14 @@ void main() {
 
       expect(schemaTypeString(Arrays<String, Strings>(Strings()), _options),
           equals('Arrays<String, Strings>(Strings())'));
+
+      expect(
+          schemaTypeString(
+              Arrays<String, Validatable<String>>(
+                  Validatable(Strings(), NonBlankStringValidator())),
+              _options),
+          equals(
+              'Arrays<String, Validatable<String>>(Validatable(Strings(), NonBlankStringValidator()))'));
     });
 
     test('nested arrays', () {
@@ -728,6 +744,7 @@ void main() {
       void main() {
         print(WithDefaults.fromJson({'mandatory': 42}));
         print(WithDefaults.fromJson({'mandatory': 0, 'nullableWithDefault': null,
+          'nonBlankArrayWithDefault': ['bar', 'zort'],
           'enum1': 'abc', 'a': 'bar', 'b': 20, 'c': []}));
       }''',
           const DartGeneratorOptions(methodGenerators: [
@@ -739,9 +756,11 @@ void main() {
           stdout,
           equals([
             'WithDefaults{a: "foo", b: 3.1415, c: [1, 2], '
-                'nullableWithDefault: 2, enum1: EnumValue.def, mandatory: 42}',
+                'nullableWithDefault: 2, nonBlankArrayWithDefault: [foo], '
+                'enum1: EnumValue.def, mandatory: 42}',
             'WithDefaults{a: "bar", b: 20.0, c: [], '
-                'nullableWithDefault: null, enum1: EnumValue.abc, mandatory: 0}'
+                'nullableWithDefault: null, nonBlankArrayWithDefault: [bar, zort], '
+                'enum1: EnumValue.abc, mandatory: 0}'
           ]));
     });
 
