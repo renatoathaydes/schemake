@@ -1,3 +1,7 @@
+## 0.6.4 (22-May-2025)
+
+- fixed Dart generation of type `Validatable(Strings(), NonBlankStringValidator()))`.
+
 ## 0.6.3 (11-Jan-2025)
 
 - fixed Dart 'toJson' for objects containing enum types.

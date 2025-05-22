@@ -8,7 +8,7 @@
 /// * `hashCode`
 /// * `toJson`
 /// * `fromJson`
-library dart_gen;
+library;
 
 export 'src/dart_gen/dart_gen.dart';
 export 'src/dart_gen/gen_options.dart';

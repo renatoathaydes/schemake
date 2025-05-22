@@ -5,7 +5,7 @@
 ///
 /// Schemake schemas may also be used for code generation. The [dart_gen]
 /// library of this package can generate Dart code, for example.
-library schemake;
+library;
 
 export 'src/errors.dart';
 export 'src/property.dart';
