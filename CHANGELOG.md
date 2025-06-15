@@ -2,6 +2,7 @@
 
 - support Dart generation of `Nullable(Arrays)`.
 - removed unnecessary `null` assignment for optional parameters.
+- added `DartGeneratorOptions.jsonMethodGenerators` convenience field.
 
 ## 0.6.4 (22-May-2025)
 

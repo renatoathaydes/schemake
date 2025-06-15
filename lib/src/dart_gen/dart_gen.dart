@@ -1,10 +1,10 @@
 import 'package:conveniently/conveniently.dart';
+import 'package:schemake/dart_gen.dart';
 
 import '../_text.dart';
 import '../property.dart';
 import '../types.dart';
 import '../validator.dart';
-import '_copy_with.dart';
 import '_utils.dart';
 import '_value_writer.dart';
 
@@ -54,6 +54,11 @@ final class DartGeneratorOptions {
     DartToStringMethodGenerator(),
     DartEqualsAndHashCodeMethodGenerator(),
     DartCopyWithMethodGenerator(),
+  ];
+
+  static const jsonMethodGenerators = [
+    DartFromJsonMethodGenerator(),
+    DartToJsonMethodGenerator(),
   ];
 
   static String _finalField(String name, Property<Object?> _) => 'final ';

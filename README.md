@@ -38,6 +38,35 @@ void main() {
 }
 ```
 
+With the `dart_gen` library in this package, you can also generate a Dart data class for
+your schema that implements (by default) `toString`, `==`, `hashCode`, `copyWith`,
+(and from `jsonMethodGenerators`) `fromJson` and `toJson`:
+
+```dart
+import 'dart:io';
+
+import 'package:schemake/dart_gen.dart';
+import 'package:schemake/schemake.dart';
+
+const person = Objects('Person', {
+  'name': Property(Strings()),
+  'age': Property(Nullable(Ints())),
+});
+
+void main() async {
+  final sourceCode = generateDartClasses([person],
+      options: const DartGeneratorOptions(
+        methodGenerators: [
+          ...DartGeneratorOptions.defaultMethodGenerators,
+          ...DartGeneratorOptions.jsonMethodGenerators,
+        ],
+      ));
+  await File('person.dart').writeAsString('$sourceCode');
+}
+```
+
+The implementation is shown in the Dart generation section later in this document.
+
 ## Data types
 
 Supported data types:
@@ -324,8 +353,7 @@ void main() {
   print(dg.generateDartClasses([person],
       options: const dg.DartGeneratorOptions(methodGenerators: [
         ...dg.DartGeneratorOptions.defaultMethodGenerators,
-        dg.DartToJsonMethodGenerator(),
-        dg.DartFromJsonMethodGenerator(),
+        ...dg.DartGeneratorOptions.jsonMethodGenerators,
       ])));
 }
 ```
