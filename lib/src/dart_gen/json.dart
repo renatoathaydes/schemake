@@ -239,7 +239,11 @@ String _schemaTypeStringWrapper(
     String kind, SchemaType<Object?> items, DartGeneratorOptions options) {
   final typeParameter = (items is Objects && !items.isSimpleMap)
       ? options.className(items.name)
-      : items.dartType();
+      : switch (items) {
+          Arrays(itemsType: final it) =>
+            _schemaTypeBasicWrapper('List', it, options),
+          _ => items.dartType(),
+        };
   return "$kind<$typeParameter, ${_schemaTypeBasic(items, options)}>"
       "(${schemaTypeString(items, options)})";
 }

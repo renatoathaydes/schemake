@@ -152,7 +152,7 @@ extension on StringBuffer {
       Strings() => write(typeWrapper('String')),
       Bools() => write(typeWrapper('bool')),
       Arrays<dynamic, SchemaType>(itemsType: var type) =>
-        writeType(type, generatorExtras, options, array),
+        writeType(type, generatorExtras, options, (t) => array(t, typeWrapper)),
       ObjectsBase() => addExtrasIfOwnType(generatorExtras, schemaType, options)
           .write(typeWrapper(schemaType.dartTypeString(options))),
     };

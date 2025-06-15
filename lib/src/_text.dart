@@ -12,7 +12,9 @@ String quoteAndDollar(String s) => '"\$$s"';
 
 String nullable(String s) => "$s?";
 
-String array(String s) => "List<$s>";
+String array(String s,
+        [String Function(String) typeWrapper = identityString]) =>
+    typeWrapper("List<$s>");
 
 String toCamelCase(String s) {
   return Casing.camelCase(s);

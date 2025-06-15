@@ -299,8 +299,76 @@ class NullableMaps {
     bool unsetObjectMap = false,
   }) {
     return NullableMaps(
-      map: unsetMap ? null : map ?? this.map == null ? null : {...this.map},
-      objectMap: unsetObjectMap ? null : objectMap ?? this.objectMap == null ? null : {...this.objectMap},
+      map: unsetMap ? null : map ?? (this.map == null ? null : {...this.map!}),
+      objectMap: unsetObjectMap ? null : objectMap ?? (this.objectMap == null ? null : {...this.objectMap!}),
+    );
+  }
+}
+''';
+
+const _generatedClassWithNullableArrays = r'''
+import 'package:collection/collection.dart';
+
+class NullableArrays {
+  final List<String>? array;
+  final MyMap object;
+  const NullableArrays({
+    this.array,
+    required this.object,
+  });
+  @override
+  String toString() =>
+    'NullableArrays{'
+    'array: $array, '
+    'object: $object'
+    '}';
+  @override
+  bool operator ==(Object other) =>
+    identical(this, other) ||
+    other is NullableArrays &&
+    runtimeType == other.runtimeType &&
+    const ListEquality<String>().equals(array, other.array) &&
+    object == other.object;
+  @override
+  int get hashCode =>
+    const ListEquality<String>().hash(array) ^ object.hashCode;
+  NullableArrays copyWith({
+    List<String>? array = null,
+    MyMap? object = null,
+    bool unsetArray = false,
+  }) {
+    return NullableArrays(
+      array: unsetArray ? null : array ?? (this.array == null ? null : [...this.array!]),
+      object: object ?? this.object.copyWith(),
+    );
+  }
+}
+
+class MyMap {
+  final List<int>? arr;
+  const MyMap({
+    this.arr,
+  });
+  @override
+  String toString() =>
+    'MyMap{'
+    'arr: $arr'
+    '}';
+  @override
+  bool operator ==(Object other) =>
+    identical(this, other) ||
+    other is MyMap &&
+    runtimeType == other.runtimeType &&
+    const ListEquality<int>().equals(arr, other.arr);
+  @override
+  int get hashCode =>
+    const ListEquality<int>().hash(arr);
+  MyMap copyWith({
+    List<int>? arr = null,
+    bool unsetArr = false,
+  }) {
+    return MyMap(
+      arr: unsetArr ? null : arr ?? (this.arr == null ? null : [...this.arr!]),
     );
   }
 }
@@ -414,6 +482,12 @@ const _schemaWithNullableMaps = Objects('NullableMaps', {
       unknownPropertiesStrategy: UnknownPropertiesStrategy.keep)))
 });
 
+const _schemaWithNullableArrays = Objects('NullableArrays', {
+  'array': Property(Nullable(Arrays<String, Strings>(Strings()))),
+  'object': Property(
+      Objects('MyMap', {'arr': Property(Nullable(Arrays<int, Ints>(Ints())))}))
+});
+
 const _semiStructuredObjects = Objects(
     'SemiStructured',
     {
@@ -524,6 +598,11 @@ void main() {
     test('can write Nullable Maps', () {
       expect(generateDartClasses([_schemaWithNullableMaps]).toString(),
           equals(_generatedClassWithNullableMaps));
+    });
+
+    test('can write Nullable Arrays', () {
+      expect(generateDartClasses([_schemaWithNullableArrays]).toString(),
+          equals(_generatedClassWithNullableArrays));
     });
 
     test('can generate semi-structured Dart class toString, == and hashCode',

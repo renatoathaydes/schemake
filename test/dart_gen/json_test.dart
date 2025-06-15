@@ -560,13 +560,15 @@ void main() {
           equals('__TestingJsonReviver()'));
     });
 
-    test('arrays', () {
+    test('primitive arrays', () {
       expect(schemaTypeString(Arrays<double, Floats>(Floats()), _options),
           equals('Arrays<double, Floats>(Floats())'));
 
       expect(schemaTypeString(Arrays<String, Strings>(Strings()), _options),
           equals('Arrays<String, Strings>(Strings())'));
+    });
 
+    test('validatable arrays', () {
       expect(
           schemaTypeString(
               Arrays<String, Validatable<String>>(
@@ -574,6 +576,14 @@ void main() {
               _options),
           equals(
               'Arrays<String, Validatable<String>>(Validatable(Strings(), NonBlankStringValidator()))'));
+    });
+
+    test('nullable arrays', () {
+      expect(
+          schemaTypeString(
+              Nullable(Arrays<double, Floats>(Floats())), _options),
+          equals('Nullable<List<double>, Arrays<double, Floats>>('
+              'Arrays<double, Floats>(Floats()))'));
     });
 
     test('nested arrays', () {
@@ -593,9 +603,31 @@ void main() {
           equals('Arrays<_Testing, _TestObject>(__TestingJsonReviver())'));
     });
 
+    test('nullable array of custom objects', () {
+      expect(
+          schemaTypeString(
+              Nullable(Arrays<_Testing, _TestObject>(_TestObject())), _options),
+          equals('Nullable<List<_Testing>, Arrays<_Testing, _TestObject>>('
+              'Arrays<_Testing, _TestObject>(__TestingJsonReviver()))'));
+    });
+
+    test('nullable array of schema (no generic type inferred)', () {
+      expect(
+          // ignore: inference_failure_on_instance_creation
+          schemaTypeString(Nullable(Arrays(_someSchema)), _options),
+          equals(
+              'Nullable<List<SomeSchema>, Arrays<SomeSchema, _SomeSchemaJsonReviver>>('
+              'Arrays<SomeSchema, _SomeSchemaJsonReviver>(_SomeSchemaJsonReviver()))'));
+    });
+
     test('nullable', () {
       expect(schemaTypeString(Nullable<int, Ints>(Ints()), _options),
           equals('Nullable<int, Ints>(Ints())'));
+    });
+
+    test('custom object', () {
+      expect(schemaTypeString(_someSchema, _options),
+          equals('_SomeSchemaJsonReviver()'));
     });
 
     test('nullable custom object', () {

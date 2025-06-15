@@ -73,12 +73,14 @@ extension on StringBuffer {
         write('unset${toPascalCase(fName)} ? null : ');
       }
       write('$fName ?? ');
-      final copyPrefix = isNullable ? 'this.$fName == null ? null : ' : '';
+      final copyPrefix = isNullable ? '(this.$fName == null ? null : ' : '';
       if (copyWithOptions.copyLists && type is Arrays) {
-        writeln('$copyPrefix[...this.$fName],');
+        final copySuffix = isNullable ? '!]),' : '],';
+        writeln('$copyPrefix[...this.$fName$copySuffix');
       } else if (copyWithOptions.copyMaps && type is ObjectsBase) {
         if (type.isSimpleMap) {
-          writeln('$copyPrefix{...this.$fName},');
+          final copySuffix = isNullable ? '!}),' : '},';
+          writeln('$copyPrefix{...this.$fName$copySuffix');
         } else {
           writeln('this.$fName${isNullable ? '?' : ''}.copyWith(),');
         }
