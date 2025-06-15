@@ -27,8 +27,8 @@ class Person {
   int get hashCode =>
     name.hashCode ^ age.hashCode;
   Person copyWith({
-    String? name = null,
-    int? age = null,
+    String? name,
+    int? age,
     bool unsetAge = false,
   }) {
     return Person(
@@ -97,10 +97,10 @@ class Validated {
   int get hashCode =>
     some.hashCode ^ const ListEquality<String>().hash(nonEmpty) ^ more.hashCode ^ other.hashCode;
   Validated copyWith({
-    Foo? some = null,
-    List<String>? nonEmpty = null,
-    int? more = null,
-    double? other = null,
+    Foo? some,
+    List<String>? nonEmpty,
+    int? more,
+    double? other,
     bool unsetMore = false,
   }) {
     return Validated(
@@ -134,7 +134,7 @@ class Nested {
   int get hashCode =>
     inner.hashCode;
   Nested copyWith({
-    Person? inner = null,
+    Person? inner,
   }) {
     return Nested(
       inner: inner ?? this.inner.copyWith(),
@@ -168,8 +168,8 @@ class NestedList {
   int get hashCode =>
     const ListEquality<Person>().hash(inners) ^ inner1.hashCode;
   NestedList copyWith({
-    List<Person>? inners = null,
-    Person? inner1 = null,
+    List<Person>? inners,
+    Person? inner1,
   }) {
     return NestedList(
       inners: inners ?? [...this.inners],
@@ -226,8 +226,8 @@ class HasMaps {
   int get hashCode =>
     const MapEquality<String, String>().hash(maps) ^ const MapEquality<String, InMaps>().hash(objects);
   HasMaps copyWith({
-    Map<String, String>? maps = null,
-    Map<String, InMaps>? objects = null,
+    Map<String, String>? maps,
+    Map<String, InMaps>? objects,
   }) {
     return HasMaps(
       maps: maps ?? {...this.maps},
@@ -256,7 +256,7 @@ class InMaps {
   int get hashCode =>
     foo.hashCode;
   InMaps copyWith({
-    String? foo = null,
+    String? foo,
   }) {
     return InMaps(
       foo: foo ?? this.foo,
@@ -293,8 +293,8 @@ class NullableMaps {
   int get hashCode =>
     const MapEquality<String, String>().hash(map) ^ const MapEquality<String, Object?>().hash(objectMap);
   NullableMaps copyWith({
-    Map<String, String>? map = null,
-    Map<String, Object?>? objectMap = null,
+    Map<String, String>? map,
+    Map<String, Object?>? objectMap,
     bool unsetMap = false,
     bool unsetObjectMap = false,
   }) {
@@ -333,8 +333,8 @@ class NullableArrays {
   int get hashCode =>
     const ListEquality<String>().hash(array) ^ object.hashCode;
   NullableArrays copyWith({
-    List<String>? array = null,
-    MyMap? object = null,
+    List<String>? array,
+    MyMap? object,
     bool unsetArray = false,
   }) {
     return NullableArrays(
@@ -364,7 +364,7 @@ class MyMap {
   int get hashCode =>
     const ListEquality<int>().hash(arr);
   MyMap copyWith({
-    List<int>? arr = null,
+    List<int>? arr,
     bool unsetArr = false,
   }) {
     return MyMap(
@@ -401,8 +401,8 @@ class SemiStructured {
   int get hashCode =>
     str.hashCode ^ const MapEquality<String, Object?>().hash(extras);
   SemiStructured copyWith({
-    String? str = null,
-    Map<String, Object?>? extras = null,
+    String? str,
+    Map<String, Object?>? extras,
     bool unsetStr = false,
   }) {
     return SemiStructured(
@@ -526,7 +526,7 @@ void main() {
               '  int get hashCode =>\n'
               "    const ListEquality<String>().hash(items);\n"
               '  StringItems copyWith({\n'
-              '    List<String>? items = null,\n'
+              '    List<String>? items,\n'
               '  }) {\n'
               '    return StringItems(\n'
               '      items: items ?? [...this.items],\n'

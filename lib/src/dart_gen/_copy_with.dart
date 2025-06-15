@@ -47,10 +47,10 @@ extension on StringBuffer {
       }
       write(' ');
       write(options.fieldName(key));
-      writeln(' = null,');
+      writeln(',');
     });
     if (objects.unknownPropertiesStrategy != UnknownPropertiesStrategy.forbid) {
-      writeln('    Map<String, Object?>? extras = null,');
+      writeln('    Map<String, Object?>? extras,');
     }
     objects.properties.forEach((key, value) {
       if (value.type is Nullable) {
