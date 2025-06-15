@@ -1,3 +1,8 @@
+## 0.6.5 (15-Jun-2025)
+
+- support Dart generation of `Nullable(Arrays)`.
+- removed unnecessary `null` assignment for optional parameters.
+
 ## 0.6.4 (22-May-2025)
 
 - fixed Dart generation of type `Validatable(Strings(), NonBlankStringValidator()))`.
