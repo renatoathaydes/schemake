@@ -46,8 +46,7 @@ void main() {
   print(generateDartClasses([personSchema],
       options: const DartGeneratorOptions(methodGenerators: [
         ...DartGeneratorOptions.defaultMethodGenerators,
-        DartToJsonMethodGenerator(),
-        DartFromJsonMethodGenerator(),
+        ...DartGeneratorOptions.jsonMethodGenerators,
       ])));
 
   // execute this example by piping its output to a ".dart" file, then run
