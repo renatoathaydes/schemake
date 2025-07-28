@@ -1,7 +1,9 @@
 import 'dart:convert';
 
-import '../types.dart';
 import '../property.dart';
+import '../types.dart';
+import '../validator.dart';
+import 'validators.dart';
 
 sealed class _AdditionalPropsType {
   const _AdditionalPropsType();
@@ -21,6 +23,28 @@ final class _None extends _AdditionalPropsType {
   const _None();
 }
 
+/// Registry for functions that can generate JSON Schema declarations.
+///
+/// This Map can handle all schemake validators. Custom validators can be
+/// added to it as needed.
+/// The JSON Schema for the validator is written to the [StringBuffer] provided
+/// to the function. The buffer will be writing inside the JSON object
+/// containing the `type` wrapped by the Validator.
+///
+/// For example, if the type is `Validatable(Strings(), validator)`, the buffer
+/// will have written `{ "type": "string"` when the function is called.
+/// The generator function could write something like `, "pattern": "[a-z]+"`,
+/// resulting in the schema `{ "type": "string", "pattern": "[a-z]+" }`
+/// (the JSON object is closed by schemake).
+final jsonSchemaValidatorGenerators = <Type,
+    void Function(
+        Object validator, SchemaType<Object?> type, StringBuffer buffer)>{
+  EnumValidator: generateEnum,
+  NonBlankStringValidator: generateNonBlankString,
+  IntRangeValidator: generateIntRange,
+  FloatRangeValidator: generateFloatRange,
+};
+
 StringBuffer generateJsonSchema(List<SchemaType<Object?>> schemaTypes) {
   final buffer = StringBuffer();
   for (final type in schemaTypes) {
@@ -34,40 +58,54 @@ void _generate(SchemaType<Object?> type, StringBuffer buffer) {
 }
 
 extension on StringBuffer {
-  void writeSchemaType(SchemaType<Object?> type, [String? description]) {
+  void writeSchemaType(SchemaType<Object?> type,
+      {String? description, bool endObject = true}) {
     return switch (type) {
-      Nullable<Object?, NonNull>(type: var innerType) =>
-        writeNullable(innerType, description),
-      Ints() => writeType("integer", description: description),
-      Floats() => writeType("number", description: description),
-      Strings() => writeType("string", description: description),
-      Bools() => writeType("boolean", description: description),
+      Nullable<Object?, NonNull>(type: var innerType) => writeNullable(
+          innerType,
+          description: description,
+          endObject: endObject),
+      Ints() =>
+        writeType("integer", description: description, endObject: endObject),
+      Floats() =>
+        writeType("number", description: description, endObject: endObject),
+      Strings() =>
+        writeType("string", description: description, endObject: endObject),
+      Bools() =>
+        writeType("boolean", description: description, endObject: endObject),
       Arrays<dynamic, SchemaType>(itemsType: var type) =>
-        writeArray(type, description: description),
+        writeArray(type, description: description, endObject: endObject),
       ObjectsBase<Object?>() => switch (type) {
-          Objects() => writeObject(type),
-          Maps() => writeMap(type),
-          _ => writeType("object", description: type.description),
+          Objects() => writeObject(type, endObject: endObject),
+          Maps() => writeMap(type, endObject: endObject),
+          _ => writeType("object",
+              description: type.description, endObject: endObject),
         },
-      Validatable<Object?>() => throw UnimplementedError(),
+      Validatable<Object?>(type: var type, validator: var validator) =>
+        writeValidatable(type, validator, endObject: endObject),
     };
   }
 
-  void writeNullable(NonNull<Object?> schemaType, [String? description]) {
+  void writeNullable(NonNull<Object?> schemaType,
+      {String? description, bool endObject = true}) {
     return switch (schemaType) {
-      Ints() => writeNullableType("integer", description: description),
-      Floats() => writeNullableType("number", description: description),
-      Strings() => writeNullableType("string", description: description),
-      Bools() => writeNullableType("boolean", description: description),
-      Arrays<dynamic, SchemaType>(itemsType: var type) =>
-        writeArray(type, description: description, nullable: true),
+      Ints() => writeNullableType("integer",
+          description: description, endObject: endObject),
+      Floats() => writeNullableType("number",
+          description: description, endObject: endObject),
+      Strings() => writeNullableType("string",
+          description: description, endObject: endObject),
+      Bools() => writeNullableType("boolean",
+          description: description, endObject: endObject),
+      Arrays<dynamic, SchemaType>(itemsType: var type) => writeArray(type,
+          description: description, nullable: true, endObject: endObject),
       ObjectsBase<Object?>() => throw UnimplementedError(),
       Validatable<Object?>() => throw UnimplementedError(),
     };
   }
 
   void writeArray(SchemaType<Object?> type,
-      {String? description, bool nullable = false}) {
+      {String? description, bool nullable = false, bool endObject = true}) {
     if (nullable) {
       writeNullableType('array', description: description, endObject: false);
     } else {
@@ -79,15 +117,18 @@ extension on StringBuffer {
     }
     write(', "items": ');
     writeSchemaType(type);
-    write(' }');
+    if (endObject) {
+      write(' }');
+    }
   }
 
-  void writeObject(Objects obj) {
+  void writeObject(Objects obj, {bool endObject = true}) {
     writeObjectType(obj.properties.entries,
-        title: obj.name, description: obj.description);
+        title: obj.name, description: obj.description, endObject: endObject);
   }
 
-  void writeMap(Maps<Object?, SchemaType<Object?>> obj) {
+  void writeMap(Maps<Object?, SchemaType<Object?>> obj,
+      {bool endObject = true}) {
     final additionalPropsType = switch (obj.unknownPropertiesStrategy) {
       UnknownPropertiesStrategy.ignore => const _Any(),
       UnknownPropertiesStrategy.keep =>
@@ -99,7 +140,8 @@ extension on StringBuffer {
         obj.knownProperties.map((p) => MapEntry(p, Property(obj.valueType))),
         additionalPropsType: additionalPropsType,
         title: obj.name,
-        description: obj.description);
+        description: obj.description,
+        endObject: endObject);
   }
 
   void writeType(String type, {String? description, bool endObject = true}) {
@@ -130,6 +172,7 @@ extension on StringBuffer {
     _AdditionalPropsType additionalPropsType = const _Any(),
     String? title,
     String? description,
+    bool endObject = true,
   }) {
     write('{ "type": "object"');
     if (title != null) {
@@ -146,7 +189,7 @@ extension on StringBuffer {
       for (final (i, prop) in props.indexed) {
         writeJson(prop.key);
         write(': ');
-        writeSchemaType(prop.value.type, prop.value.description);
+        writeSchemaType(prop.value.type, description: prop.value.description);
         if (i != finalIndex) {
           write(', ');
         }
@@ -172,7 +215,23 @@ extension on StringBuffer {
       case _None():
         write(', "additionalProperties": false');
     }
-    write(' }');
+    if (endObject) {
+      write(' }');
+    }
+  }
+
+  void writeValidatable(NonNull<Object?> type, Validator<Object?> validator,
+      {bool endObject = true}) {
+    final generator = jsonSchemaValidatorGenerators[validator.runtimeType];
+    if (generator == null) {
+      throw Exception('No JSON Schema registered for ${validator.runtimeType}. '
+          'To register one, add it to the `jsonSchemaValidatorGenerators` Map.');
+    }
+    writeSchemaType(type, endObject: false);
+    generator(validator, type, this);
+    if (endObject) {
+      write(' }');
+    }
   }
 
   void writeJson(Object value) {

@@ -1,5 +1,4 @@
 import 'package:schemake/schemake.dart';
-import 'package:schemake/src/json_schema/json_schema.dart';
 import 'package:test/expect.dart';
 import 'package:test/scaffolding.dart';
 
@@ -209,6 +208,40 @@ void main() {
           '"myProp": { "type": "integer", "description": "my property" }, '
           '"otherProp": { "type": ["string", "null"], "description": "another property" } '
           '}, "required": ["myProp"] }');
+    });
+  });
+
+  group('Validatable types', () {
+    test('string enum', () {
+      expect(
+          generateJsonSchema([
+            Validatable(Strings(), EnumValidator('Foo', {'a', 'b', 'c'}))
+          ]).toString(),
+          '{ "type": "string", "enum": ["a","b","c"] }');
+    });
+
+    test('non-blank string', () {
+      expect(
+          generateJsonSchema(
+                  [Validatable(Strings(), const NonBlankStringValidator())])
+              .toString(),
+          r'{ "type": "string", "pattern": ".*\\S.*" }');
+    });
+
+    test('int range', () {
+      expect(
+          generateJsonSchema(
+                  [Validatable<int>(Ints(), const IntRangeValidator(1, 10))])
+              .toString(),
+          r'{ "type": "integer", "minimum": 1, "maximum": 10 }');
+    });
+
+    test('float range', () {
+      expect(
+          generateJsonSchema([
+            Validatable<double>(Floats(), const FloatRangeValidator(0.1, 0.85))
+          ]).toString(),
+          r'{ "type": "number", "minimum": 0.1, "maximum": 0.85 }');
     });
   });
 }
