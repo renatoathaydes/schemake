@@ -39,6 +39,20 @@ void main() {
     });
   });
 
+  group('Nullable Arrays', () {
+    test('integer', () {
+      expect(
+          generateJsonSchema([Nullable(Arrays<int, Ints>(Ints()))]).toString(),
+          '{ "type": ["array", "null"], "items": { "type": "integer" } }');
+    });
+    test('number', () {
+      expect(
+          generateJsonSchema([Nullable(Arrays<double, Floats>(Floats()))])
+              .toString(),
+          '{ "type": ["array", "null"], "items": { "type": "number" } }');
+    });
+  });
+
   group('Arrays', () {
     test('of integer', () {
       expect(generateJsonSchema([Arrays<int, Ints>(Ints())]).toString(),
@@ -49,6 +63,14 @@ void main() {
       expect(
           generateJsonSchema([Arrays<String, Strings>(Strings())]).toString(),
           '{ "type": "array", "items": { "type": "string" } }');
+    });
+
+    test('of nullable string', () {
+      expect(
+          generateJsonSchema([
+            Arrays<String?, Nullable<String?, Strings>>(Nullable(Strings()))
+          ]).toString(),
+          '{ "type": "array", "items": { "type": ["string", "null"] } }');
     });
   });
 
