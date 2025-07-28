@@ -137,7 +137,7 @@ class Objects extends ObjectsBase<Map<String, Object?>> {
     super.name,
     this.properties, {
     super.unknownPropertiesStrategy = UnknownPropertiesStrategy.forbid,
-    super.description = '',
+    super.description,
   });
 
   @override
@@ -180,7 +180,7 @@ class Maps<V, T extends SchemaType<V>> extends ObjectsBase<Map<String, V>> {
   const Maps(
     super.name, {
     required this.valueType,
-    super.description = '',
+    super.description,
     super.unknownPropertiesStrategy = UnknownPropertiesStrategy.keep,
     this.knownProperties = const {},
   });
@@ -221,12 +221,12 @@ class Maps<V, T extends SchemaType<V>> extends ObjectsBase<Map<String, V>> {
 abstract class ObjectsBase<T> extends NonNull<T> {
   final String name;
   final UnknownPropertiesStrategy unknownPropertiesStrategy;
-  final String description;
+  final String? description;
 
   const ObjectsBase(
     this.name, {
     this.unknownPropertiesStrategy = UnknownPropertiesStrategy.forbid,
-    this.description = '',
+    this.description,
   });
 
   /// Get the [Converter] for the property of this object with the given name.

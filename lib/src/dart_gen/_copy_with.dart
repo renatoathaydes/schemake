@@ -65,7 +65,7 @@ extension on StringBuffer {
     writeln('    return ${options.className(objects.name)}(');
     objects.properties.forEach((key, value) {
       final fName = options.fieldName(key);
-      var type = value.type;
+      SchemaType<Object?> type = value.type;
       var isNullable = type is Nullable;
       type = type.unwrap();
       write('      $fName: ');

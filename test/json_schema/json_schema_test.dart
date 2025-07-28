@@ -39,20 +39,50 @@ void main() {
     });
   });
 
+  group('Arrays', () {
+    test('of integer', () {
+      expect(generateJsonSchema([Arrays<int, Ints>(Ints())]).toString(),
+          '{ "type": "array", "items": { "type": "integer" } }');
+    });
+
+    test('of string', () {
+      expect(
+          generateJsonSchema([Arrays<String, Strings>(Strings())]).toString(),
+          '{ "type": "array", "items": { "type": "string" } }');
+    });
+  });
+
   group('Maps', () {
     test('default Maps with value type Strings', () {
       expect(
           generateJsonSchema(
                   const [Maps<String, Strings>('MyMap', valueType: Strings())])
               .toString(),
-          '{ "type": "object", "additionalProperties": { "type": "string" } }');
+          '{ "type": "object", "title": "MyMap", "additionalProperties": { "type": "string" } }');
     });
 
     test('default Maps with value type Ints', () {
       expect(
           generateJsonSchema(
               const [Maps<int, Ints>('MyMap', valueType: Ints())]).toString(),
-          '{ "type": "object", "additionalProperties": { "type": "integer" } }');
+          '{ "type": "object", "title": "MyMap", "additionalProperties": { "type": "integer" } }');
+    });
+
+    test('default Maps with value type Ints, some known properties', () {
+      expect(
+          generateJsonSchema(const [
+            Maps<int, Ints>('MyMap',
+                valueType: Ints(), knownProperties: {'hello', 'bye'})
+          ]).toString(),
+          '{ "type": "object", '
+          '"title": "MyMap", '
+          '"properties": { '
+          '"hello": { "type": "integer" }, '
+          '"bye": { "type": "integer" } '
+          '}, '
+          '"required": ["hello","bye"], '
+          '"additionalProperties": { "type": "integer" } '
+          '}');
     });
 
     test('Maps with value type Ints, ignore additional properties', () {
@@ -62,7 +92,7 @@ void main() {
                 valueType: Ints(),
                 unknownPropertiesStrategy: UnknownPropertiesStrategy.ignore)
           ]).toString(),
-          '{ "type": "object" }');
+          '{ "type": "object", "title": "MyMap" }');
     });
 
     test(
@@ -75,7 +105,7 @@ void main() {
                 knownProperties: {'foo', 'bar'},
                 unknownPropertiesStrategy: UnknownPropertiesStrategy.ignore)
           ]).toString(),
-          '{ "type": "object", "properties": { '
+          '{ "type": "object", "title": "MyMap", "properties": { '
           '"foo": { "type": "integer" }, '
           '"bar": { "type": "integer" } '
           '}, "required": ["foo","bar"] }');
@@ -91,11 +121,72 @@ void main() {
                 knownProperties: {'foo', 'bar'},
                 unknownPropertiesStrategy: UnknownPropertiesStrategy.forbid)
           ]).toString(),
-          '{ "type": "object", "properties": { '
+          '{ "type": "object", "title": "MyMap", "properties": { '
           '"foo": { "type": "integer" }, '
           '"bar": { "type": "integer" } '
           '}, "required": ["foo","bar"], '
           '"additionalProperties": false }');
+    });
+  });
+
+  group('Objects', () {
+    test('default Object with one property', () {
+      expect(
+          generateJsonSchema([
+            Objects('Foo', {'bar': Property(Strings())})
+          ]).toString(),
+          '{ "type": "object", '
+          '"title": "Foo", '
+          '"properties": { '
+          '"bar": { "type": "string" } '
+          '}, "required": ["bar"] }');
+    });
+
+    test('default Object with one optional property', () {
+      expect(
+          generateJsonSchema([
+            Objects('Foo', {'bar': Property(Nullable(Strings()))})
+          ]).toString(),
+          '{ "type": "object", '
+          '"title": "Foo", '
+          '"properties": { '
+          '"bar": { "type": ["string", "null"] } '
+          '} }');
+    });
+
+    test('default Object with a mandatory and an optional property', () {
+      expect(
+          generateJsonSchema([
+            Objects('Foo',
+                {'foo': Property(Nullable(Ints())), 'bar': Property(Strings())})
+          ]).toString(),
+          '{ "type": "object", '
+          '"title": "Foo", '
+          '"properties": { '
+          '"foo": { "type": ["integer", "null"] }, '
+          '"bar": { "type": "string" } '
+          '}, "required": ["bar"] }');
+    });
+
+    test('Object with descriptions', () {
+      expect(
+          generateJsonSchema([
+            Objects(
+                'MyObject',
+                {
+                  'myProp': Property(Ints(), description: 'my property'),
+                  'otherProp': Property(Nullable(Strings()),
+                      description: 'another property'),
+                },
+                description: 'this is an object')
+          ]).toString(),
+          '{ "type": "object", '
+          '"title": "MyObject", '
+          '"description": "this is an object", '
+          '"properties": { '
+          '"myProp": { "type": "integer", "description": "my property" }, '
+          '"otherProp": { "type": ["string", "null"], "description": "another property" } '
+          '}, "required": ["myProp"] }');
     });
   });
 }

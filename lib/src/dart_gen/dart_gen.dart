@@ -190,8 +190,8 @@ extension on StringBuffer {
     writeln('}');
   }
 
-  void writeComments(String comments, [String indent = '']) {
-    if (comments.isEmpty) return;
+  void writeComments(String? comments, [String indent = '']) {
+    if (comments == null) return;
     for (final line in comments.split("\n")) {
       if (line.isEmpty) {
         writeln('$indent///');
