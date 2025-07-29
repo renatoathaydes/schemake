@@ -1,3 +1,4 @@
+import 'package:schemake/json_schema.dart';
 import 'package:schemake/schemake.dart';
 import 'package:test/expect.dart';
 import 'package:test/scaffolding.dart';
@@ -38,20 +39,6 @@ void main() {
     });
   });
 
-  group('Nullable Arrays', () {
-    test('integer', () {
-      expect(
-          generateJsonSchema([Nullable(Arrays<int, Ints>(Ints()))]).toString(),
-          '{ "type": ["array", "null"], "items": { "type": "integer" } }');
-    });
-    test('number', () {
-      expect(
-          generateJsonSchema([Nullable(Arrays<double, Floats>(Floats()))])
-              .toString(),
-          '{ "type": ["array", "null"], "items": { "type": "number" } }');
-    });
-  });
-
   group('Arrays', () {
     test('of integer', () {
       expect(generateJsonSchema([Arrays<int, Ints>(Ints())]).toString(),
@@ -70,6 +57,20 @@ void main() {
             Arrays<String?, Nullable<String?, Strings>>(Nullable(Strings()))
           ]).toString(),
           '{ "type": "array", "items": { "type": ["string", "null"] } }');
+    });
+  });
+
+  group('Nullable Arrays', () {
+    test('integer', () {
+      expect(
+          generateJsonSchema([Nullable(Arrays<int, Ints>(Ints()))]).toString(),
+          '{ "type": ["array", "null"], "items": { "type": "integer" } }');
+    });
+    test('number', () {
+      expect(
+          generateJsonSchema([Nullable(Arrays<double, Floats>(Floats()))])
+              .toString(),
+          '{ "type": ["array", "null"], "items": { "type": "number" } }');
     });
   });
 
@@ -211,6 +212,34 @@ void main() {
     });
   });
 
+  group('Nullable Objects', () {
+    test('Nullable Object with a mandatory and an optional property', () {
+      expect(
+          generateJsonSchema([
+            Nullable(Objects('Foo',
+                {'foo': Property(Nullable(Ints())), 'bar': Property(Strings())},
+                description: 'nullable object'))
+          ]).toString(),
+          '{ "type": ["object", "null"], '
+          '"title": "Foo", '
+          '"description": "nullable object", '
+          '"properties": { '
+          '"foo": { "type": ["integer", "null"] }, '
+          '"bar": { "type": "string" } '
+          '}, "required": ["bar"] }');
+    });
+  });
+
+  group('Nullable Maps', () {
+    test('Nullable Maps with value type Strings', () {
+      expect(
+          generateJsonSchema([
+            Nullable(Maps<String, Strings>('MyMap', valueType: Strings()))
+          ]).toString(),
+          '{ "type": ["object", "null"], "title": "MyMap", "additionalProperties": { "type": "string" } }');
+    });
+  });
+
   group('Validatable types', () {
     test('string enum', () {
       expect(
@@ -242,6 +271,17 @@ void main() {
             Validatable<double>(Floats(), const FloatRangeValidator(0.1, 0.85))
           ]).toString(),
           r'{ "type": "number", "minimum": 0.1, "maximum": 0.85 }');
+    });
+  });
+
+  group('Nullable Validatable', () {
+    test('string enum', () {
+      expect(
+          generateJsonSchema([
+            Nullable(
+                Validatable(Strings(), EnumValidator('Foo', {'a', 'b', 'c'})))
+          ]).toString(),
+          '{ "type": ["string", "null"], "enum": ["a","b","c"] }');
     });
   });
 }
