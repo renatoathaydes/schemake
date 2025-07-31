@@ -60,6 +60,8 @@ const String jsonSchema_2020_12 =
 /// rest of the schema is generated (i.e. it cannot generate schemas for other
 /// JSON Schema versions).
 ///
+/// Parameters [title] and [description] are optional.
+///
 /// Parameter [useRefsForNestedTypes] defines whether to use `$ref` pointing to
 /// local `$defs` for nested types. This setting does not apply to any types in
 /// [externalTypes].
@@ -76,6 +78,8 @@ StringBuffer generateJsonSchema(
   SchemaType<Object?> schemaType, {
   String? schemaUri = jsonSchema_2020_12,
   String? schemaId,
+  String? title,
+  String? description,
   bool useRefsForNestedTypes = true,
   Map<SchemaType<Object?>, String> externalTypes = const {},
   bool endObject = true,
@@ -83,19 +87,21 @@ StringBuffer generateJsonSchema(
   final buffer = StringBuffer();
   buffer.write('{ ');
   var isFirstKey = true;
-  if (schemaUri != null) {
-    buffer.write(r'"$schema": ');
-    buffer.writeJson(schemaUri);
-    isFirstKey = false;
-  }
-  if (schemaId != null) {
-    if (!isFirstKey) {
-      buffer.write(', ');
+  void writeEntry(String key, Object? value) {
+    if (value != null) {
+      if (!isFirstKey) {
+        buffer.write(', ');
+      }
+      buffer.write('"$key": ');
+      buffer.writeJson(value);
+      isFirstKey = false;
     }
-    buffer.write(r'"$id": ');
-    buffer.writeJson(schemaId);
-    isFirstKey = false;
   }
+
+  writeEntry(r'$schema', schemaUri);
+  writeEntry(r'$id', schemaId);
+  writeEntry(r'description', description);
+  writeEntry(r'title', title);
 
   _generate(schemaType, buffer, startObject: false, endObject: endObject);
 

@@ -286,10 +286,16 @@ void main() {
   group('Full Schema', () {
     test('Can write full schema', () {
       expect(
-          generateJsonSchema(Strings(), schemaId: '/mySchema').toString(),
+          generateJsonSchema(Strings(),
+                  schemaId: '/mySchema',
+                  description: 'A JSON Schema',
+                  title: 'Foo')
+              .toString(),
           r'{ "$schema": '
           '"$jsonSchema_2020_12", '
           r'"$id": "/mySchema", '
+          r'"description": "A JSON Schema", '
+          r'"title": "Foo", '
           r'"type": "string"'
           r' }');
     });
