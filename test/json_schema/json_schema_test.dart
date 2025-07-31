@@ -6,56 +6,59 @@ import 'package:test/scaffolding.dart';
 void main() {
   group('Basic types', () {
     test('integer', () {
-      expect(generateJsonSchema([Ints()]).toString(), '{ "type": "integer" }');
+      expect(
+          generateTypeJsonSchema(Ints()).toString(), '{ "type": "integer" }');
     });
     test('number', () {
-      expect(generateJsonSchema([Floats()]).toString(), '{ "type": "number" }');
+      expect(
+          generateTypeJsonSchema(Floats()).toString(), '{ "type": "number" }');
     });
     test('boolean', () {
-      expect(generateJsonSchema([Bools()]).toString(), '{ "type": "boolean" }');
+      expect(
+          generateTypeJsonSchema(Bools()).toString(), '{ "type": "boolean" }');
     });
     test('string', () {
       expect(
-          generateJsonSchema([Strings()]).toString(), '{ "type": "string" }');
+          generateTypeJsonSchema(Strings()).toString(), '{ "type": "string" }');
     });
   });
 
   group('Nullable Basic types', () {
     test('integer', () {
-      expect(generateJsonSchema([Nullable(Ints())]).toString(),
+      expect(generateTypeJsonSchema(Nullable(Ints())).toString(),
           '{ "type": ["integer", "null"] }');
     });
     test('number', () {
-      expect(generateJsonSchema([Nullable(Floats())]).toString(),
+      expect(generateTypeJsonSchema(Nullable(Floats())).toString(),
           '{ "type": ["number", "null"] }');
     });
     test('boolean', () {
-      expect(generateJsonSchema([Nullable(Bools())]).toString(),
+      expect(generateTypeJsonSchema(Nullable(Bools())).toString(),
           '{ "type": ["boolean", "null"] }');
     });
     test('string', () {
-      expect(generateJsonSchema([Nullable(Strings())]).toString(),
+      expect(generateTypeJsonSchema(Nullable(Strings())).toString(),
           '{ "type": ["string", "null"] }');
     });
   });
 
   group('Arrays', () {
     test('of integer', () {
-      expect(generateJsonSchema([Arrays<int, Ints>(Ints())]).toString(),
+      expect(generateTypeJsonSchema(Arrays<int, Ints>(Ints())).toString(),
           '{ "type": "array", "items": { "type": "integer" } }');
     });
 
     test('of string', () {
       expect(
-          generateJsonSchema([Arrays<String, Strings>(Strings())]).toString(),
+          generateTypeJsonSchema(Arrays<String, Strings>(Strings())).toString(),
           '{ "type": "array", "items": { "type": "string" } }');
     });
 
     test('of nullable string', () {
       expect(
-          generateJsonSchema([
-            Arrays<String?, Nullable<String?, Strings>>(Nullable(Strings()))
-          ]).toString(),
+          generateTypeJsonSchema(Arrays<String?, Nullable<String?, Strings>>(
+                  Nullable(Strings())))
+              .toString(),
           '{ "type": "array", "items": { "type": ["string", "null"] } }');
     });
   });
@@ -63,12 +66,13 @@ void main() {
   group('Nullable Arrays', () {
     test('integer', () {
       expect(
-          generateJsonSchema([Nullable(Arrays<int, Ints>(Ints()))]).toString(),
+          generateTypeJsonSchema(Nullable(Arrays<int, Ints>(Ints())))
+              .toString(),
           '{ "type": ["array", "null"], "items": { "type": "integer" } }');
     });
     test('number', () {
       expect(
-          generateJsonSchema([Nullable(Arrays<double, Floats>(Floats()))])
+          generateTypeJsonSchema(Nullable(Arrays<double, Floats>(Floats())))
               .toString(),
           '{ "type": ["array", "null"], "items": { "type": "number" } }');
     });
@@ -77,25 +81,23 @@ void main() {
   group('Maps', () {
     test('default Maps with value type Strings', () {
       expect(
-          generateJsonSchema(
-                  const [Maps<String, Strings>('MyMap', valueType: Strings())])
+          generateTypeJsonSchema(
+                  Maps<String, Strings>('MyMap', valueType: Strings()))
               .toString(),
           '{ "type": "object", "title": "MyMap", "additionalProperties": { "type": "string" } }');
     });
 
     test('default Maps with value type Ints', () {
       expect(
-          generateJsonSchema(
-              const [Maps<int, Ints>('MyMap', valueType: Ints())]).toString(),
+          generateTypeJsonSchema(Maps<int, Ints>('MyMap', valueType: Ints()))
+              .toString(),
           '{ "type": "object", "title": "MyMap", "additionalProperties": { "type": "integer" } }');
     });
 
     test('default Maps with value type Ints, some known properties', () {
       expect(
-          generateJsonSchema(const [
-            Maps<int, Ints>('MyMap',
-                valueType: Ints(), knownProperties: {'hello', 'bye'})
-          ]).toString(),
+          generateTypeJsonSchema(Maps<int, Ints>('MyMap',
+              valueType: Ints(), knownProperties: {'hello', 'bye'})).toString(),
           '{ "type": "object", '
           '"title": "MyMap", '
           '"properties": { '
@@ -109,11 +111,10 @@ void main() {
 
     test('Maps with value type Ints, ignore additional properties', () {
       expect(
-          generateJsonSchema(const [
-            Maps<int, Ints>('MyMap',
-                valueType: Ints(),
-                unknownPropertiesStrategy: UnknownPropertiesStrategy.ignore)
-          ]).toString(),
+          generateTypeJsonSchema(Maps<int, Ints>('MyMap',
+                  valueType: Ints(),
+                  unknownPropertiesStrategy: UnknownPropertiesStrategy.ignore))
+              .toString(),
           '{ "type": "object", "title": "MyMap" }');
     });
 
@@ -121,12 +122,11 @@ void main() {
         'Maps with value type Ints, some known properties, ignore additional properties',
         () {
       expect(
-          generateJsonSchema(const [
-            Maps<int, Ints>('MyMap',
-                valueType: Ints(),
-                knownProperties: {'foo', 'bar'},
-                unknownPropertiesStrategy: UnknownPropertiesStrategy.ignore)
-          ]).toString(),
+          generateTypeJsonSchema(Maps<int, Ints>('MyMap',
+                  valueType: Ints(),
+                  knownProperties: {'foo', 'bar'},
+                  unknownPropertiesStrategy: UnknownPropertiesStrategy.ignore))
+              .toString(),
           '{ "type": "object", "title": "MyMap", "properties": { '
           '"foo": { "type": "integer" }, '
           '"bar": { "type": "integer" } '
@@ -137,12 +137,11 @@ void main() {
         'Maps with value type Ints, some known properties, forbid additional properties',
         () {
       expect(
-          generateJsonSchema(const [
-            Maps<int, Ints>('MyMap',
-                valueType: Ints(),
-                knownProperties: {'foo', 'bar'},
-                unknownPropertiesStrategy: UnknownPropertiesStrategy.forbid)
-          ]).toString(),
+          generateTypeJsonSchema(Maps<int, Ints>('MyMap',
+                  valueType: Ints(),
+                  knownProperties: {'foo', 'bar'},
+                  unknownPropertiesStrategy: UnknownPropertiesStrategy.forbid))
+              .toString(),
           '{ "type": "object", "title": "MyMap", "properties": { '
           '"foo": { "type": "integer" }, '
           '"bar": { "type": "integer" } '
@@ -154,9 +153,8 @@ void main() {
   group('Objects', () {
     test('default Object with one property', () {
       expect(
-          generateJsonSchema([
-            Objects('Foo', {'bar': Property(Strings())})
-          ]).toString(),
+          generateTypeJsonSchema(Objects('Foo', {'bar': Property(Strings())}))
+              .toString(),
           '{ "type": "object", '
           '"title": "Foo", '
           '"properties": { '
@@ -166,9 +164,9 @@ void main() {
 
     test('default Object with one optional property', () {
       expect(
-          generateJsonSchema([
-            Objects('Foo', {'bar': Property(Nullable(Strings()))})
-          ]).toString(),
+          generateTypeJsonSchema(
+                  Objects('Foo', {'bar': Property(Nullable(Strings()))}))
+              .toString(),
           '{ "type": "object", '
           '"title": "Foo", '
           '"properties": { '
@@ -178,10 +176,10 @@ void main() {
 
     test('default Object with a mandatory and an optional property', () {
       expect(
-          generateJsonSchema([
-            Objects('Foo',
-                {'foo': Property(Nullable(Ints())), 'bar': Property(Strings())})
-          ]).toString(),
+          generateTypeJsonSchema(Objects('Foo', {
+            'foo': Property(Nullable(Ints())),
+            'bar': Property(Strings())
+          })).toString(),
           '{ "type": "object", '
           '"title": "Foo", '
           '"properties": { '
@@ -192,16 +190,15 @@ void main() {
 
     test('Object with descriptions', () {
       expect(
-          generateJsonSchema([
-            Objects(
-                'MyObject',
-                {
-                  'myProp': Property(Ints(), description: 'my property'),
-                  'otherProp': Property(Nullable(Strings()),
-                      description: 'another property'),
-                },
-                description: 'this is an object')
-          ]).toString(),
+          generateTypeJsonSchema(Objects(
+                  'MyObject',
+                  {
+                    'myProp': Property(Ints(), description: 'my property'),
+                    'otherProp': Property(Nullable(Strings()),
+                        description: 'another property'),
+                  },
+                  description: 'this is an object'))
+              .toString(),
           '{ "type": "object", '
           '"title": "MyObject", '
           '"description": "this is an object", '
@@ -215,11 +212,14 @@ void main() {
   group('Nullable Objects', () {
     test('Nullable Object with a mandatory and an optional property', () {
       expect(
-          generateJsonSchema([
-            Nullable(Objects('Foo',
-                {'foo': Property(Nullable(Ints())), 'bar': Property(Strings())},
-                description: 'nullable object'))
-          ]).toString(),
+          generateTypeJsonSchema(Nullable(Objects(
+                  'Foo',
+                  {
+                    'foo': Property(Nullable(Ints())),
+                    'bar': Property(Strings())
+                  },
+                  description: 'nullable object')))
+              .toString(),
           '{ "type": ["object", "null"], '
           '"title": "Foo", '
           '"description": "nullable object", '
@@ -233,9 +233,9 @@ void main() {
   group('Nullable Maps', () {
     test('Nullable Maps with value type Strings', () {
       expect(
-          generateJsonSchema([
-            Nullable(Maps<String, Strings>('MyMap', valueType: Strings()))
-          ]).toString(),
+          generateTypeJsonSchema(Nullable(
+                  Maps<String, Strings>('MyMap', valueType: Strings())))
+              .toString(),
           '{ "type": ["object", "null"], "title": "MyMap", "additionalProperties": { "type": "string" } }');
     });
   });
@@ -243,33 +243,33 @@ void main() {
   group('Validatable types', () {
     test('string enum', () {
       expect(
-          generateJsonSchema([
-            Validatable(Strings(), EnumValidator('Foo', {'a', 'b', 'c'}))
-          ]).toString(),
+          generateTypeJsonSchema(
+                  Validatable(Strings(), EnumValidator('Foo', {'a', 'b', 'c'})))
+              .toString(),
           '{ "type": "string", "enum": ["a","b","c"] }');
     });
 
     test('non-blank string', () {
       expect(
-          generateJsonSchema(
-                  [Validatable(Strings(), const NonBlankStringValidator())])
+          generateTypeJsonSchema(
+                  Validatable(Strings(), const NonBlankStringValidator()))
               .toString(),
           r'{ "type": "string", "pattern": ".*\\S.*" }');
     });
 
     test('int range', () {
       expect(
-          generateJsonSchema(
-                  [Validatable<int>(Ints(), const IntRangeValidator(1, 10))])
+          generateTypeJsonSchema(
+                  Validatable<int>(Ints(), const IntRangeValidator(1, 10)))
               .toString(),
           r'{ "type": "integer", "minimum": 1, "maximum": 10 }');
     });
 
     test('float range', () {
       expect(
-          generateJsonSchema([
-            Validatable<double>(Floats(), const FloatRangeValidator(0.1, 0.85))
-          ]).toString(),
+          generateTypeJsonSchema(Validatable<double>(
+                  Floats(), const FloatRangeValidator(0.1, 0.85)))
+              .toString(),
           r'{ "type": "number", "minimum": 0.1, "maximum": 0.85 }');
     });
   });
@@ -277,11 +277,21 @@ void main() {
   group('Nullable Validatable', () {
     test('string enum', () {
       expect(
-          generateJsonSchema([
-            Nullable(
-                Validatable(Strings(), EnumValidator('Foo', {'a', 'b', 'c'})))
-          ]).toString(),
+          generateTypeJsonSchema(Nullable(Validatable(
+              Strings(), EnumValidator('Foo', {'a', 'b', 'c'})))).toString(),
           '{ "type": ["string", "null"], "enum": ["a","b","c"] }');
+    });
+  });
+
+  group('Full Schema', () {
+    test('Can write full schema', () {
+      expect(
+          generateJsonSchema(Strings(), schemaId: '/mySchema').toString(),
+          r'{ "$schema": '
+          '"$jsonSchema_2020_12", '
+          r'"$id": "/mySchema", '
+          r'"type": "string"'
+          r' }');
     });
   });
 }

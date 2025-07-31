@@ -45,49 +45,137 @@ final jsonSchemaValidatorGenerators = <Type,
   FloatRangeValidator: generateFloatRange,
 };
 
-StringBuffer generateJsonSchema(List<SchemaType<Object?>> schemaTypes) {
+const String jsonSchema_2020_12 =
+    'https://json-schema.org/draft/2020-12/schema';
+
+///
+/// Generate a JSON Schema where the given [schemaType] is the root type.
+///
+/// An optional [schemaId] may be given and is the value of `$id` unless set
+/// to `null`.
+///
+/// The default [schemaUri] is [jsonSchema_2020_12] but may be overridden,
+/// including setting it to `null` so `$schema` will not be added to the schema.
+/// Notice that if another value is given, it makes no difference to how the
+/// rest of the schema is generated (i.e. it cannot generate schemas for other
+/// JSON Schema versions).
+///
+/// Parameter [useRefsForNestedTypes] defines whether to use `$ref` pointing to
+/// local `$defs` for nested types. This setting does not apply to any types in
+/// [externalTypes].
+///
+/// Parameter [externalTypes] defines the types which should always be pointed
+/// at by a `$ref` to an external schema (given by the values of the Map).
+///
+/// Parameter [endObject] defines whether to close the JSON object written
+/// to the returned [StringBuffer]. You can set this to `false` and then
+/// continue writing more definitions in the resulting schema object, in which
+/// case you must remember to close the JSON object with `}`.
+///
+StringBuffer generateJsonSchema(
+  SchemaType<Object?> schemaType, {
+  String? schemaUri = jsonSchema_2020_12,
+  String? schemaId,
+  bool useRefsForNestedTypes = true,
+  Map<SchemaType<Object?>, String> externalTypes = const {},
+  bool endObject = true,
+}) {
   final buffer = StringBuffer();
-  for (final type in schemaTypes) {
-    _generate(type, buffer);
+  buffer.write('{ ');
+  var isFirstKey = true;
+  if (schemaUri != null) {
+    buffer.write(r'"$schema": ');
+    buffer.writeJson(schemaUri);
+    isFirstKey = false;
   }
+  if (schemaId != null) {
+    if (!isFirstKey) {
+      buffer.write(', ');
+    }
+    buffer.write(r'"$id": ');
+    buffer.writeJson(schemaId);
+    isFirstKey = false;
+  }
+
+  _generate(schemaType, buffer, startObject: false, endObject: endObject);
+
   return buffer;
 }
 
-void _generate(SchemaType<Object?> type, StringBuffer buffer) {
-  buffer.writeSchemaType(type);
+StringBuffer generateTypeJsonSchema(SchemaType<Object?> schemaType) {
+  final buffer = StringBuffer();
+  _generate(schemaType, buffer);
+  return buffer;
+}
+
+void _generate(
+  SchemaType<Object?> type,
+  StringBuffer buffer, {
+  bool startObject = true,
+  bool endObject = true,
+}) {
+  buffer.writeSchemaType(type, startObject: startObject, endObject: endObject);
 }
 
 extension on StringBuffer {
   void writeSchemaType(SchemaType<Object?> type,
-      {String? description, bool endObject = true, bool nullable = false}) {
+      {String? description,
+      bool startObject = true,
+      bool endObject = true,
+      bool nullable = false}) {
     return switch (type) {
       Nullable<Object?, NonNull>(type: var innerType) => writeSchemaType(
           innerType,
           description: description,
           endObject: endObject,
+          startObject: startObject,
           nullable: true),
       Ints() => writeType("integer",
-          description: description, endObject: endObject, nullable: nullable),
+          description: description,
+          startObject: startObject,
+          endObject: endObject,
+          nullable: nullable),
       Floats() => writeType("number",
-          description: description, endObject: endObject, nullable: nullable),
+          description: description,
+          startObject: startObject,
+          endObject: endObject,
+          nullable: nullable),
       Strings() => writeType("string",
-          description: description, endObject: endObject, nullable: nullable),
+          description: description,
+          startObject: startObject,
+          endObject: endObject,
+          nullable: nullable),
       Bools() => writeType("boolean",
-          description: description, endObject: endObject, nullable: nullable),
+          description: description,
+          startObject: startObject,
+          endObject: endObject,
+          nullable: nullable),
       Arrays<dynamic, SchemaType>(itemsType: var type) => writeArray(type,
-          description: description, endObject: endObject, nullable: nullable),
+          description: description,
+          startObject: startObject,
+          endObject: endObject,
+          nullable: nullable),
       ObjectsBase<Object?>() => writeObjectsBase(type,
-          description: description, endObject: endObject, nullable: nullable),
+          description: description,
+          startObject: startObject,
+          endObject: endObject,
+          nullable: nullable),
       Validatable<Object?>(type: var type, validator: var validator) =>
         writeValidatable(type, validator,
-            endObject: endObject, nullable: nullable),
+            startObject: startObject, endObject: endObject, nullable: nullable),
     };
   }
 
   void writeArray(SchemaType<Object?> type,
-      {String? description, bool endObject = true, bool nullable = false}) {
+      {String? description,
+      bool startObject = true,
+      bool endObject = true,
+      bool nullable = false}) {
     writeType('array',
-        description: description, endObject: false, nullable: nullable);
+        description: description,
+        startObject: startObject,
+        endObject: false,
+        nullable: nullable);
     if (description != null) {
       write(', "description": ');
       writeJson(description);
@@ -100,16 +188,17 @@ extension on StringBuffer {
   }
 
   void writeObject(Objects obj,
-      {bool endObject = true, bool nullable = false}) {
+      {bool startObject = true, bool endObject = true, bool nullable = false}) {
     writeObjectType(obj.properties.entries,
         title: obj.name,
         description: obj.description,
+        startObject: startObject,
         endObject: endObject,
         nullable: nullable);
   }
 
   void writeMap(Maps<Object?, SchemaType<Object?>> obj,
-      {bool endObject = true, bool nullable = false}) {
+      {bool startObject = true, bool endObject = true, bool nullable = false}) {
     final additionalPropsType = switch (obj.unknownPropertiesStrategy) {
       UnknownPropertiesStrategy.ignore => const _Any(),
       UnknownPropertiesStrategy.keep =>
@@ -122,16 +211,25 @@ extension on StringBuffer {
         additionalPropsType: additionalPropsType,
         title: obj.name,
         description: obj.description,
+        startObject: startObject,
         endObject: endObject,
         nullable: nullable);
   }
 
   void writeType(String type,
-      {String? description, bool endObject = true, bool nullable = false}) {
-    if (nullable) {
-      write('{ "type": ["$type", "null"]');
+      {String? description,
+      bool startObject = true,
+      bool endObject = true,
+      bool nullable = false}) {
+    if (startObject) {
+      write('{ ');
     } else {
-      write('{ "type": "$type"');
+      write(', ');
+    }
+    if (nullable) {
+      write('"type": ["$type", "null"]');
+    } else {
+      write('"type": "$type"');
     }
     if (description != null) {
       write(', "description": ');
@@ -143,12 +241,18 @@ extension on StringBuffer {
   }
 
   void writeObjectsBase(ObjectsBase<Object?> type,
-      {String? description, required bool endObject, bool nullable = false}) {
+      {String? description,
+      required bool startObject,
+      required bool endObject,
+      bool nullable = false}) {
     return switch (type) {
-      Objects() => writeObject(type, endObject: endObject, nullable: nullable),
-      Maps() => writeMap(type, endObject: endObject, nullable: nullable),
+      Objects() => writeObject(type,
+          startObject: startObject, endObject: endObject, nullable: nullable),
+      Maps() => writeMap(type,
+          startObject: startObject, endObject: endObject, nullable: nullable),
       _ => writeType("object",
           description: type.description,
+          startObject: startObject,
           endObject: endObject,
           nullable: nullable),
     };
@@ -159,13 +263,19 @@ extension on StringBuffer {
     _AdditionalPropsType additionalPropsType = const _Any(),
     String? title,
     String? description,
+    bool startObject = true,
     bool endObject = true,
     bool nullable = false,
   }) {
-    if (nullable) {
-      write('{ "type": ["object", "null"]');
+    if (startObject) {
+      write('{ ');
     } else {
-      write('{ "type": "object"');
+      write(', ');
+    }
+    if (nullable) {
+      write('"type": ["object", "null"]');
+    } else {
+      write('"type": "object"');
     }
     if (title != null) {
       write(', "title": ');
@@ -213,13 +323,14 @@ extension on StringBuffer {
   }
 
   void writeValidatable(NonNull<Object?> type, Validator<Object?> validator,
-      {bool endObject = true, bool nullable = false}) {
+      {bool startObject = true, bool endObject = true, bool nullable = false}) {
     final generator = jsonSchemaValidatorGenerators[validator.runtimeType];
     if (generator == null) {
       throw Exception('No JSON Schema registered for ${validator.runtimeType}. '
           'To register one, add it to the `jsonSchemaValidatorGenerators` Map.');
     }
-    writeSchemaType(type, endObject: false, nullable: nullable);
+    writeSchemaType(type,
+        startObject: startObject, endObject: false, nullable: nullable);
     generator(validator, type, this);
     if (endObject) {
       write(' }');
