@@ -84,22 +84,23 @@ void main() {
           generateTypeJsonSchema(
                   Maps<String, Strings>('MyMap', valueType: Strings()))
               .toString(),
-          '{ "type": "object", "title": "MyMap", "additionalProperties": { "type": "string" } }');
+          '{ "title": "MyMap", "type": "object", "additionalProperties": { "type": "string" } }');
     });
 
     test('default Maps with value type Ints', () {
       expect(
           generateTypeJsonSchema(Maps<int, Ints>('MyMap', valueType: Ints()))
               .toString(),
-          '{ "type": "object", "title": "MyMap", "additionalProperties": { "type": "integer" } }');
+          '{ "title": "MyMap", "type": "object", "additionalProperties": { "type": "integer" } }');
     });
 
     test('default Maps with value type Ints, some known properties', () {
       expect(
           generateTypeJsonSchema(Maps<int, Ints>('MyMap',
               valueType: Ints(), knownProperties: {'hello', 'bye'})).toString(),
-          '{ "type": "object", '
+          '{ '
           '"title": "MyMap", '
+          '"type": "object", '
           '"properties": { '
           '"hello": { "type": "integer" }, '
           '"bye": { "type": "integer" } '
@@ -115,7 +116,7 @@ void main() {
                   valueType: Ints(),
                   unknownPropertiesStrategy: UnknownPropertiesStrategy.ignore))
               .toString(),
-          '{ "type": "object", "title": "MyMap" }');
+          '{ "title": "MyMap", "type": "object" }');
     });
 
     test(
@@ -127,7 +128,7 @@ void main() {
                   knownProperties: {'foo', 'bar'},
                   unknownPropertiesStrategy: UnknownPropertiesStrategy.ignore))
               .toString(),
-          '{ "type": "object", "title": "MyMap", "properties": { '
+          '{ "title": "MyMap", "type": "object", "properties": { '
           '"foo": { "type": "integer" }, '
           '"bar": { "type": "integer" } '
           '}, "required": ["foo","bar"] }');
@@ -142,7 +143,7 @@ void main() {
                   knownProperties: {'foo', 'bar'},
                   unknownPropertiesStrategy: UnknownPropertiesStrategy.forbid))
               .toString(),
-          '{ "type": "object", "title": "MyMap", "properties": { '
+          '{ "title": "MyMap", "type": "object", "properties": { '
           '"foo": { "type": "integer" }, '
           '"bar": { "type": "integer" } '
           '}, "required": ["foo","bar"], '
@@ -155,8 +156,8 @@ void main() {
       expect(
           generateTypeJsonSchema(Objects('Foo', {'bar': Property(Strings())}))
               .toString(),
-          '{ "type": "object", '
-          '"title": "Foo", '
+          '{ "title": "Foo", '
+          '"type": "object", '
           '"properties": { '
           '"bar": { "type": "string" } '
           '}, "required": ["bar"] }');
@@ -167,8 +168,8 @@ void main() {
           generateTypeJsonSchema(
                   Objects('Foo', {'bar': Property(Nullable(Strings()))}))
               .toString(),
-          '{ "type": "object", '
-          '"title": "Foo", '
+          '{ "title": "Foo", '
+          '"type": "object", '
           '"properties": { '
           '"bar": { "type": ["string", "null"] } '
           '} }');
@@ -180,8 +181,8 @@ void main() {
             'foo': Property(Nullable(Ints())),
             'bar': Property(Strings())
           })).toString(),
-          '{ "type": "object", '
-          '"title": "Foo", '
+          '{ "title": "Foo", '
+          '"type": "object", '
           '"properties": { '
           '"foo": { "type": ["integer", "null"] }, '
           '"bar": { "type": "string" } '
@@ -199,9 +200,9 @@ void main() {
                   },
                   description: 'this is an object'))
               .toString(),
-          '{ "type": "object", '
-          '"title": "MyObject", '
+          '{ "title": "MyObject", '
           '"description": "this is an object", '
+          '"type": "object", '
           '"properties": { '
           '"myProp": { "type": "integer", "description": "my property" }, '
           '"otherProp": { "type": ["string", "null"], "description": "another property" } '
@@ -220,9 +221,9 @@ void main() {
                   },
                   description: 'nullable object')))
               .toString(),
-          '{ "type": ["object", "null"], '
-          '"title": "Foo", '
+          '{ "title": "Foo", '
           '"description": "nullable object", '
+          '"type": ["object", "null"], '
           '"properties": { '
           '"foo": { "type": ["integer", "null"] }, '
           '"bar": { "type": "string" } '
@@ -236,7 +237,7 @@ void main() {
           generateTypeJsonSchema(Nullable(
                   Maps<String, Strings>('MyMap', valueType: Strings())))
               .toString(),
-          '{ "type": ["object", "null"], "title": "MyMap", "additionalProperties": { "type": "string" } }');
+          '{ "title": "MyMap", "type": ["object", "null"], "additionalProperties": { "type": "string" } }');
     });
   });
 
@@ -284,20 +285,70 @@ void main() {
   });
 
   group('Full Schema', () {
-    test('Can write full schema', () {
+    test('Can write basic JSON schema', () {
       expect(
-          generateJsonSchema(Strings(),
-                  schemaId: '/mySchema',
-                  description: 'A JSON Schema',
-                  title: 'Foo')
-              .toString(),
+          generateJsonSchema(Strings(), schemaId: '/mySchema').toString(),
           r'{ "$schema": '
           '"$jsonSchema_2020_12", '
           r'"$id": "/mySchema", '
-          r'"description": "A JSON Schema", '
-          r'"title": "Foo", '
           r'"type": "string"'
           r' }');
+    });
+
+    test('Objects: with ID, title and descriptions', () {
+      expect(
+          generateJsonSchema(
+                  Objects(
+                      'MySchema',
+                      description: 'my JSON schema',
+                      {'foo': Property(Strings(), description: 'a property')}),
+                  schemaId: '/my-schema')
+              .toString(),
+          r'{ "$schema": '
+          '"$jsonSchema_2020_12", '
+          r'"$id": "/my-schema", '
+          r'"title": "MySchema", '
+          r'"description": "my JSON schema", '
+          r'"type": "object", '
+          r'"properties": {'
+          r' "foo": { "type": "string", "description": "a property" } '
+          r'}, "required": ["foo"] }');
+    });
+
+    test('Objects: no json-schema version, ID or descriptions', () {
+      expect(
+          generateJsonSchema(
+                  Objects('MySchema', {'number': Property(Nullable(Ints()))}),
+                  schemaUri: null)
+              .toString(),
+          r'{ '
+          r'"title": "MySchema", '
+          r'"type": "object", '
+          r'"properties": {'
+          r' "number": { "type": ["integer", "null"] } '
+          r'} }');
+    });
+
+    test('Objects: with inner ref', skip: 'not implemented yet', () {
+      const inner = Objects('Inner', {
+        'a': Property(Ints()),
+      });
+      const parent = Objects('Parent', {
+        'b': Property(inner),
+      });
+      expect(
+          generateJsonSchema(Objects('MySchema', {'p': Property(parent)}),
+                  schemaUri: null)
+              .toString(),
+          r'{ '
+          r'"title": "MySchema", '
+          r'"type": "object", '
+          r'"properties": {'
+          r' "p": { "$ref": "#/$defs/Parent" } '
+          r'}, "$defs": { '
+          r'"Parent": { "type": "object", "properties": { "b": { "$ref": "#/$defs/Inner" } } }, '
+          r'"Inner": { "type": "object", "properties": { "a": { "type": "integer" } } } '
+          r'} }');
     });
   });
 }
