@@ -329,7 +329,30 @@ void main() {
           r'} }');
     });
 
-    test('Objects: with inner ref', skip: 'not implemented yet', () {
+    test('Objects: no inner refs', () {
+      const inner = Objects('Inner', {
+        'a': Property(Ints()),
+      });
+      const parent = Objects('Parent', {
+        'b': Property(inner),
+      });
+      expect(
+          generateJsonSchema(Objects('MySchema', {'p': Property(parent)}),
+                  schemaUri: null,
+                  options: JsonSchemaOptions(useRefsForNestedTypes: false))
+              .toString(),
+          r'{ '
+          r'"title": "MySchema", '
+          r'"type": "object", '
+          r'"properties": {'
+          r' "p": { "title": "Parent", "type": "object", "properties": {'
+          r' "b": { "title": "Inner", "type": "object", "properties": {'
+          r' "a": { "type": "integer" } }, "required": ["a"] }'
+          r' }, "required": ["b"] '
+          r'} }, "required": ["p"] }');
+    });
+
+    test('Objects: with inner refs', () {
       const inner = Objects('Inner', {
         'a': Property(Ints()),
       });
@@ -345,9 +368,34 @@ void main() {
           r'"type": "object", '
           r'"properties": {'
           r' "p": { "$ref": "#/$defs/Parent" } '
-          r'}, "$defs": { '
-          r'"Parent": { "type": "object", "properties": { "b": { "$ref": "#/$defs/Inner" } } }, '
-          r'"Inner": { "type": "object", "properties": { "a": { "type": "integer" } } } '
+          r'}, "required": ["p"], '
+          r'"$defs": { '
+          r'"Parent": { "title": "Parent", "type": "object", "properties": { "b": { "$ref": "#/$defs/Inner" } }, "required": ["b"] }, '
+          r'"Inner": { "title": "Inner", "type": "object", "properties": { "a": { "type": "integer" } }, "required": ["a"] } '
+          r'} }');
+    });
+
+    test('Array of Objects: with inner refs', () {
+      const inner = Objects('Integers', {
+        'ints': Property(Ints(), description: 'some integers'),
+      });
+      expect(
+          generateJsonSchema(
+                  Objects('MySchema', {
+                    'arr':
+                        Property(Arrays<Map<String, Object?>, Objects>(inner))
+                  }),
+                  schemaUri: null)
+              .toString(),
+          r'{ '
+          r'"title": "MySchema", '
+          r'"type": "object", "properties": { "arr": '
+          r'{ "type": "array", "items": { "$ref": "#/$defs/Integers" } } },'
+          r' "required": ["arr"], '
+          r'"$defs": { '
+          r'"Integers": { "title": "Integers", "type": "object", '
+          r'"properties": { "ints": { "type": "integer", "description": "some integers" } },'
+          r' "required": ["ints"] } '
           r'} }');
     });
   });

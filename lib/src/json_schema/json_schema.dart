@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:collection/collection.dart' show IterableExtension;
+
 import '../property.dart';
 import '../types.dart';
 import '../validator.dart';
@@ -87,6 +89,8 @@ StringBuffer generateJsonSchema(SchemaType<Object?> schemaType,
   return buffer;
 }
 
+/// Simplified version of [generateJsonSchema] that only generates the type
+/// definition.
 StringBuffer generateTypeJsonSchema(SchemaType<Object?> schemaType) {
   final buffer = StringBuffer();
   _generate(schemaType, buffer);
@@ -96,7 +100,16 @@ StringBuffer generateTypeJsonSchema(SchemaType<Object?> schemaType) {
 void _generate(SchemaType<Object?> type, StringBuffer buffer,
     [String? description,
     JsonSchemaOptions options = const JsonSchemaOptions()]) {
-  buffer.writeSchemaType(type, description, options);
+  final useRefs = options.useRefsForNestedTypes;
+  Map<String, ObjectsBase<Object?>> refs = useRefs ? {} : const {};
+  buffer.writeSchemaType(
+      type, refs, description, options.copyWith(endObject: !useRefs));
+  if (useRefs) {
+    buffer.writeRefs(refs);
+    if (options.endObject) {
+      buffer.write(' }');
+    }
+  }
 }
 
 /// Options for generating JSON Schemas.
@@ -168,38 +181,48 @@ class JsonSchemaOptions {
 }
 
 extension on StringBuffer {
-  void writeSchemaType(SchemaType<Object?> type,
+  void writeSchemaType(
+      SchemaType<Object?> type, Map<String, ObjectsBase<Object?>> refs,
       [String? description,
       JsonSchemaOptions options = const JsonSchemaOptions()]) {
     return switch (type) {
       Nullable<Object?, NonNull>(type: var innerType) => writeSchemaType(
-          innerType, description, options.copyWith(nullable: true)),
+          innerType, refs, description, options.copyWith(nullable: true)),
       Ints() => writeType("integer", description, options),
       Floats() => writeType("number", description, options),
       Strings() => writeType("string", description, options),
       Bools() => writeType("boolean", description, options),
       Arrays<dynamic, SchemaType>(itemsType: var type) =>
-        writeArray(type, description, options),
-      ObjectsBase<Object?>() => writeObjectsBase(type, description, options),
-      Validatable<Object?>() => writeValidatable(type, description, options),
+        writeArray(type, refs, description, options),
+      ObjectsBase<Object?>() =>
+        writeObjectsBase(type, refs, description, options),
+      Validatable<Object?>() =>
+        writeValidatable(type, refs, description, options),
     };
   }
 
-  void writeArray(SchemaType<Object?> type,
+  void writeArray(
+      SchemaType<Object?> type, Map<String, ObjectsBase<Object?>> refs,
       [String? description,
       JsonSchemaOptions options = const JsonSchemaOptions()]) {
     writeType('array', description, options.copyWith(endObject: false));
     write(', "items": ');
-    writeSchemaType(type, null, options.forInnerType());
+    if (type is ObjectsBase) {
+      writeRefType(type.name);
+      refs[type.name] = type;
+    } else {
+      writeSchemaType(type, refs, null, options.forInnerType());
+    }
     if (options.endObject) {
       write(' }');
     }
   }
 
-  void writeObject(Objects obj,
+  void writeObject(Objects obj, Map<String, ObjectsBase<Object?>> refs,
       [JsonSchemaOptions options = const JsonSchemaOptions()]) {
     writeObjectType(
       obj.properties.entries,
+      refs,
       title: obj.name,
       description: obj.description,
       options: options,
@@ -207,6 +230,7 @@ extension on StringBuffer {
   }
 
   void writeMap(Maps<Object?, SchemaType<Object?>> obj,
+      Map<String, ObjectsBase<Object?>> refs,
       [JsonSchemaOptions options = const JsonSchemaOptions()]) {
     final additionalPropsType = switch (obj.unknownPropertiesStrategy) {
       UnknownPropertiesStrategy.ignore => const _Any(),
@@ -217,6 +241,7 @@ extension on StringBuffer {
 
     return writeObjectType(
         obj.knownProperties.map((p) => MapEntry(p, Property(obj.valueType))),
+        refs,
         additionalPropsType: additionalPropsType,
         title: obj.name,
         description: obj.description,
@@ -243,17 +268,19 @@ extension on StringBuffer {
     }
   }
 
-  void writeObjectsBase(ObjectsBase<Object?> type,
+  void writeObjectsBase(
+      ObjectsBase<Object?> type, Map<String, ObjectsBase<Object?>> refs,
       [String? description,
       JsonSchemaOptions options = const JsonSchemaOptions()]) {
     return switch (type) {
-      Objects() => writeObject(type, options),
-      Maps() => writeMap(type, options),
+      Objects() => writeObject(type, refs, options),
+      Maps() => writeMap(type, refs, options),
       _ => writeType("object", type.description ?? description, options),
     };
   }
 
   void writeObjectType(Iterable<MapEntry<String, Property<Object?>>> props,
+      Map<String, ObjectsBase<Object?>> refs,
       {_AdditionalPropsType additionalPropsType = const _Any(),
       String? title,
       String? description,
@@ -282,8 +309,14 @@ extension on StringBuffer {
       for (final (i, prop) in props.indexed) {
         writeJson(prop.key);
         write(': ');
-        writeSchemaType(
-            prop.value.type, prop.value.description, options.forInnerType());
+        final propType = prop.value.type;
+        if (options.useRefsForNestedTypes && propType is ObjectsBase) {
+          writeRefType(propType.name);
+          refs[propType.name] = propType;
+        } else {
+          writeSchemaType(prop.value.type, refs, prop.value.description,
+              options.forInnerType());
+        }
         if (i != finalIndex) {
           write(', ');
         }
@@ -301,7 +334,7 @@ extension on StringBuffer {
     switch (additionalPropsType) {
       case _AdditionalPropsSchemaType(type: var type):
         write(', "additionalProperties": ');
-        writeSchemaType(type, null, options.forInnerType());
+        writeSchemaType(type, refs, null, options.forInnerType());
         break;
       case _Any():
         // nothing to do, default for JSON Schema
@@ -314,7 +347,14 @@ extension on StringBuffer {
     }
   }
 
-  void writeValidatable(Validatable<Object?> type,
+  void writeRefType(String title) {
+    write(r'{ "$ref": ');
+    writeJson(r"#/$defs/" + title);
+    write(' }');
+  }
+
+  void writeValidatable(
+      Validatable<Object?> type, Map<String, ObjectsBase<Object?>> refs,
       [String? description,
       JsonSchemaOptions options = const JsonSchemaOptions()]) {
     final validator = type.validator;
@@ -323,7 +363,8 @@ extension on StringBuffer {
       throw Exception('No JSON Schema registered for ${validator.runtimeType}. '
           'To register one, add it to the `jsonSchemaValidatorGenerators` Map.');
     }
-    writeSchemaType(type.type, description, options.copyWith(endObject: false));
+    writeSchemaType(
+        type.type, refs, description, options.copyWith(endObject: false));
     generator(
         validator,
         type.type,
@@ -340,5 +381,33 @@ extension on StringBuffer {
 
   void writeJson(Object value) {
     write(jsonEncode(value));
+  }
+
+  void writeRefs(Map<String, ObjectsBase<Object?>> refs) {
+    if (refs.isEmpty) return;
+    write(r', "$defs": { ');
+    Set<String> writtenDefs = {};
+    Map<String, ObjectsBase<Object?>> nextRefs = refs;
+    while (nextRefs.isNotEmpty) {
+      final finalIndex = refs.length - 1;
+      Map<String, ObjectsBase<Object?>> innerRefs = {};
+      for (final (index, entry)
+          in nextRefs.entries.sortedBy((e) => e.key).indexed) {
+        writeJson(entry.key);
+        writtenDefs.add(entry.key);
+        write(': ');
+        final ref = entry.value;
+        writeObjectsBase(ref, innerRefs);
+        if (index < finalIndex) {
+          write(', ');
+        }
+      }
+      innerRefs.removeWhere((name, t) => writtenDefs.contains(name));
+      if (innerRefs.isNotEmpty) {
+        write(', ');
+      }
+      nextRefs = innerRefs;
+    }
+    write(' }');
   }
 }
