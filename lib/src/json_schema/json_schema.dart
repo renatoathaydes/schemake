@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:collection/collection.dart' show IterableExtension;
@@ -25,10 +26,17 @@ final class _None extends _AdditionalPropsType {
   const _None();
 }
 
+/// Signature of JSON Schema writer functions.
+///
+/// See [jsonSchemaValidatorGenerators].
+typedef JsonSchemaWriterFunction = void Function(Object validator,
+    SchemaType<Object?> type, StringBuffer buffer, JsonSchemaOptions options);
+
 /// Registry for functions that can generate JSON Schema declarations.
 ///
 /// This Map can handle all schemake validators. Custom validators can be
-/// added to it as needed.
+/// added to it as needed, or changed by [Zone] as explained later.
+///
 /// The JSON Schema for the validator is written to the [StringBuffer] provided
 /// to the function. The buffer will be writing inside the JSON object
 /// containing the `type` wrapped by the Validator.
@@ -41,9 +49,15 @@ final class _None extends _AdditionalPropsType {
 /// Notice that the [JsonSchemaOptions] argument will always have value `false`
 /// for properties [JsonSchemaOptions.startObject] and [JsonSchemaOptions.endObject]
 /// because the JSON object is started and ended by schemake.
-final jsonSchemaValidatorGenerators = <Type,
-    void Function(Object validator, SchemaType<Object?> type,
-        StringBuffer buffer, JsonSchemaOptions options)>{
+///
+/// ## Changing the generators only for a specific [Zone]
+///
+/// This registry can be modified globally by modifying this Map or,
+/// if you prefer to avoid modifying global state, by setting the [Zone] key
+/// [jsonSchemaValidatorGeneratorsZoneKey]
+/// with a `Map` with the same type as this value.
+/// See [runZoned] for details on how to customize a [Zone].
+final jsonSchemaValidatorGenerators = <Type, JsonSchemaWriterFunction>{
   EnumValidator: generateEnum,
   NonBlankStringValidator: generateNonBlankString,
   IntRangeValidator: generateIntRange,
@@ -64,6 +78,8 @@ const String jsonSchema_2020_12 =
 /// Notice that if another value is given, it makes no difference to how the
 /// rest of the schema is generated (i.e. this method cannot generate schemas
 /// for other JSON Schema versions).
+///
+/// See [jsonSchemaValidatorGenerators].
 StringBuffer generateJsonSchema(SchemaType<Object?> schemaType,
     {String? schemaUri = jsonSchema_2020_12,
     String? schemaId,
@@ -88,6 +104,10 @@ StringBuffer generateJsonSchema(SchemaType<Object?> schemaType,
 
   return buffer;
 }
+
+/// [Zone] key for non-global [jsonSchemaValidatorGenerators].
+const Symbol jsonSchemaValidatorGeneratorsZoneKey =
+    #jsonSchemaValidatorGenerators;
 
 /// Simplified version of [generateJsonSchema] that only generates the type
 /// definition.
@@ -358,7 +378,8 @@ extension on StringBuffer {
       [String? description,
       JsonSchemaOptions options = const JsonSchemaOptions()]) {
     final validator = type.validator;
-    final generator = jsonSchemaValidatorGenerators[validator.runtimeType];
+    final writerFunctions = _getWriterFunctions();
+    final generator = writerFunctions[validator.runtimeType];
     if (generator == null) {
       throw Exception('No JSON Schema registered for ${validator.runtimeType}. '
           'To register one, add it to the `jsonSchemaValidatorGenerators` Map.');
@@ -410,4 +431,10 @@ extension on StringBuffer {
     }
     write(' }');
   }
+}
+
+Map<Type, JsonSchemaWriterFunction> _getWriterFunctions() {
+  final zoneMap = Zone.current[jsonSchemaValidatorGeneratorsZoneKey]
+      as Map<Type, JsonSchemaWriterFunction>?;
+  return zoneMap ?? jsonSchemaValidatorGenerators;
 }

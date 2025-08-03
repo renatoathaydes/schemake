@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:schemake/json_schema.dart';
 import 'package:schemake/schemake.dart';
 import 'package:test/expect.dart';
@@ -281,6 +283,51 @@ void main() {
           generateTypeJsonSchema(Nullable(Validatable(
               Strings(), EnumValidator('Foo', {'a', 'b', 'c'})))).toString(),
           '{ "type": ["string", "null"], "enum": ["a","b","c"] }');
+    });
+  });
+
+  group('Custom Validator generation', () {
+    JsonSchemaWriterFunction? originalEnumValidatorGenerator;
+    setUp(() {
+      originalEnumValidatorGenerator =
+          jsonSchemaValidatorGenerators[EnumValidator] = (Object validator,
+              SchemaType<Object?> type,
+              StringBuffer buffer,
+              JsonSchemaOptions options) {
+        validator as EnumValidator;
+        buffer.write(validator);
+        buffer.write('\n');
+        buffer.write(type);
+      };
+    });
+    tearDown(() {
+      jsonSchemaValidatorGenerators[EnumValidator] =
+          originalEnumValidatorGenerator!;
+    });
+
+    test('Can set validator generator globally', () {
+      final testEnum = Enums(EnumValidator('TestEnum', {'a', 'b', 'c'}));
+      expect(generateTypeJsonSchema(testEnum).toString(),
+          '{ "type": "string"${testEnum.validator}\n${Strings()} }');
+    });
+
+    test('Can set validator generator by Zone', () {
+      final testEnum = Enums(EnumValidator('TestEnumZone', {'d', 'e', 'f'}));
+      void customWriter(Object validator, SchemaType<Object?> type,
+          StringBuffer buffer, JsonSchemaOptions options) {
+        validator as EnumValidator;
+        buffer.write(type);
+        buffer.write('\n');
+        buffer.write(validator);
+      }
+
+      final result = runZoned(() {
+        return generateTypeJsonSchema(testEnum).toString();
+      }, zoneValues: {
+        jsonSchemaValidatorGeneratorsZoneKey: {EnumValidator: customWriter}
+      });
+
+      expect(result, '{ "type": "string"${Strings()}\n${testEnum.validator} }');
     });
   });
 
