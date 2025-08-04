@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:schemake/dart_gen.dart';
+import 'package:schemake/json_schema.dart';
 import 'package:schemake/schemake.dart';
 import 'package:yaml/yaml.dart';
 
@@ -60,4 +61,8 @@ void main() {
   print(otherPerson.toJson());
 }
   ''');
+
+  // JSON Schema Generation
+  print(generateJsonSchema(personSchema,
+      schemaId: 'https://example.org/schemas/Person'));
 }
