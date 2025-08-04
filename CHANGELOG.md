@@ -1,3 +1,7 @@
+## 0.6.6 (04-Aug-2025)
+
+- JSON Schema generation implemented.
+
 ## 0.6.5 (15-Jun-2025)
 
 - support Dart generation of `Nullable(Arrays)`.
