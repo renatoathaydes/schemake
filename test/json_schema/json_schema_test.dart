@@ -422,6 +422,54 @@ void main() {
           r'} }');
     });
 
+    test('Objects: with inner refs, inner external type', () {
+      const inner = Objects('Inner', {
+        'a': Property(Ints()),
+      });
+      const parent = Objects('Parent', {
+        'b': Property(inner),
+      });
+      expect(
+          generateJsonSchema(Objects('MySchema', {'p': Property(parent)}),
+              schemaUri: null,
+              options: JsonSchemaOptions(externalTypes: {
+                inner: 'https://example.org/schema/Inner'
+              })).toString(),
+          r'{ '
+          r'"title": "MySchema", '
+          r'"type": "object", '
+          r'"properties": {'
+          r' "p": { "$ref": "#/$defs/Parent" } '
+          r'}, "required": ["p"], '
+          r'"$defs": { '
+          r'"Parent": { "title": "Parent", "type": "object", "properties": {'
+          r' "b": { "$ref": "https://example.org/schema/Inner" } '
+          r'}, "required": ["b"] } '
+          r'} }');
+    });
+
+    test('Objects: with inner refs, all external types', () {
+      const inner = Objects('Inner', {
+        'a': Property(Ints()),
+      });
+      const parent = Objects('Parent', {
+        'b': Property(inner),
+      });
+      expect(
+          generateJsonSchema(Objects('MySchema', {'p': Property(parent)}),
+              schemaUri: null,
+              options: JsonSchemaOptions(externalTypes: {
+                parent: 'https://example.org/schema/Parent'
+              })).toString(),
+          r'{ '
+          r'"title": "MySchema", '
+          r'"type": "object", '
+          r'"properties": {'
+          r' "p": { "$ref": "https://example.org/schema/Parent" } '
+          r'}, "required": ["p"] '
+          r'}');
+    });
+
     test('Array of Objects: with inner refs', () {
       const inner = Objects('Integers', {
         'ints': Property(Ints(), description: 'some integers'),

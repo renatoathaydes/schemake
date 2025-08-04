@@ -125,7 +125,7 @@ void _generate(SchemaType<Object?> type, StringBuffer buffer,
   buffer.writeSchemaType(
       type, refs, description, options.copyWith(endObject: !useRefs));
   if (useRefs) {
-    buffer.writeRefs(refs);
+    buffer.writeRefs(refs, options.externalTypes);
     if (options.endObject) {
       buffer.write(' }');
     }
@@ -228,7 +228,7 @@ extension on StringBuffer {
     writeType('array', description, options.copyWith(endObject: false));
     write(', "items": ');
     if (type is ObjectsBase) {
-      writeRefType(type.name);
+      writeInnerType(options, type, refs, type.description);
       refs[type.name] = type;
     } else {
       writeSchemaType(type, refs, null, options.forInnerType());
@@ -330,13 +330,7 @@ extension on StringBuffer {
         writeJson(prop.key);
         write(': ');
         final propType = prop.value.type;
-        if (options.useRefsForNestedTypes && propType is ObjectsBase) {
-          writeRefType(propType.name);
-          refs[propType.name] = propType;
-        } else {
-          writeSchemaType(prop.value.type, refs, prop.value.description,
-              options.forInnerType());
-        }
+        writeInnerType(options, propType, refs, prop.value.description);
         if (i != finalIndex) {
           write(', ');
         }
@@ -367,9 +361,22 @@ extension on StringBuffer {
     }
   }
 
-  void writeRefType(String title) {
+  void writeInnerType(JsonSchemaOptions options, SchemaType<Object?> schemaType,
+      Map<String, ObjectsBase<Object?>> refs, String? description) {
+    final externalType = options.externalTypes[schemaType];
+    if (externalType != null) {
+      writeRefType(externalType, isDef: false);
+    } else if (options.useRefsForNestedTypes && schemaType is ObjectsBase) {
+      writeRefType(schemaType.name);
+      refs[schemaType.name] = schemaType;
+    } else {
+      writeSchemaType(schemaType, refs, description, options.forInnerType());
+    }
+  }
+
+  void writeRefType(String path, {bool isDef = true}) {
     write(r'{ "$ref": ');
-    writeJson(r"#/$defs/" + title);
+    writeJson((isDef ? r"#/$defs/" : '') + path);
     write(' }');
   }
 
@@ -404,8 +411,10 @@ extension on StringBuffer {
     write(jsonEncode(value));
   }
 
-  void writeRefs(Map<String, ObjectsBase<Object?>> refs) {
+  void writeRefs(Map<String, ObjectsBase<Object?>> refs,
+      Map<SchemaType<Object?>, String> externalTypes) {
     if (refs.isEmpty) return;
+    final options = JsonSchemaOptions(externalTypes: externalTypes);
     write(r', "$defs": { ');
     Set<String> writtenDefs = {};
     Map<String, ObjectsBase<Object?>> nextRefs = refs;
@@ -418,7 +427,7 @@ extension on StringBuffer {
         writtenDefs.add(entry.key);
         write(': ');
         final ref = entry.value;
-        writeObjectsBase(ref, innerRefs);
+        writeObjectsBase(ref, innerRefs, null, options);
         if (index < finalIndex) {
           write(', ');
         }
