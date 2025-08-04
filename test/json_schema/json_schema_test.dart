@@ -162,7 +162,7 @@ void main() {
           '"type": "object", '
           '"properties": { '
           '"bar": { "type": "string" } '
-          '}, "required": ["bar"] }');
+          '}, "required": ["bar"], "additionalProperties": false }');
     });
 
     test('default Object with one optional property', () {
@@ -174,7 +174,7 @@ void main() {
           '"type": "object", '
           '"properties": { '
           '"bar": { "type": ["string", "null"] } '
-          '} }');
+          '}, "additionalProperties": false }');
     });
 
     test('default Object with a mandatory and an optional property', () {
@@ -188,7 +188,7 @@ void main() {
           '"properties": { '
           '"foo": { "type": ["integer", "null"] }, '
           '"bar": { "type": "string" } '
-          '}, "required": ["bar"] }');
+          '}, "required": ["bar"], "additionalProperties": false }');
     });
 
     test('Object with descriptions', () {
@@ -208,7 +208,7 @@ void main() {
           '"properties": { '
           '"myProp": { "type": "integer", "description": "my property" }, '
           '"otherProp": { "type": ["string", "null"], "description": "another property" } '
-          '}, "required": ["myProp"] }');
+          '}, "required": ["myProp"], "additionalProperties": false }');
     });
   });
 
@@ -229,7 +229,7 @@ void main() {
           '"properties": { '
           '"foo": { "type": ["integer", "null"] }, '
           '"bar": { "type": "string" } '
-          '}, "required": ["bar"] }');
+          '}, "required": ["bar"], "additionalProperties": false }');
     });
   });
 
@@ -359,7 +359,7 @@ void main() {
           r'"type": "object", '
           r'"properties": {'
           r' "foo": { "type": "string", "description": "a property" } '
-          r'}, "required": ["foo"] }');
+          r'}, "required": ["foo"], "additionalProperties": false }');
     });
 
     test('Objects: no json-schema version, ID or descriptions', () {
@@ -373,16 +373,19 @@ void main() {
           r'"type": "object", '
           r'"properties": {'
           r' "number": { "type": ["integer", "null"] } '
-          r'} }');
+          r'}, "additionalProperties": false }');
     });
 
-    test('Objects: no inner refs', () {
+    test('Objects: no inner refs, ignore unknown props', () {
       const inner = Objects('Inner', {
         'a': Property(Ints()),
       });
-      const parent = Objects('Parent', {
-        'b': Property(inner),
-      });
+      const parent = Objects(
+          'Parent',
+          {
+            'b': Property(inner),
+          },
+          unknownPropertiesStrategy: UnknownPropertiesStrategy.ignore);
       expect(
           generateJsonSchema(Objects('MySchema', {'p': Property(parent)}),
                   schemaUri: null,
@@ -394,18 +397,26 @@ void main() {
           r'"properties": {'
           r' "p": { "title": "Parent", "type": "object", "properties": {'
           r' "b": { "title": "Inner", "type": "object", "properties": {'
-          r' "a": { "type": "integer" } }, "required": ["a"] }'
-          r' }, "required": ["b"] '
-          r'} }, "required": ["p"] }');
+          r' "a": { "type": "integer" } }, "required": ["a"],'
+          r' "additionalProperties": false }'
+          r' }, "required": ["b"] }'
+          r' }, "required": ["p"],'
+          r' "additionalProperties": false }');
     });
 
-    test('Objects: with inner refs', () {
-      const inner = Objects('Inner', {
-        'a': Property(Ints()),
-      });
-      const parent = Objects('Parent', {
-        'b': Property(inner),
-      });
+    test('Objects: with inner refs, keep unknown props', () {
+      const inner = Objects(
+          'Inner',
+          {
+            'a': Property(Ints()),
+          },
+          unknownPropertiesStrategy: UnknownPropertiesStrategy.keep);
+      const parent = Objects(
+          'Parent',
+          {
+            'b': Property(inner),
+          },
+          unknownPropertiesStrategy: UnknownPropertiesStrategy.keep);
       expect(
           generateJsonSchema(Objects('MySchema', {'p': Property(parent)}),
                   schemaUri: null)
@@ -415,7 +426,7 @@ void main() {
           r'"type": "object", '
           r'"properties": {'
           r' "p": { "$ref": "#/$defs/Parent" } '
-          r'}, "required": ["p"], '
+          r'}, "required": ["p"], "additionalProperties": false, '
           r'"$defs": { '
           r'"Parent": { "title": "Parent", "type": "object", "properties": { "b": { "$ref": "#/$defs/Inner" } }, "required": ["b"] }, '
           r'"Inner": { "title": "Inner", "type": "object", "properties": { "a": { "type": "integer" } }, "required": ["a"] } '
@@ -440,11 +451,11 @@ void main() {
           r'"type": "object", '
           r'"properties": {'
           r' "p": { "$ref": "#/$defs/Parent" } '
-          r'}, "required": ["p"], '
+          r'}, "required": ["p"], "additionalProperties": false, '
           r'"$defs": { '
           r'"Parent": { "title": "Parent", "type": "object", "properties": {'
           r' "b": { "$ref": "https://example.org/schema/Inner" } '
-          r'}, "required": ["b"] } '
+          r'}, "required": ["b"], "additionalProperties": false } '
           r'} }');
     });
 
@@ -466,7 +477,7 @@ void main() {
           r'"type": "object", '
           r'"properties": {'
           r' "p": { "$ref": "https://example.org/schema/Parent" } '
-          r'}, "required": ["p"] '
+          r'}, "required": ["p"], "additionalProperties": false '
           r'}');
     });
 
@@ -486,11 +497,11 @@ void main() {
           r'"title": "MySchema", '
           r'"type": "object", "properties": { "arr": '
           r'{ "type": "array", "items": { "$ref": "#/$defs/Integers" } } },'
-          r' "required": ["arr"], '
+          r' "required": ["arr"], "additionalProperties": false, '
           r'"$defs": { '
           r'"Integers": { "title": "Integers", "type": "object", '
           r'"properties": { "ints": { "type": "integer", "description": "some integers" } },'
-          r' "required": ["ints"] } '
+          r' "required": ["ints"], "additionalProperties": false } '
           r'} }');
     });
   });

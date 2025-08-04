@@ -200,6 +200,18 @@ class JsonSchemaOptions {
   }
 }
 
+_AdditionalPropsType _getAdditionalPropsType(
+    UnknownPropertiesStrategy strategy, SchemaType<Object?>? schemaType) {
+  final additionalPropsType = switch (strategy) {
+    UnknownPropertiesStrategy.ignore => const _Any(),
+    UnknownPropertiesStrategy.keep => schemaType == null
+        ? const _Any()
+        : _AdditionalPropsSchemaType(schemaType),
+    UnknownPropertiesStrategy.forbid => _None(),
+  };
+  return additionalPropsType;
+}
+
 extension on StringBuffer {
   void writeSchemaType(
       SchemaType<Object?> type, Map<String, ObjectsBase<Object?>> refs,
@@ -243,6 +255,8 @@ extension on StringBuffer {
     writeObjectType(
       obj.properties.entries,
       refs,
+      additionalPropsType:
+          _getAdditionalPropsType(obj.unknownPropertiesStrategy, null),
       title: obj.name,
       description: obj.description,
       options: options,
@@ -252,12 +266,8 @@ extension on StringBuffer {
   void writeMap(Maps<Object?, SchemaType<Object?>> obj,
       Map<String, ObjectsBase<Object?>> refs,
       [JsonSchemaOptions options = const JsonSchemaOptions()]) {
-    final additionalPropsType = switch (obj.unknownPropertiesStrategy) {
-      UnknownPropertiesStrategy.ignore => const _Any(),
-      UnknownPropertiesStrategy.keep =>
-        _AdditionalPropsSchemaType(obj.valueType),
-      UnknownPropertiesStrategy.forbid => _None(),
-    };
+    final additionalPropsType =
+        _getAdditionalPropsType(obj.unknownPropertiesStrategy, obj.valueType);
 
     return writeObjectType(
         obj.knownProperties.map((p) => MapEntry(p, Property(obj.valueType))),
