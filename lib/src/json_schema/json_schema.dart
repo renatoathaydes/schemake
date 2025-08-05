@@ -339,17 +339,15 @@ extension on StringBuffer {
       for (final (i, prop) in props.indexed) {
         writeJson(prop.key);
         write(': ');
-        final propType = prop.value.type;
-        writeInnerType(options, propType, refs, prop.value.description);
+        writeInnerType(options, prop.value.type, refs, prop.value.description,
+            prop.value.defaultValue);
         if (i != finalIndex) {
           write(', ');
         }
       }
       write(' }');
-      final required = props
-          .where((p) => p.value.type is! Nullable<Object?, NonNull<Object?>>)
-          .map((p) => p.key)
-          .toList();
+      final required =
+          props.where((p) => p.value.isMandatory).map((p) => p.key).toList();
       if (required.isNotEmpty) {
         write(', "required": ');
         writeJson(required);
@@ -372,7 +370,8 @@ extension on StringBuffer {
   }
 
   void writeInnerType(JsonSchemaOptions options, SchemaType<Object?> schemaType,
-      Map<String, ObjectsBase<Object?>> refs, String? description) {
+      Map<String, ObjectsBase<Object?>> refs, String? description,
+      [Object? defaultValue]) {
     final externalType = options.externalTypes[schemaType];
     if (externalType != null) {
       writeRefType(externalType, isDef: false);
@@ -380,7 +379,15 @@ extension on StringBuffer {
       writeRefType(schemaType.name);
       refs[schemaType.name] = schemaType;
     } else {
-      writeSchemaType(schemaType, refs, description, options.forInnerType());
+      var innerOptions = options.forInnerType();
+      if (defaultValue != null) {
+        innerOptions = innerOptions.copyWith(endObject: false);
+      }
+      writeSchemaType(schemaType, refs, description, innerOptions);
+      if (defaultValue != null) {
+        writeDefaultValue(defaultValue);
+        write(' }');
+      }
     }
   }
 
@@ -450,10 +457,22 @@ extension on StringBuffer {
     }
     write(' }');
   }
+
+  void writeDefaultValue(Object? defaultValue) {
+    if (defaultValue == null) return;
+    write(r', "default": ');
+    writeJson(defaultValue);
+  }
 }
 
 Map<Type, JsonSchemaWriterFunction> _getWriterFunctions() {
   final zoneMap = Zone.current[jsonSchemaValidatorGeneratorsZoneKey]
       as Map<Type, JsonSchemaWriterFunction>?;
   return zoneMap ?? jsonSchemaValidatorGenerators;
+}
+
+extension<T> on Property<T> {
+  bool get isOptional => type is Nullable || defaultValue != null;
+
+  bool get isMandatory => !isOptional;
 }

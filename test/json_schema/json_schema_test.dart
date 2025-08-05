@@ -210,6 +210,43 @@ void main() {
           '"otherProp": { "type": ["string", "null"], "description": "another property" } '
           '}, "required": ["myProp"], "additionalProperties": false }');
     });
+
+    test('Object with nullable property with default values', () {
+      expect(
+          generateTypeJsonSchema(Objects('Foo', {
+            'foo': Property(Nullable(Ints()), defaultValue: 10),
+          })).toString(),
+          '{ "title": "Foo", '
+          '"type": "object", '
+          '"properties": { '
+          '"foo": { "type": ["integer", "null"], "default": 10 } '
+          '}, "additionalProperties": false }');
+    });
+
+    test('Object with mandatory property with default values', () {
+      expect(
+          generateTypeJsonSchema(Objects('Foo', {
+            'foo': Property(Ints(), defaultValue: 10),
+          })).toString(),
+          '{ "title": "Foo", '
+          '"type": "object", '
+          '"properties": { '
+          '"foo": { "type": "integer", "default": 10 } '
+          '}, "additionalProperties": false }');
+    });
+
+    test('Object with optional array property with default value', () {
+      expect(
+          generateTypeJsonSchema(Objects('Foo', {
+            'foo': Property(Nullable(Arrays<String, Strings>(Strings())),
+                defaultValue: const []),
+          })).toString(),
+          '{ "title": "Foo", '
+          '"type": "object", '
+          '"properties": { '
+          '"foo": { "type": ["array", "null"], "items": { "type": "string" }, "default": [] } '
+          '}, "additionalProperties": false }');
+    });
   });
 
   group('Nullable Objects', () {
