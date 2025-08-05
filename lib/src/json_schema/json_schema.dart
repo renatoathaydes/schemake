@@ -356,7 +356,7 @@ extension on StringBuffer {
     switch (additionalPropsType) {
       case _AdditionalPropsSchemaType(type: var type):
         write(', "additionalProperties": ');
-        writeSchemaType(type, refs, null, options.forInnerType());
+        writeInnerType(options.forInnerType(), type, refs, null);
         break;
       case _Any():
         // nothing to do, default for JSON Schema

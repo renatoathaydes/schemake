@@ -541,5 +541,46 @@ void main() {
           r' "required": ["ints"], "additionalProperties": false } '
           r'} }');
     });
+
+    test('Maps: with values of inner refs type (top-level)', () {
+      const inner = Objects('Inner', {
+        'a': Property(Ints()),
+      });
+      const parent =
+          Maps<Map<String, Object?>, Objects>('Parent', valueType: inner);
+      expect(
+          generateJsonSchema(parent, schemaUri: null).toString(),
+          r'{ '
+          r'"title": "Parent", '
+          r'"type": "object", '
+          r'"additionalProperties": { "$ref": "#/$defs/Inner" }, '
+          r'"$defs": { '
+          r'"Inner": { "title": "Inner", "type": "object", "properties": { "a": { "type": "integer" } },'
+          r' "required": ["a"], "additionalProperties": false } '
+          r'} }');
+    });
+
+    test('Maps: with values of inner refs type (inside Objects)', () {
+      const inner = Objects('Inner', {
+        'a': Property(Ints()),
+      });
+      const parent =
+          Maps<Map<String, Object?>, Objects>('Parent', valueType: inner);
+      expect(
+          generateJsonSchema(Objects('MySchema', {'p': Property(parent)}),
+                  schemaUri: null)
+              .toString(),
+          r'{ '
+          r'"title": "MySchema", '
+          r'"type": "object", '
+          r'"properties": {'
+          r' "p": { "$ref": "#/$defs/Parent" } '
+          r'}, "required": ["p"], "additionalProperties": false, '
+          r'"$defs": { '
+          r'"Parent": { "title": "Parent", "type": "object", "additionalProperties": { "$ref": "#/$defs/Inner" } }, '
+          r'"Inner": { "title": "Inner", "type": "object", "properties": { "a": { "type": "integer" } },'
+          r' "required": ["a"], "additionalProperties": false } '
+          r'} }');
+    });
   });
 }
