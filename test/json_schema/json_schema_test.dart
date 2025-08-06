@@ -205,6 +205,7 @@ void main() {
                                   Property(Strings(), description: 'the prop'),
                             },
                             description: 'Object description')),
+                        // the property description wins
                         description: 'Property description'),
                   },
                   description: 'this is an object'))
@@ -215,7 +216,7 @@ void main() {
           '"properties": { '
           '"myProp": { "type": "integer", "description": "my property" }, '
           r'"otherProp": { "title": "HasDescription",'
-          r' "description": "Object description", "type": ["object", "null"],'
+          r' "description": "Property description", "type": ["object", "null"],'
           r' "properties": { "prop": { "type": "string", "description": "the prop" } },'
           r' "required": ["prop"], "additionalProperties": false } '
           '}, "required": ["myProp"], "additionalProperties": false'

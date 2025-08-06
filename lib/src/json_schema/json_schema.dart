@@ -251,21 +251,23 @@ extension on StringBuffer {
   }
 
   void writeObject(Objects obj, Map<String, ObjectsBase<Object?>> refs,
-      [JsonSchemaOptions options = const JsonSchemaOptions()]) {
+      [JsonSchemaOptions options = const JsonSchemaOptions(),
+      String? description]) {
     writeObjectType(
       obj.properties.entries,
       refs,
       additionalPropsType:
           _getAdditionalPropsType(obj.unknownPropertiesStrategy, null),
       title: obj.name,
-      description: obj.description,
+      description: description ?? obj.description,
       options: options,
     );
   }
 
   void writeMap(Maps<Object?, SchemaType<Object?>> obj,
       Map<String, ObjectsBase<Object?>> refs,
-      [JsonSchemaOptions options = const JsonSchemaOptions()]) {
+      [JsonSchemaOptions options = const JsonSchemaOptions(),
+      String? description]) {
     final additionalPropsType =
         _getAdditionalPropsType(obj.unknownPropertiesStrategy, obj.valueType);
 
@@ -274,7 +276,7 @@ extension on StringBuffer {
         refs,
         additionalPropsType: additionalPropsType,
         title: obj.name,
-        description: obj.description,
+        description: description ?? obj.description,
         options: options);
   }
 
@@ -303,8 +305,8 @@ extension on StringBuffer {
       [String? description,
       JsonSchemaOptions options = const JsonSchemaOptions()]) {
     return switch (type) {
-      Objects() => writeObject(type, refs, options),
-      Maps() => writeMap(type, refs, options),
+      Objects() => writeObject(type, refs, options, description),
+      Maps() => writeMap(type, refs, options, description),
       _ => writeType("object", type.description ?? description, options),
     };
   }
