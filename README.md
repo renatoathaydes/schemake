@@ -92,10 +92,10 @@ const person = Objects('Person', {
   'age': Property(Nullable(Ints())),
 });
 
-print
-(
-generateJsonSchema(personSchema,
-schemaId: 'https://example.org/schemas/Person'));
+void main() {
+  print(generateJsonSchema(personSchema,
+      schemaId: 'https://example.org/schemas/Person'));
+}
 ```
 
 Which prints the following (line-breaks and indentation for illustration purposes only):
