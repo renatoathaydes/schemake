@@ -4,9 +4,9 @@ import 'types.dart';
 class Property<T> {
   final SchemaType<T> type;
   final T? defaultValue;
-  final String description;
+  final String? description;
 
-  const Property(this.type, {this.defaultValue, this.description = ''});
+  const Property(this.type, {this.defaultValue, this.description});
 
   /// Return `true` if this property is required
   /// (i.e. it doesn't have a default value, and it's type is not nullable).

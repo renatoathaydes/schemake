@@ -17,7 +17,15 @@ const person = Objects('Person', {
 });
 ```
 
-With such a schema specification, you can now validate data you receive, for example, from JSON or YAML:
+From such a schema specification, you can now:
+
+* validate data conform to the schema.
+* generate Dart data types, optionally with `toJson` and `fromJson` methods.
+* generate a [JSON Schema](https://json-schema.org/).
+
+### Validating data
+
+Example to validate data you receive, for example, from JSON or YAML:
 
 ```dart
 import 'package:schemake/schemake.dart';
@@ -37,6 +45,8 @@ void main() {
   person.convert(jsonDecode('{"name": "Joe", "age": "foo"}'));
 }
 ```
+
+### Dart Generation
 
 With the `dart_gen` library in this package, you can also generate a Dart data class for
 your schema that implements (by default) `toString`, `==`, `hashCode`, `copyWith`,
@@ -66,6 +76,57 @@ void main() async {
 ```
 
 The implementation is shown in the Dart generation section later in this document.
+
+### JSON Schema Generation
+
+Finally, you can also generate a JSON Schema from it!
+
+Import the `json_schema` library and use the `generateJsonSchema` function to do that:
+
+```dart
+import 'package:schemake/json_schema.dart';
+import 'package:schemake/schemake.dart';
+
+const person = Objects('Person', {
+  'name': Property(Strings()),
+  'age': Property(Nullable(Ints())),
+});
+
+print
+(
+generateJsonSchema(personSchema,
+schemaId: 'https://example.org/schemas/Person'));
+```
+
+Which prints the following (line-breaks and indentation for illustration purposes only):
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.org/schemas/Person",
+  "title": "Person",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "age": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "additionalProperties": false
+}
+```
+
+> By default, Schemake schemas for objects are "strict", hence `"additionalProperties": false` at the end of the JSON
+> Schema above. To allow additional properties, set the `UnknownPropertiesStrategy` to `ignore` or `keep`.
+> To create a schema which allows properties of a certain specific type only, use `Maps`.
 
 ## Data types
 

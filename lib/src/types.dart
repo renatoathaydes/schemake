@@ -137,7 +137,7 @@ class Objects extends ObjectsBase<Map<String, Object?>> {
     super.name,
     this.properties, {
     super.unknownPropertiesStrategy = UnknownPropertiesStrategy.forbid,
-    super.description = '',
+    super.description,
   });
 
   @override
@@ -169,10 +169,21 @@ class Objects extends ObjectsBase<Map<String, Object?>> {
 class Maps<V, T extends SchemaType<V>> extends ObjectsBase<Map<String, V>> {
   final T valueType;
 
-  const Maps(super.name,
-      {required this.valueType,
-      super.description = '',
-      super.unknownPropertiesStrategy = UnknownPropertiesStrategy.keep});
+  /// The known properties (or keys) of the Map.
+  ///
+  /// If [unknownPropertiesStrategy] is [UnknownPropertiesStrategy.forbid],
+  /// only properties contained in `knownProperties` are allowed.
+  /// If [unknownPropertiesStrategy] is [UnknownPropertiesStrategy.ignore],
+  /// any properties NOT contained in `knownProperties` are thrown away.
+  final Set<String> knownProperties;
+
+  const Maps(
+    super.name, {
+    required this.valueType,
+    super.description,
+    super.unknownPropertiesStrategy = UnknownPropertiesStrategy.keep,
+    this.knownProperties = const {},
+  });
 
   @override
   Map<String, V> convert(Object? input) {
@@ -189,13 +200,16 @@ class Maps<V, T extends SchemaType<V>> extends ObjectsBase<Map<String, V>> {
   }
 
   @override
-  Converter<Object?, V> getPropertyConverter(String property) {
+  Converter<Object?, V>? getPropertyConverter(String property) {
+    if (knownProperties.isNotEmpty) {
+      return knownProperties.contains(property) ? valueType : null;
+    }
     return valueType;
   }
 
   @override
   Iterable<String> getRequiredProperties() {
-    return const [];
+    return valueType is Nullable<Object?, Object?> ? const [] : knownProperties;
   }
 }
 
@@ -207,18 +221,18 @@ class Maps<V, T extends SchemaType<V>> extends ObjectsBase<Map<String, V>> {
 abstract class ObjectsBase<T> extends NonNull<T> {
   final String name;
   final UnknownPropertiesStrategy unknownPropertiesStrategy;
-  final String description;
+  final String? description;
 
   const ObjectsBase(
     this.name, {
     this.unknownPropertiesStrategy = UnknownPropertiesStrategy.forbid,
-    this.description = '',
+    this.description,
   });
 
   /// Get the [Converter] for the property of this object with the given name.
   Converter<Object?, Object?>? getPropertyConverter(String property);
 
-  /// Get all required (non-nullable properties without default values)
+  /// Get all required (non-nullable, without default values)
   /// properties of this object.
   Iterable<String> getRequiredProperties();
 
