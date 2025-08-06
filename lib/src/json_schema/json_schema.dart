@@ -374,9 +374,9 @@ extension on StringBuffer {
       [Object? defaultValue]) {
     final externalType = options.externalTypes[schemaType];
     if (externalType != null) {
-      writeRefType(externalType, isDef: false);
+      writeRefType(externalType, isDef: false, description: description);
     } else if (options.useRefsForNestedTypes && schemaType is ObjectsBase) {
-      writeRefType(schemaType.name);
+      writeRefType(schemaType.name, description: description);
       refs[schemaType.name] = schemaType;
     } else {
       var innerOptions = options.forInnerType();
@@ -391,9 +391,13 @@ extension on StringBuffer {
     }
   }
 
-  void writeRefType(String path, {bool isDef = true}) {
+  void writeRefType(String path, {bool isDef = true, String? description}) {
     write(r'{ "$ref": ');
     writeJson((isDef ? r"#/$defs/" : '') + path);
+    if (description != null) {
+      write(', "description": ');
+      writeJson(description);
+    }
     write(' }');
   }
 

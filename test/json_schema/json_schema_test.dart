@@ -197,8 +197,15 @@ void main() {
                   'MyObject',
                   {
                     'myProp': Property(Ints(), description: 'my property'),
-                    'otherProp': Property(Nullable(Strings()),
-                        description: 'another property'),
+                    'otherProp': Property(
+                        Nullable(Objects(
+                            'HasDescription',
+                            {
+                              'prop':
+                                  Property(Strings(), description: 'the prop'),
+                            },
+                            description: 'Object description')),
+                        description: 'Property description'),
                   },
                   description: 'this is an object'))
               .toString(),
@@ -207,8 +214,12 @@ void main() {
           '"type": "object", '
           '"properties": { '
           '"myProp": { "type": "integer", "description": "my property" }, '
-          '"otherProp": { "type": ["string", "null"], "description": "another property" } '
-          '}, "required": ["myProp"], "additionalProperties": false }');
+          r'"otherProp": { "title": "HasDescription",'
+          r' "description": "Object description", "type": ["object", "null"],'
+          r' "properties": { "prop": { "type": "string", "description": "the prop" } },'
+          r' "required": ["prop"], "additionalProperties": false } '
+          '}, "required": ["myProp"], "additionalProperties": false'
+          ' }');
     });
 
     test('Object with nullable property with default values', () {
@@ -474,11 +485,16 @@ void main() {
       const inner = Objects('Inner', {
         'a': Property(Ints()),
       });
-      const parent = Objects('Parent', {
-        'b': Property(inner),
-      });
+      const parent = Objects(
+          'Parent',
+          {
+            'b': Property(inner),
+          },
+          description: "The Parent");
       expect(
-          generateJsonSchema(Objects('MySchema', {'p': Property(parent)}),
+          generateJsonSchema(
+              Objects('MySchema',
+                  {'p': Property(parent, description: 'property description')}),
               schemaUri: null,
               options: JsonSchemaOptions(externalTypes: {
                 inner: 'https://example.org/schema/Inner'
@@ -487,10 +503,10 @@ void main() {
           r'"title": "MySchema", '
           r'"type": "object", '
           r'"properties": {'
-          r' "p": { "$ref": "#/$defs/Parent" } '
+          r' "p": { "$ref": "#/$defs/Parent", "description": "property description" } '
           r'}, "required": ["p"], "additionalProperties": false, '
           r'"$defs": { '
-          r'"Parent": { "title": "Parent", "type": "object", "properties": {'
+          r'"Parent": { "title": "Parent", "description": "The Parent", "type": "object", "properties": {'
           r' "b": { "$ref": "https://example.org/schema/Inner" } '
           r'}, "required": ["b"], "additionalProperties": false } '
           r'} }');
