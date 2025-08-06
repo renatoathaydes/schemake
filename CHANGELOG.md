@@ -1,4 +1,4 @@
-## 0.6.6 (04-Aug-2025)
+## 0.6.6 (06-Aug-2025)
 
 - JSON Schema generation implemented.
 
