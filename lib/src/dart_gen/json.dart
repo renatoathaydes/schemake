@@ -46,6 +46,9 @@ extension on StringBuffer {
       write("'$key': $fieldName");
       final enumOptions = type.enumOptions();
       if (enumOptions != null) {
+        if (isNullable) {
+          write('?');
+        }
         write('.${enumOptions.nameProperty}');
       }
       writeln(',');
