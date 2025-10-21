@@ -460,10 +460,17 @@ void main() {
             'a': Property(Ints()),
           },
           unknownPropertiesStrategy: UnknownPropertiesStrategy.keep);
+      const otherInner = Objects(
+          'OtherInner',
+          {
+            'e': Property(Ints()),
+          },
+          unknownPropertiesStrategy: UnknownPropertiesStrategy.keep);
       const parent = Objects(
           'Parent',
           {
             'b': Property(inner),
+            'c': Property(otherInner),
           },
           unknownPropertiesStrategy: UnknownPropertiesStrategy.keep);
       expect(
@@ -477,8 +484,9 @@ void main() {
           r' "p": { "$ref": "#/$defs/Parent" } '
           r'}, "required": ["p"], "additionalProperties": false, '
           r'"$defs": { '
-          r'"Parent": { "title": "Parent", "type": "object", "properties": { "b": { "$ref": "#/$defs/Inner" } }, "required": ["b"] }, '
-          r'"Inner": { "title": "Inner", "type": "object", "properties": { "a": { "type": "integer" } }, "required": ["a"] } '
+          r'"Parent": { "title": "Parent", "type": "object", "properties": { "b": { "$ref": "#/$defs/Inner" }, "c": { "$ref": "#/$defs/OtherInner" } }, "required": ["b","c"] }, '
+          r'"Inner": { "title": "Inner", "type": "object", "properties": { "a": { "type": "integer" } }, "required": ["a"] }, '
+          r'"OtherInner": { "title": "OtherInner", "type": "object", "properties": { "e": { "type": "integer" } }, "required": ["e"] } '
           r'} }');
     });
 

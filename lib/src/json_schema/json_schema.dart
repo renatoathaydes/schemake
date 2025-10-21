@@ -442,7 +442,7 @@ extension on StringBuffer {
     Set<String> writtenDefs = {};
     Map<String, ObjectsBase<Object?>> nextRefs = refs;
     while (nextRefs.isNotEmpty) {
-      final finalIndex = refs.length - 1;
+      final finalIndex = nextRefs.length - 1;
       Map<String, ObjectsBase<Object?>> innerRefs = {};
       for (final (index, entry)
           in nextRefs.entries.sortedBy((e) => e.key).indexed) {
