@@ -1,3 +1,8 @@
+## 0.6.7 (21-Oct-2025)
+
+- fixed bug where comma was not emitted properly when multiple `$ref`s were present in JSON schema.
+- fixed bug generating nullable enum methods.
+
 ## 0.6.6 (06-Aug-2025)
 
 - JSON Schema generation implemented.
