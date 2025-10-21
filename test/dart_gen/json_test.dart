@@ -37,6 +37,7 @@ const enumAbcDef = Enums(EnumValidator('EnumValue', {'abc', 'def'}));
 
 const simpleObjectWithEnum = Objects('WithEnum', {
   'myEnum': Property(enumAbcDef),
+  'myEnumButNullable': Property(Nullable(enumAbcDef)),
 });
 
 const _schemaWithDefaultValues = Objects('WithDefaults', {
@@ -191,11 +192,14 @@ import 'package:schemake/schemake.dart';
 
 class WithEnum {
   final EnumValue myEnum;
+  final EnumValue? myEnumButNullable;
   const WithEnum({
     required this.myEnum,
+    this.myEnumButNullable,
   });
   Map<String, Object?> toJson() => {
     'myEnum': myEnum.name,
+    if (myEnumButNullable != null) 'myEnumButNullable': myEnumButNullable?.name,
   };
 }
 enum EnumValue {
