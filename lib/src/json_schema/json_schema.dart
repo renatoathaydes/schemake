@@ -377,19 +377,30 @@ extension on StringBuffer {
     final externalType = options.externalTypes[schemaType];
     if (externalType != null) {
       writeRefType(externalType, isDef: false, description: description);
-    } else if (options.useRefsForNestedTypes && schemaType is ObjectsBase) {
-      writeRefType(schemaType.name, description: description);
-      refs[schemaType.name] = schemaType;
-    } else {
-      var innerOptions = options.forInnerType();
-      if (defaultValue != null) {
-        innerOptions = innerOptions.copyWith(endObject: false);
+      return;
+    }
+
+    if (options.useRefsForNestedTypes) {
+      if (schemaType
+          case Nullable<Object, NonNull>(type: ObjectsBase<Object> innerType)) {
+        refs[innerType.name] = innerType;
+        writeNullableRefType(innerType.name, description: description);
+        return;
+      } else if (schemaType is ObjectsBase) {
+        refs[schemaType.name] = schemaType;
+        writeRefType(schemaType.name, description: description);
+        return;
       }
-      writeSchemaType(schemaType, refs, description, innerOptions);
-      if (defaultValue != null) {
-        writeDefaultValue(defaultValue);
-        write(' }');
-      }
+    }
+
+    var innerOptions = options.forInnerType();
+    if (defaultValue != null) {
+      innerOptions = innerOptions.copyWith(endObject: false);
+    }
+    writeSchemaType(schemaType, refs, description, innerOptions);
+    if (defaultValue != null) {
+      writeDefaultValue(defaultValue);
+      write(' }');
     }
   }
 
@@ -401,6 +412,15 @@ extension on StringBuffer {
       writeJson(description);
     }
     write(' }');
+  }
+
+  void writeNullableRefType(String path,
+      {bool isDef = true, String? description}) {
+    write('{ "oneOf": [');
+    writeRefType(path, isDef: isDef, description: description);
+    write(', ');
+    writeType('null');
+    write('] }');
   }
 
   void writeValidatable(
