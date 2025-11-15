@@ -465,7 +465,51 @@ void main() {
 
 Schemake was designed to make it easy to add more generators.
 
-Currently, only Dart code generation is supported, but **JSON Schema** will be added soon.
-I might add a Java generator as well, and hopefully others can contribute more!
+Currently, the following generators are available:
 
-TODO show how to create a generator.
+* Dart code generation.
+* **JSON Schema**.
+
+I expect to add a Java generator as well as I need that for another project.
+
+And hopefully, others can contribute more generators, it's fairly easy to write one!
+
+### Creating your own generator
+
+The simple approach is to have a top-level function called `generateX` where `X` is the kind of output your
+generator will generate (e.g. `generateJava`), and a `StringBuffer` extension with methods for writing each type:
+
+```dart
+import 'package:schemake/schemake.dart';
+
+StringBuffer generateSimpleSchemaDescription(SchemaType<Object> schemaType) {
+  final result = StringBuffer();
+  result.writeSchema(schemaType);
+  return result;
+}
+
+extension on StringBuffer {
+  void writeSchema(SchemaType<Object?> schemaType,
+      {int level = 0, bool nullable = false}) {
+    final _ = switch (schemaType) {
+      Ints() => writeType('int', level: level, nullable: nullable),
+      Floats() => writeType('float', level: level, nullable: nullable),
+      Strings() => writeType('string', level: level, nullable: nullable),
+      Bools() => writeType('boolean', level: level, nullable: nullable),
+      Nullable<Object?, NonNull>(type: var type) =>
+          writeSchema(type, level: level, nullable: true),
+      Validatable(type: var type, validator: var validator) =>
+          writeValidatable(type, validator, level: level, nullable: nullable),
+      Arrays<Object?, SchemaType>(itemsType: var type) =>
+          writeArrays(type, level: level, nullable: nullable),
+      Objects() => writeObjects(schemaType, level: level, nullable: nullable),
+      Maps() => writeMaps(schemaType, level: level, nullable: nullable),
+      ObjectsBase() =>
+      throw Exception('Custom object type is not supported: $schemaType'),
+    };
+  }
+  // helper methods not shown
+}
+```
+
+See the full example at [examples/generator_example.dart](example/generator_example.dart);
