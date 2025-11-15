@@ -1,3 +1,7 @@
+## 0.6.8 (15-Nov-2025)
+
+- improved generation of nullable properties when enabling `useRefsForNestedTypes`.
+
 ## 0.6.7 (21-Oct-2025)
 
 - fixed bug where comma was not emitted properly when multiple `$ref`s were present in JSON schema.
