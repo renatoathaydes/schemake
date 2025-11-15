@@ -52,10 +52,9 @@ extension on StringBuffer {
 
   void writeArrays(SchemaType<Object?> valueType,
       {required int level, required bool nullable}) {
+    writeIndent(level, 'nullable: $nullable\n');
     writeIndent(level, 'arrayOf:\n');
-    writeIndent(level + 1, 'nullable: $nullable\n');
-    writeIndent(level + 1, 'type:\n');
-    writeSchema(valueType, level: level + 2);
+    writeSchema(valueType, level: level + 1);
     writeln();
   }
 
