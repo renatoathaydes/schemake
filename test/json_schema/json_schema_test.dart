@@ -215,12 +215,14 @@ void main() {
           '"type": "object", '
           '"properties": { '
           '"myProp": { "type": "integer", "description": "my property" }, '
-          r'"otherProp": { "title": "HasDescription",'
-          r' "description": "Property description", "type": ["object", "null"],'
-          r' "properties": { "prop": { "type": "string", "description": "the prop" } },'
-          r' "required": ["prop"], "additionalProperties": false } '
-          '}, "required": ["myProp"], "additionalProperties": false'
-          ' }');
+          r'"otherProp": { "oneOf": [{ "$ref": "#/$defs/HasDescription", "description": "Property description" }, { "type": "null" }] } }, '
+          r'"required": ["myProp"], '
+          r'"additionalProperties": false, '
+          r'"$defs": { "HasDescription": { "title": "HasDescription", '
+          r'"description": "Object description", "type": "object", '
+          r'"properties": { "prop": { "type": "string", "description": "the prop" } }, '
+          r'"required": ["prop"], "additionalProperties": false } '
+          '} }');
     });
 
     test('Object with nullable property with default values', () {
